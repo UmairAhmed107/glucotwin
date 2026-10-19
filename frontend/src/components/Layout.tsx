@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Activity,
+  Bell,
   BookOpen,
   Calendar,
+  Check,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
@@ -28,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { usePatients } from '../api/queries';
+import { usePatients, useAlerts, useAcknowledgeAlert } from '../api/queries';
 import { subscribeToToasts } from '../api/client';
 
 interface NavItem {
@@ -40,7 +42,9 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/', label: 'Overview', patientLabel: 'My Twin Overview', icon: Activity },
+  { to: '/panel', label: 'Patient Panel', icon: Users, clinicianOnly: true },
+  { to: '/', label: 'Twin Overview', patientLabel: 'My Twin Overview', icon: Activity },
+  { to: '/alerts', label: 'Alerts Center', icon: ShieldAlert, clinicianOnly: true },
   { to: '/timeline', label: 'Timeline & Replay', patientLabel: 'Glucose Diary & Replay', icon: History },
   { to: '/simulation', label: 'Simulation Lab', patientLabel: 'Meal & Walk Forecast', icon: Sliders },
   { to: '/treatment', label: 'Treatment Studio', patientLabel: 'Doctor Advice & Plan', icon: Sparkles },
@@ -48,9 +52,10 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/governance', label: 'SCM Governance', icon: Database, clinicianOnly: true },
 ];
 
-
 const ROUTE_TITLES: Record<string, string> = {
   '/': 'Twin Overview',
+  '/panel': 'Clinical Patient Panel',
+  '/alerts': 'Metabolic Alerts Center',
   '/timeline': 'Glucose Timeline & Sensor Replay',
   '/simulation': 'Metabolic Simulation Lab',
   '/treatment': 'Clinical Care & Treatment Studio',
@@ -107,6 +112,17 @@ export const Layout: React.FC = () => {
   const activePatient = patients?.find((p) => p.id === activePatientId);
   const isPatientUser = user?.role === 'patient';
 
+  // Alerts notification state for clinicians / providers
+  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
+  const { data: openAlerts = [] } = useAlerts({ status: 'open' });
+  const ackMutation = useAcknowledgeAlert();
+  const unreadAlertsCount = openAlerts.length;
+
+  const visibleNavItems = NAV_ITEMS.filter((item) => {
+    if (isPatientUser && item.clinicianOnly) return false;
+    return true;
+  });
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0B1220] text-slate-100 font-sans">
 
@@ -156,7 +172,7 @@ export const Layout: React.FC = () => {
                 {viewMode === 'patient' ? 'Patient Portal' : 'Clinical Decision Support'}
               </div>
             )}
-            {NAV_ITEMS.map((item, idx) => {
+            {visibleNavItems.map((item, idx) => {
               const Icon = item.icon;
               const displayLabel =
                 viewMode === 'patient' && item.patientLabel
@@ -166,7 +182,7 @@ export const Layout: React.FC = () => {
               // If entering clinician-only tools in the nav, add a small separator
               const isFirstClinicianTool =
                 item.clinicianOnly &&
-                (idx === 0 || !NAV_ITEMS[idx - 1].clinicianOnly);
+                (idx === 0 || !visibleNavItems[idx - 1].clinicianOnly);
 
               return (
                 <React.Fragment key={item.to}>
@@ -294,6 +310,110 @@ export const Layout: React.FC = () => {
                   </>
                 )}
               </div>
+
+              {/* Alert Notification Bell & Dropdown for Clinicians */}
+              {!isPatientUser && (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsAlertsOpen(!isAlertsOpen)}
+                    className="relative p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-700"
+                    title="Clinical Alerts"
+                    aria-label="Clinical Alerts"
+                  >
+                    <Bell className="w-4 h-4" />
+                    {unreadAlertsCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-[#111C30]">
+                        {unreadAlertsCount > 99 ? '99+' : unreadAlertsCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Backdrop to close */}
+                  {isAlertsOpen && (
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsAlertsOpen(false)}
+                    />
+                  )}
+
+                  {/* Dropdown panel */}
+                  {isAlertsOpen && (
+                    <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-[#0F172A] border border-slate-700 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-4 py-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ShieldAlert className="w-4 h-4 text-rose-400" />
+                          <span className="text-xs font-bold text-slate-200">Active Metabolic Alerts</span>
+                        </div>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                          {unreadAlertsCount} Open
+                        </span>
+                      </div>
+
+                      <div className="max-h-80 overflow-y-auto divide-y divide-slate-800/80">
+                        {openAlerts.length === 0 ? (
+                          <div className="p-6 text-center text-xs text-slate-400">
+                            <Check className="w-8 h-8 mx-auto mb-2 text-emerald-400/80" />
+                            All linked patients are within target metabolic boundaries.
+                          </div>
+                        ) : (
+                          openAlerts.slice(0, 5).map((a) => (
+                            <div key={a.id} className="p-3 hover:bg-slate-800/50 transition flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span
+                                    className={`w-2 h-2 rounded-full shrink-0 ${
+                                      a.severity === 'critical'
+                                        ? 'bg-rose-500 animate-pulse'
+                                        : a.severity === 'warning'
+                                        ? 'bg-amber-500'
+                                        : 'bg-blue-500'
+                                    }`}
+                                  />
+                                  <span className="text-[11px] font-bold text-slate-200 truncate">
+                                    {a.patient_name || `Patient #${a.patient_id}`}
+                                  </span>
+                                  <span className="text-[9px] uppercase px-1.5 py-0.2 rounded font-mono font-bold bg-slate-800 text-slate-400">
+                                    {a.severity}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+                                  {a.message}
+                                </p>
+                                <span className="text-[9px] text-slate-500 mt-1 block">
+                                  {new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => ackMutation.mutate(a.id)}
+                                disabled={ackMutation.isPending}
+                                className="px-2 py-1 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 rounded text-[10px] font-medium transition shrink-0"
+                                title="Acknowledge alert"
+                              >
+                                Ack
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      <div className="p-2 bg-slate-900/90 border-t border-slate-800 text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAlertsOpen(false);
+                            navigate('/alerts');
+                          }}
+                          className="w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 hover:text-teal-200 text-xs font-semibold transition"
+                        >
+                          View All in Alerts Center →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* User Profile Info */}
               <div className="flex items-center gap-2 pl-2 border-l border-slate-800">

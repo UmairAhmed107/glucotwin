@@ -514,4 +514,46 @@ export interface CareTeamLink {
   created_at: string;
 }
 
+export type AlertSeverity = 'info' | 'warning' | 'critical';
+export type AlertStatus = 'open' | 'acknowledged' | 'resolved';
+
+export interface Alert {
+  id: number;
+  patient_id: number;
+  rule_key: string;
+  severity: AlertSeverity;
+  message: string;
+  created_at: string;
+  acknowledged_by?: number | null;
+  acknowledged_at?: string | null;
+  status: AlertStatus;
+  patient_name?: string | null;
+}
+
+export interface ClinicianPanelItem {
+  patient_id: number;
+  display_name: string;
+  age?: number | null;
+  sex?: string | null;
+  hba1c_pct?: number | null;
+  risk_score: number;
+  risk_level: 'low' | 'moderate' | 'high' | 'critical';
+  time_in_range_pct?: number | null;
+  last_reading_time?: string | null;
+  open_alerts_count: number;
+  alerts_by_severity: {
+    critical: number;
+    warning: number;
+    info: number;
+  };
+  twin_status: {
+    mem_n: number;
+    confidence_score: number;
+    personalized: boolean;
+    last_calibrated?: string | null;
+  };
+  care_team_status: string;
+}
+
+
 

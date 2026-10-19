@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest, showToast } from './client';
 import {
   AuditLogEntry,
+  Alert,
   BestTimeResponse,
   ClinicalPlanResponse,
+  ClinicianPanelItem,
   CohortPositionResponse,
   CombinedPlanResponse,
   CompareMealsRequest,
@@ -301,6 +303,77 @@ export function useReplayStart(participantId: number) {
         method: 'POST',
         body: JSON.stringify(payload),
       }),
+  });
+}
+
+// ============================================================================
+// Clinician Panel & Alerts
+// ============================================================================
+
+export function useClinicianPanel() {
+  return useQuery({
+    queryKey: ['clinician-panel'],
+    queryFn: () => apiRequest<ClinicianPanelItem[]>('/clinician/panel'),
+    refetchInterval: 15000,
+  });
+}
+
+export function useAlerts(params?: { patient_id?: number; status?: string; severity?: string }) {
+  const queryStr = params
+    ? new URLSearchParams(
+        Object.entries(params)
+          .filter(([_, v]) => v !== undefined && v !== '')
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
+    : '';
+
+  return useQuery({
+    queryKey: ['alerts', queryStr],
+    queryFn: () => apiRequest<Alert[]>(`/alerts${queryStr ? `?${queryStr}` : ''}`),
+    refetchInterval: 10000,
+  });
+}
+
+export function useAcknowledgeAlert() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (alertId: number) =>
+      apiRequest<Alert>(`/alerts/${alertId}/acknowledge`, { method: 'POST' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['clinician-panel'] });
+      showToast({ type: 'success', title: 'Alert Acknowledged', message: 'Alert has been acknowledged.' });
+    },
+  });
+}
+
+export function useResolveAlert() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (alertId: number) =>
+      apiRequest<Alert>(`/alerts/${alertId}/resolve`, { method: 'POST' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['clinician-panel'] });
+      showToast({ type: 'success', title: 'Alert Resolved', message: 'Alert has been marked as resolved.' });
+    },
+  });
+}
+
+export function useEvaluateAlerts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (patientId: number) =>
+      apiRequest<Alert[]>(`/alerts/evaluate/${patientId}`, { method: 'POST' }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['clinician-panel'] });
+      showToast({
+        type: 'info',
+        title: 'Rules Evaluated',
+        message: `Evaluation completed. ${data.length} active alerts found.`,
+      });
+    },
   });
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
@@ -9,6 +9,8 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { CareTeamPage } from './pages/CareTeam';
 import { TwinOverview } from './pages/TwinOverview';
+import { PatientPanel } from './pages/PatientPanel';
+import { AlertsPage } from './pages/Alerts';
 import { PatientSetup } from './pages/PatientSetup';
 import { LogData } from './pages/LogData';
 import { PredictionPage } from './pages/Prediction';
@@ -36,6 +38,14 @@ const queryClient = new QueryClient({
   },
 });
 
+const HomeRoute: React.FC = () => {
+  const { user } = useAuth();
+  if (user?.role === 'patient') {
+    return <TwinOverview />;
+  }
+  return <PatientPanel />;
+};
+
 export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -56,7 +66,10 @@ export const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<TwinOverview />} />
+                <Route index element={<HomeRoute />} />
+                <Route path="panel" element={<PatientPanel />} />
+                <Route path="twin" element={<TwinOverview />} />
+                <Route path="alerts" element={<AlertsPage />} />
                 <Route path="patients/setup" element={<PatientSetup />} />
 
                 {/* 5 Unified Primary Workspaces */}
