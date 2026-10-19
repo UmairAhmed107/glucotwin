@@ -5,12 +5,12 @@ from app.config import settings
 # SQLite requires check_same_thread=False for multi-threaded FastAPI workers
 connect_args = (
     {"check_same_thread": False}
-    if settings.database_url.startswith("sqlite")
+    if settings.resolved_database_url.startswith("sqlite")
     else {}
 )
 
 engine = create_engine(
-    settings.database_url,
+    settings.resolved_database_url,
     connect_args=connect_args,
     echo=False,
 )

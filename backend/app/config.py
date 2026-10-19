@@ -23,6 +23,14 @@ class Settings(BaseSettings):
     # Base path resolution
     backend_dir: Path = Field(default_factory=lambda: Path(__file__).resolve().parent.parent)
 
+    @property
+    def resolved_database_url(self) -> str:
+        if self.database_url.startswith("sqlite:///./") or self.database_url == "sqlite:///glucotwin.db":
+            fname = self.database_url.split("///")[-1].lstrip("./")
+            # Always anchor relative sqlite path to backend_dir
+            return f"sqlite:///{(self.backend_dir / fname).resolve().as_posix()}"
+        return self.database_url
+
     def resolve_replay_path(self) -> Optional[Path]:
         """Resolve path to CGM replay time series data if available."""
         if self.replay_data_path:
