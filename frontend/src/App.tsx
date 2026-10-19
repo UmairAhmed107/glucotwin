@@ -1,8 +1,13 @@
 import React from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
+import { CareTeamPage } from './pages/CareTeam';
 import { TwinOverview } from './pages/TwinOverview';
 import { PatientSetup } from './pages/PatientSetup';
 import { LogData } from './pages/LogData';
@@ -14,7 +19,6 @@ import { CohortPage } from './pages/Cohort';
 import { ClinicalPlanPage } from './pages/ClinicalPlan';
 import { TherapyScenariosPage } from './pages/TherapyScenarios';
 import { FourWeekPlanPage } from './pages/FourWeekPlan';
-import { TimelinePage } from './pages/Timeline';
 import { ClinicianViewPage } from './pages/ClinicianView';
 import { ValidationPage } from './pages/Validation';
 import { ReplayPage } from './pages/Replay';
@@ -35,38 +39,59 @@ const queryClient = new QueryClient({
 export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<TwinOverview />} />
-              <Route path="patients/setup" element={<PatientSetup />} />
+      <AuthProvider>
+        <AppProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Authentication Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-              {/* 5 Unified Primary Workspaces */}
-              <Route path="timeline" element={<TimelineWorkspace />} />
-              <Route path="simulation" element={<SimulationWorkspace />} />
-              <Route path="treatment" element={<TreatmentWorkspace />} />
-              <Route path="governance" element={<GovernanceWorkspace />} />
+              {/* Protected Application Routes */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<TwinOverview />} />
+                <Route path="patients/setup" element={<PatientSetup />} />
 
-              {/* Preserved Granular Sub-Routes for Direct Deep Linking & Tests */}
-              <Route path="log" element={<LogData />} />
-              <Route path="predict" element={<PredictionPage />} />
-              <Route path="learning" element={<TwinLearningPage />} />
-              <Route path="whatif" element={<WhatIfLabPage />} />
-              <Route path="meal-tools" element={<MealToolsPage />} />
-              <Route path="cohort" element={<CohortPage />} />
-              <Route path="clinical-plan" element={<ClinicalPlanPage />} />
-              <Route path="therapy-scenarios" element={<TherapyScenariosPage />} />
-              <Route path="plan" element={<FourWeekPlanPage />} />
-              <Route path="clinician-view" element={<ClinicianViewPage />} />
-              <Route path="validation" element={<ValidationPage />} />
-              <Route path="replay" element={<ReplayPage />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </AppProvider>
+                {/* 5 Unified Primary Workspaces */}
+                <Route path="timeline" element={<TimelineWorkspace />} />
+                <Route path="simulation" element={<SimulationWorkspace />} />
+                <Route path="treatment" element={<TreatmentWorkspace />} />
+                <Route path="governance" element={<GovernanceWorkspace />} />
+
+                {/* My Care Team */}
+                <Route path="care-team" element={<CareTeamPage />} />
+
+                {/* Preserved Granular Sub-Routes for Direct Deep Linking & Tests */}
+                <Route path="log" element={<LogData />} />
+                <Route path="predict" element={<PredictionPage />} />
+                <Route path="learning" element={<TwinLearningPage />} />
+                <Route path="whatif" element={<WhatIfLabPage />} />
+                <Route path="meal-tools" element={<MealToolsPage />} />
+                <Route path="cohort" element={<CohortPage />} />
+                <Route path="clinical-plan" element={<ClinicalPlanPage />} />
+                <Route path="therapy-scenarios" element={<TherapyScenariosPage />} />
+                <Route path="plan" element={<FourWeekPlanPage />} />
+                <Route path="clinician-view" element={<ClinicianViewPage />} />
+                <Route path="validation" element={<ValidationPage />} />
+                <Route path="replay" element={<ReplayPage />} />
+              </Route>
+
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </AppProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };
 
 export default App;
+

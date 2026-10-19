@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';
 
 interface AppContextType {
   activePatientId: number | null;
@@ -12,19 +13,46 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  let authUser = null;
+  try {
+    const auth = useAuth();
+    authUser = auth?.user ?? null;
+  } catch {
+    // If rendered outside AuthProvider (e.g. in some isolated unit tests)
+  }
+
   const [activePatientId, setActivePatientIdState] = useState<number | null>(() => {
     const saved = localStorage.getItem('glucotwin_active_patient_id');
     return saved ? parseInt(saved, 10) : null;
   });
 
-  const [viewMode, setViewModeState] = useState<'patient' | 'clinician'>(() => {
+  const [fallbackViewMode, setFallbackViewMode] = useState<'patient' | 'clinician'>(() => {
     const saved = localStorage.getItem('glucotwin_view_mode');
     return saved === 'clinician' ? 'clinician' : 'patient';
   });
 
+  // UI mode derived strictly from logged-in user role
+  const viewMode: 'patient' | 'clinician' = authUser
+    ? authUser.role === 'patient'
+      ? 'patient'
+      : 'clinician'
+    : fallbackViewMode;
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+  // If authenticated user is a patient, automatically lock active patient to their own profile
+  useEffect(() => {
+    if (authUser?.role === 'patient' && authUser.patient_id) {
+      setActivePatientIdState(authUser.patient_id);
+      localStorage.setItem('glucotwin_active_patient_id', authUser.patient_id.toString());
+    }
+  }, [authUser]);
+
   const setActivePatientId = (id: number | null) => {
+    // Patients cannot switch away from their own patient profile
+    if (authUser?.role === 'patient' && authUser.patient_id && id !== authUser.patient_id) {
+      return;
+    }
     setActivePatientIdState(id);
     if (id !== null) {
       localStorage.setItem('glucotwin_active_patient_id', id.toString());
@@ -34,7 +62,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const setViewMode = (mode: 'patient' | 'clinician') => {
-    setViewModeState(mode);
+    setFallbackViewMode(mode);
     localStorage.setItem('glucotwin_view_mode', mode);
   };
 

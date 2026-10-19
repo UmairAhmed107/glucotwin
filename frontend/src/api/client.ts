@@ -37,11 +37,14 @@ export async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
-  const headers = {
+  const token = localStorage.getItem('glucotwin_token');
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...((options.headers as Record<string, string>) || {}),
   };
+
 
   try {
     const res = await fetch(url, { ...options, headers });

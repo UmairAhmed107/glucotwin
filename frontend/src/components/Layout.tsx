@@ -27,6 +27,7 @@ import {
   X,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { usePatients } from '../api/queries';
 import { subscribeToToasts } from '../api/client';
 
@@ -43,8 +44,10 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/timeline', label: 'Timeline & Replay', patientLabel: 'Glucose Diary & Replay', icon: History },
   { to: '/simulation', label: 'Simulation Lab', patientLabel: 'Meal & Walk Forecast', icon: Sliders },
   { to: '/treatment', label: 'Treatment Studio', patientLabel: 'Doctor Advice & Plan', icon: Sparkles },
+  { to: '/care-team', label: 'My Care Team', patientLabel: 'My Care Team', icon: Users },
   { to: '/governance', label: 'SCM Governance', icon: Database, clinicianOnly: true },
 ];
+
 
 const ROUTE_TITLES: Record<string, string> = {
   '/': 'Twin Overview',
@@ -68,7 +71,8 @@ const ROUTE_TITLES: Record<string, string> = {
 };
 
 export const Layout: React.FC = () => {
-  const { activePatientId, setActivePatientId, viewMode, setViewMode, isSidebarCollapsed, toggleSidebar } = useApp();
+  const { activePatientId, setActivePatientId, viewMode, isSidebarCollapsed, toggleSidebar } = useApp();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -101,6 +105,7 @@ export const Layout: React.FC = () => {
   }, [patients, activePatientId, setActivePatientId]);
 
   const activePatient = patients?.find((p) => p.id === activePatientId);
+  const isPatientUser = user?.role === 'patient';
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0B1220] text-slate-100 font-sans">
@@ -231,27 +236,39 @@ export const Layout: React.FC = () => {
               <span className="text-xs text-slate-400 font-medium hidden sm:inline">
                 Active Twin:
               </span>
-              <div className="relative">
-                <select
-                  value={activePatientId ?? ''}
-                  onChange={(e) => setActivePatientId(Number(e.target.value))}
-                  className="bg-[#0B1220] border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 pr-8 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors cursor-pointer appearance-none font-medium min-w-[200px]"
-                >
-                  {patientsLoading && <option>Loading patients...</option>}
-                  {!patientsLoading && patients?.length === 0 && (
-                    <option value="">No patients created</option>
+              {isPatientUser ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0B1220] border border-slate-700/80 text-xs font-medium text-slate-200">
+                  <User className="w-3.5 h-3.5 text-teal-400" />
+                  <span>{activePatient?.display_name || user?.full_name || 'My Record'}</span>
+                  {activePatient && (
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      (#{activePatient.id} • HbA1c {activePatient.hba1c_pct}%)
+                    </span>
                   )}
-                  {patients?.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.display_name} (#{p.id} • {p.age}y {p.sex} • HbA1c {p.hba1c_pct}%)
-                      {p.is_synthetic ? ' [Synthetic]' : ''}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
-                  ▼
                 </div>
-              </div>
+              ) : (
+                <div className="relative">
+                  <select
+                    value={activePatientId ?? ''}
+                    onChange={(e) => setActivePatientId(Number(e.target.value))}
+                    className="bg-[#0B1220] border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 pr-8 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors cursor-pointer appearance-none font-medium min-w-[200px]"
+                  >
+                    {patientsLoading && <option>Loading patients...</option>}
+                    {!patientsLoading && patients?.length === 0 && (
+                      <option value="">No patients available</option>
+                    )}
+                    {patients?.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.display_name} (#{p.id} • {p.age}y {p.sex} • HbA1c {p.hba1c_pct}%)
+                        {p.is_synthetic ? ' [Synthetic]' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
+                    ▼
+                  </div>
+                </div>
+              )}
 
               {activePatient?.is_synthetic && (
                 <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-500/15 text-purple-300 border border-purple-500/30">
@@ -260,52 +277,54 @@ export const Layout: React.FC = () => {
               )}
             </div>
 
-            {/* Right: Active Mode Pill & Mode Toggle (Patient vs Clinician) */}
+            {/* Right: Authenticated User Badge & Logout (Persona toggle removed per prompt) */}
             <div className="flex items-center gap-3">
-              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border border-slate-800 bg-slate-900/60">
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border border-slate-800 bg-slate-900/60">
                 {viewMode === 'clinician' ? (
                   <>
                     <Stethoscope className="w-3.5 h-3.5 text-indigo-400" />
-                    <span className="text-indigo-300 font-semibold">Clinician View:</span>
-                    <span className="text-slate-400">R1–R9 rules & pharmacological dosing</span>
+                    <span className="text-indigo-300 font-semibold capitalize">{user?.role || 'Clinician'}:</span>
+                    <span className="text-slate-400">CDS & Safety Governor Active</span>
                   </>
                 ) : (
                   <>
                     <User className="w-3.5 h-3.5 text-teal-400" />
-                    <span className="text-teal-300 font-semibold">Patient View:</span>
-                    <span className="text-slate-400">Lifestyle habits & doctor questions</span>
+                    <span className="text-teal-300 font-semibold">Patient Mode:</span>
+                    <span className="text-slate-400">Personal Simulations</span>
                   </>
                 )}
               </div>
 
-              <div className="flex items-center bg-[#0B1220] p-1 rounded-lg border border-slate-700">
+              {/* User Profile Info */}
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500/20 to-indigo-500/20 border border-teal-500/30 text-teal-300 flex items-center justify-center text-xs font-bold shrink-0">
+                  {user?.full_name ? user.full_name[0].toUpperCase() : 'U'}
+                </div>
+                <div className="hidden md:block text-left">
+                  <p className="text-xs font-semibold text-slate-200 leading-tight truncate max-w-[140px]">
+                    {user?.full_name || 'Guest User'}
+                  </p>
+                  <p className="text-[10px] text-teal-400/90 font-mono capitalize leading-none">
+                    {user?.role || 'user'}
+                  </p>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setViewMode('patient')}
-                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${
-                    viewMode === 'patient'
-                      ? 'bg-teal-500 text-[#0B1220] shadow-sm font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                  onClick={() => {
+                    logout();
+                    navigate('/login');
+                  }}
+                  className="p-1.5 ml-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors border border-transparent hover:border-rose-500/20"
+                  title="Sign Out"
+                  aria-label="Sign Out"
                 >
-                  <User className="w-3 h-3" />
-                  <span>Patient View</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('clinician')}
-                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${
-                    viewMode === 'clinician'
-                      ? 'bg-indigo-500 text-white shadow-sm font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Stethoscope className="w-3 h-3" />
-                  <span>Clinician Mode</span>
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </header>
+
 
           {/* Page View Body */}
           <main className="flex-1 p-6 max-w-7xl w-full mx-auto">

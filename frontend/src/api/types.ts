@@ -485,3 +485,33 @@ export interface ReplayPointEvent {
   };
 }
 
+export type UserRole = 'patient' | 'clinician' | 'dietitian' | 'admin';
+
+export interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  created_at: string;
+  patient_id?: number | null;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+}
+
+export interface CareTeamLink {
+  id: number;
+  patient_id: number;
+  provider_user_id: number;
+  provider_name?: string | null;
+  provider_role?: string | null;
+  patient_name?: string | null;
+  role_in_team: string;
+  status: 'pending' | 'active' | 'revoked';
+  created_at: string;
+}
+
+
