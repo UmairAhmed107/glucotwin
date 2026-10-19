@@ -555,5 +555,136 @@ export interface ClinicianPanelItem {
   care_team_status: string;
 }
 
+// ============================================================================
+// Clinician-Reviewed Visit & Care Plan Types
+// ============================================================================
+
+export type VisitStatus = 'scheduled' | 'in_progress' | 'completed';
+export type DraftStatus = 'draft' | 'approved' | 'edited' | 'rejected';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+
+export interface PreVisitSummary {
+  patient_id: number;
+  patient_name: string;
+  generated_at: string;
+  glucose_stats_14d: {
+    days_window: number;
+    reading_count: number;
+    mean_mgdl: number;
+    std_mgdl: number;
+    min_mgdl: number;
+    max_mgdl: number;
+    time_in_range_pct: number;
+    hypo_events_count: number;
+    critical_hypo_count: number;
+    hyper_events_count: number;
+  };
+  twin_patterns: {
+    mem_n: number;
+    mem_mean_rise: number;
+    mem_mean_iauc: number;
+    baseline_used: boolean;
+    representative_meal_rise_mgdl: number;
+    carb_sensitivity: string;
+  };
+  open_alerts: Array<{
+    id: number;
+    rule_key: string;
+    severity: string;
+    message: string;
+    created_at?: string | null;
+  }>;
+  open_alerts_count: number;
+  biomarkers: {
+    hba1c_pct: number;
+    fasting_glucose_mgdl: number;
+    kidney_flag: boolean;
+    estimated_egfr: number;
+    hypoglycemia_history?: boolean | null;
+    bmi: number;
+  };
+  medication_adherence: {
+    current_meds: string[];
+    estimated_adherence_pct: number;
+    status: string;
+  };
+  clinical_focus: string;
+}
+
+export interface RecommendationDraft {
+  id: number;
+  visit_id: number;
+  patient_id: number;
+  category: 'therapy' | 'lifestyle' | 'monitoring' | string;
+  title: string;
+  detail?: string | null;
+  payload: Record<string, any>;
+  status: DraftStatus;
+  clinician_comment?: string | null;
+  governor_trace?: {
+    rules_triggered: string[];
+    clean: boolean;
+    blocked?: boolean;
+    reason?: string;
+  } | null;
+  created_at: string;
+  reviewed_at?: string | null;
+}
+
+export interface Visit {
+  id: number;
+  patient_id: number;
+  clinician_id?: number | null;
+  scheduled_at: string;
+  status: VisitStatus;
+  pre_visit_summary?: PreVisitSummary | null;
+  notes?: string | null;
+  final_plan?: {
+    completed_at: string;
+    clinician_id: number;
+    clinician_name?: string;
+    notes: string;
+    approved_recommendations: Array<{
+      id: number;
+      category: string;
+      title: string;
+      detail?: string | null;
+      payload: Record<string, any>;
+      clinician_comment?: string | null;
+      status: string;
+    }>;
+  } | null;
+  created_at: string;
+  completed_at?: string | null;
+  drafts: RecommendationDraft[];
+  patient_name?: string | null;
+  clinician_name?: string | null;
+}
+
+export interface CarePlanTask {
+  id: number;
+  care_plan_id: number;
+  patient_id: number;
+  title: string;
+  description?: string | null;
+  due_date: string;
+  category: 'lifestyle' | 'medication' | 'monitoring' | 'visit' | string;
+  assigned_to: 'patient' | 'clinician';
+  status: TaskStatus;
+  completed_at?: string | null;
+}
+
+export interface CarePlan {
+  id: number;
+  patient_id: number;
+  visit_id?: number | null;
+  title: string;
+  status: 'active' | 'completed' | 'archived';
+  created_at: string;
+  updated_at: string;
+  tasks: CarePlanTask[];
+}
+
+
 
 

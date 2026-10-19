@@ -4,6 +4,8 @@ import {
   AuditLogEntry,
   Alert,
   BestTimeResponse,
+  CarePlan,
+  CarePlanTask,
   ClinicalPlanResponse,
   ClinicianPanelItem,
   CohortPositionResponse,
@@ -27,7 +29,9 @@ import {
   TimelineResponse,
   TwinLearningResponse,
   ValidationMetricsResponse,
+  RecommendationDraft,
   ReplayStartResponse,
+  Visit,
   WhatIfResponse,
 } from './types';
 
@@ -376,4 +380,146 @@ export function useEvaluateAlerts() {
     },
   });
 }
+
+// ============================================================================
+// Clinical Visits & 4-Week Care Pathway Queries
+// ============================================================================
+
+export function usePatientVisits(patientId: number | null) {
+  return useQuery({
+    queryKey: ['visits', patientId],
+    queryFn: () => apiRequest<Visit[]>(`/patients/${patientId}/visits`),
+    enabled: patientId !== null && patientId !== undefined,
+  });
+}
+
+export function useVisit(visitId: number | null) {
+  return useQuery({
+    queryKey: ['visit', visitId],
+    queryFn: () => apiRequest<Visit>(`/visits/${visitId}`),
+    enabled: visitId !== null && visitId !== undefined,
+  });
+}
+
+export function useCreateVisit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ patientId, notes }: { patientId: number; notes?: string }) =>
+      apiRequest<Visit>(`/patients/${patientId}/visits`, {
+        method: 'POST',
+        body: JSON.stringify({ notes }),
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['visits', variables.patientId] });
+      showToast({ type: 'success', title: 'Visit Scheduled', message: 'Clinical visit scheduled and pre-visit summary prepared.' });
+    },
+  });
+}
+
+export function useStartVisit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (visitId: number) =>
+      apiRequest<Visit>(`/visits/${visitId}/start`, { method: 'POST' }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['visit', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['visits', data.patient_id] });
+      showToast({ type: 'info', title: 'Visit In Progress', message: 'Consultation active. Ready for recommendation review.' });
+    },
+  });
+}
+
+export function useReviewDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      draftId,
+      status,
+      title,
+      detail,
+      clinician_comment,
+    }: {
+      draftId: number;
+      visitId: number;
+      status: 'approved' | 'edited' | 'rejected';
+      title?: string;
+      detail?: string;
+      clinician_comment?: string;
+    }) =>
+      apiRequest<RecommendationDraft>(`/visits/drafts/${draftId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status, title, detail, clinician_comment }),
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['visit', variables.visitId] });
+      showToast({
+        type: 'success',
+        title: 'Draft Updated',
+        message: `Recommendation marked as ${variables.status}.`,
+      });
+    },
+    onError: (err: any) => {
+      showToast({
+        type: 'error',
+        title: 'Review Blocked',
+        message: err?.message || 'Cannot approve draft that failed safety governor checks.',
+      });
+    },
+  });
+}
+
+export function useCompleteVisit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ visitId, notes }: { visitId: number; notes?: string }) =>
+      apiRequest<Visit>(`/visits/${visitId}/complete${notes ? `?notes=${encodeURIComponent(notes)}` : ''}`, {
+        method: 'POST',
+      }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['visit', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['visits', data.patient_id] });
+      queryClient.invalidateQueries({ queryKey: ['care-plan', data.patient_id] });
+      showToast({
+        type: 'success',
+        title: 'Plan Published',
+        message: 'Visit completed and 4-week actionable Care Pathway published!',
+      });
+    },
+  });
+}
+
+export function usePatientCarePlan(patientId: number | null) {
+  return useQuery({
+    queryKey: ['care-plan', patientId],
+    queryFn: () => apiRequest<CarePlan>(`/patients/${patientId}/care-plan`),
+    enabled: patientId !== null && patientId !== undefined,
+  });
+}
+
+export function useUpdateTaskStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      taskId,
+      status,
+    }: {
+      taskId: number;
+      patientId: number;
+      status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+    }) =>
+      apiRequest<CarePlanTask>(`/care-plan/tasks/${taskId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['care-plan', variables.patientId] });
+      showToast({
+        type: 'success',
+        title: 'Task Updated',
+        message: `Task status updated to ${variables.status}.`,
+      });
+    },
+  });
+}
+
 

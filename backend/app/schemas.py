@@ -611,4 +611,89 @@ class ClinicianPanelItem(BaseModel):
     care_team_status: str
 
 
+# ============================================================================
+# Clinician-Reviewed Visit & Care Plan Schemas
+# ============================================================================
+
+class VisitCreate(BaseModel):
+    scheduled_at: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class RecommendationDraftResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    visit_id: int
+    patient_id: int
+    category: str
+    title: str
+    detail: Optional[str] = None
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    status: Literal["draft", "approved", "edited", "rejected"]
+    clinician_comment: Optional[str] = None
+    governor_trace: Optional[Dict[str, Any]] = None
+    created_at: datetime
+    reviewed_at: Optional[datetime] = None
+
+
+class DraftReviewRequest(BaseModel):
+    status: Literal["approved", "edited", "rejected"]
+    title: Optional[str] = None
+    detail: Optional[str] = None
+    clinician_comment: Optional[str] = None
+    payload: Optional[Dict[str, Any]] = None
+
+
+class CarePlanTaskResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    care_plan_id: int
+    patient_id: int
+    title: str
+    description: Optional[str] = None
+    due_date: datetime
+    category: str
+    assigned_to: str
+    status: Literal["pending", "in_progress", "completed", "cancelled"]
+    completed_at: Optional[datetime] = None
+
+
+class CarePlanResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    patient_id: int
+    visit_id: Optional[int] = None
+    title: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    tasks: List[CarePlanTaskResponse] = Field(default_factory=list)
+
+
+class VisitResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    patient_id: int
+    clinician_id: Optional[int] = None
+    scheduled_at: datetime
+    status: Literal["scheduled", "in_progress", "completed"]
+    pre_visit_summary: Optional[Dict[str, Any]] = None
+    notes: Optional[str] = None
+    final_plan: Optional[Dict[str, Any]] = None
+    created_at: datetime
+    completed_at: Optional[datetime] = None
+    drafts: List[RecommendationDraftResponse] = Field(default_factory=list)
+    patient_name: Optional[str] = None
+    clinician_name: Optional[str] = None
+
+
+class TaskUpdateRequest(BaseModel):
+    status: Literal["pending", "in_progress", "completed", "cancelled"]
+
+
+
 

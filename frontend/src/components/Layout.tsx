@@ -44,6 +44,8 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: '/panel', label: 'Patient Panel', icon: Users, clinicianOnly: true },
   { to: '/', label: 'Twin Overview', patientLabel: 'My Twin Overview', icon: Activity },
+  { to: '/visits', label: 'Visit Workspace', icon: Stethoscope, clinicianOnly: true },
+  { to: '/my-plan', label: 'My Care Plan', patientLabel: 'My 4-Week Plan', icon: ClipboardList },
   { to: '/alerts', label: 'Alerts Center', icon: ShieldAlert, clinicianOnly: true },
   { to: '/timeline', label: 'Timeline & Replay', patientLabel: 'Glucose Diary & Replay', icon: History },
   { to: '/simulation', label: 'Simulation Lab', patientLabel: 'Meal & Walk Forecast', icon: Sliders },
@@ -55,6 +57,8 @@ const NAV_ITEMS: NavItem[] = [
 const ROUTE_TITLES: Record<string, string> = {
   '/': 'Twin Overview',
   '/panel': 'Clinical Patient Panel',
+  '/visits': 'Clinician Visit Workspace',
+  '/my-plan': 'My 4-Week Care Plan',
   '/alerts': 'Metabolic Alerts Center',
   '/timeline': 'Glucose Timeline & Sensor Replay',
   '/simulation': 'Metabolic Simulation Lab',

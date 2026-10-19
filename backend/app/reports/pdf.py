@@ -38,7 +38,7 @@ from app.audit import log_audit_event
 from app.clinical.governor import run_safety_governor
 from app.clinical.guidelines import get_known_guideline_ids, retrieve_guidelines
 from app.clinical.reasoning import generate_clinical_plan
-from app.models_db import AuditLog, MealEntry, Patient, Recommendation
+from app.models_db import AuditLog, CarePlan, MealEntry, Patient, Recommendation, Visit
 from app.twin.memory import compute_confidence_score, compute_memory
 from app.twin.twin_engine import (
     get_model_version,
@@ -562,56 +562,96 @@ def generate_patient_report_pdf(patient: Patient, db: Session) -> bytes:
     story.append(Spacer(1, 2))
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#0f766e"), spaceAfter=5))
 
-    # Retrieve or generate clinical plan
-    rec_record = (
-        db.query(Recommendation)
-        .filter(Recommendation.patient_id == patient.id, Recommendation.kind == "therapy")
-        .order_by(Recommendation.created_at.desc())
+    # Look for completed clinical visit with approved final plan first
+    completed_visit = (
+        db.query(Visit)
+        .filter(Visit.patient_id == patient.id, Visit.status == "completed")
+        .order_by(Visit.completed_at.desc())
         .first()
     )
+    has_approved_plan = (
+        completed_visit is not None
+        and completed_visit.final_plan is not None
+        and bool(completed_visit.final_plan.get("approved_recommendations"))
+    )
 
-    if rec_record:
-        plan_dict = rec_record.payload
-        rules_triggered = (rec_record.governor_result or {}).get("rules_triggered", ["R9_SAFETY_STAMPED"])
-    else:
-        # Generate on the fly
-        patient_context = {
-            "id": patient.id,
-            "display_name": patient.display_name,
-            "age": patient.age,
-            "sex": patient.sex,
-            "bmi": patient.bmi,
-            "hba1c_pct": patient.hba1c_pct,
-            "fasting_glucose_mgdl": patient.fasting_glucose_mgdl,
-            "hypoglycemia_history": patient.hypoglycemia_history,
-            "kidney_flag": patient.kidney_flag,
-            "current_meds": patient.current_meds or [],
-            "twin_summary": {
-                "mem_n": mem_n,
-                "mem_mean_rise": mem_info["mem_mean_rise"] or 0.0,
-                "mem_mean_iauc": mem_info["mem_mean_iauc"] or 0.0,
-                "baseline_used": mem_info["baseline_used"],
-            },
+    if has_approved_plan:
+        approved_recs = completed_visit.final_plan.get("approved_recommendations", [])
+        rules_triggered = ["R9_SAFETY_STAMPED"]
+        plan_dict = {
+            "therapy_options": [
+                {
+                    "drug_class": r.get("payload", {}).get("drug_class", "Therapy"),
+                    "rationale": f"{r.get('detail', '')} [Clinician Note: {r.get('clinician_comment')}]" if r.get('clinician_comment') else r.get('detail', ''),
+                    "guideline_ids": r.get("payload", {}).get("guideline_ids", ["ADA-2024-PHARM"]),
+                }
+                for r in approved_recs if r.get("category") == "therapy"
+            ],
+            "lifestyle_interventions": [
+                {
+                    "title": r.get("title", "Lifestyle"),
+                    "detail": f"{r.get('detail', '')} [Clinician Note: {r.get('clinician_comment')}]" if r.get('clinician_comment') else r.get('detail', ''),
+                }
+                for r in approved_recs if r.get("category") == "lifestyle"
+            ],
+            "red_flags": [],
         }
-        snippets = retrieve_guidelines(patient_context, top_k=4)
-        raw_plan, gemini_used, demo_fixture, _ = generate_clinical_plan(patient_context, snippets, db)
-        plan_dict, rules_triggered = run_safety_governor(
-            raw_plan,
-            patient_context,
-            known_guideline_ids=get_known_guideline_ids(),
-            gemini_used=gemini_used,
-            demo_fixture=demo_fixture,
+    else:
+        # Retrieve or generate governed clinical plan
+        rec_record = (
+            db.query(Recommendation)
+            .filter(Recommendation.patient_id == patient.id, Recommendation.kind == "therapy")
+            .order_by(Recommendation.created_at.desc())
+            .first()
         )
 
-    # 5. CLINICAL PLAN: THERAPY OPTIONS
-    story.append(
-        Paragraph(
+        if rec_record:
+            plan_dict = rec_record.payload
+            rules_triggered = (rec_record.governor_result or {}).get("rules_triggered", ["R9_SAFETY_STAMPED"])
+        else:
+            # Generate on the fly
+            patient_context = {
+                "id": patient.id,
+                "display_name": patient.display_name,
+                "age": patient.age,
+                "sex": patient.sex,
+                "bmi": patient.bmi,
+                "hba1c_pct": patient.hba1c_pct,
+                "fasting_glucose_mgdl": patient.fasting_glucose_mgdl,
+                "hypoglycemia_history": patient.hypoglycemia_history,
+                "kidney_flag": patient.kidney_flag,
+                "current_meds": patient.current_meds or [],
+                "twin_summary": {
+                    "mem_n": mem_n,
+                    "mem_mean_rise": mem_info["mem_mean_rise"] or 0.0,
+                    "mem_mean_iauc": mem_info["mem_mean_iauc"] or 0.0,
+                    "baseline_used": mem_info["baseline_used"],
+                },
+            }
+            snippets = retrieve_guidelines(patient_context, top_k=4)
+            raw_plan, gemini_used, demo_fixture, _ = generate_clinical_plan(patient_context, snippets, db)
+            plan_dict, rules_triggered = run_safety_governor(
+                raw_plan,
+                patient_context,
+                known_guideline_ids=get_known_guideline_ids(),
+                gemini_used=gemini_used,
+                demo_fixture=demo_fixture,
+            )
+
+    # 5. CLINICAL PLAN
+    if has_approved_plan:
+        plan_heading = (
+            "5. Clinician-Approved Care Plan "
+            "<font color='#059669'><b>[CLINICIAN-REVIEWED &amp; APPROVED]</b></font>"
+        )
+    else:
+        plan_heading = (
             "5. Clinical Plan: Therapeutic Options to Discuss "
             "<font color='#4338ca'><b>[GUIDELINE-BASED (AI)]</b></font> "
-            "<font color='#059669'><b>[SAFETY-CHECKED]</b></font>",
-            styles["SectionHeading"],
+            "<font color='#059669'><b>[SAFETY-CHECKED]</b></font>"
         )
-    )
+
+    story.append(Paragraph(plan_heading, styles["SectionHeading"]))
 
     therapy_rows = [
         [

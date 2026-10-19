@@ -37,6 +37,11 @@ class User(Base):
         foreign_keys="CareTeamLink.provider_user_id",
         cascade="all, delete-orphan",
     )
+    visits_as_clinician = relationship(
+        "Visit",
+        back_populates="clinician",
+        foreign_keys="Visit.clinician_id",
+    )
 
 
 class Patient(Base):
@@ -67,6 +72,8 @@ class Patient(Base):
     twin_state = relationship("TwinState", back_populates="patient", uselist=False, cascade="all, delete-orphan")
     recommendations = relationship("Recommendation", back_populates="patient", cascade="all, delete-orphan")
     alerts = relationship("Alert", back_populates="patient", cascade="all, delete-orphan")
+    visits = relationship("Visit", back_populates="patient", cascade="all, delete-orphan")
+    care_plans = relationship("CarePlan", back_populates="patient", cascade="all, delete-orphan")
 
 
 class CareTeamLink(Base):
@@ -196,4 +203,83 @@ class Alert(Base):
     # Relationships
     patient = relationship("Patient", back_populates="alerts")
     acknowledged_by_user = relationship("User", foreign_keys=[acknowledged_by])
+
+
+class Visit(Base):
+    __tablename__ = "visits"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    clinician_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    scheduled_at = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String(20), nullable=False, default="scheduled", index=True)  # "scheduled" | "in_progress" | "completed"
+    pre_visit_summary = Column(JSON, nullable=True)
+    notes = Column(Text, nullable=True)
+    final_plan = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="visits")
+    clinician = relationship("User", foreign_keys=[clinician_id], back_populates="visits_as_clinician")
+    drafts = relationship("RecommendationDraft", back_populates="visit", cascade="all, delete-orphan")
+    care_plan = relationship("CarePlan", back_populates="visit", uselist=False)
+
+
+class RecommendationDraft(Base):
+    __tablename__ = "recommendation_drafts"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    visit_id = Column(Integer, ForeignKey("visits.id", ondelete="CASCADE"), nullable=False, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    category = Column(String(50), nullable=False)  # "therapy" | "lifestyle" | "monitoring" | "meal"
+    title = Column(String(255), nullable=False)
+    detail = Column(Text, nullable=True)
+    payload = Column(JSON, nullable=False, default=dict)
+    status = Column(String(20), nullable=False, default="draft", index=True)  # "draft" | "approved" | "edited" | "rejected"
+    clinician_comment = Column(Text, nullable=True)
+    governor_trace = Column(JSON, nullable=True)  # { rules_triggered: [...], clean: bool, blocked: bool, reason: str }
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    visit = relationship("Visit", back_populates="drafts")
+    patient = relationship("Patient")
+
+
+class CarePlan(Base):
+    __tablename__ = "care_plans"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    visit_id = Column(Integer, ForeignKey("visits.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    status = Column(String(20), nullable=False, default="active", index=True)  # "active" | "completed" | "archived"
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="care_plans")
+    visit = relationship("Visit", back_populates="care_plan")
+    tasks = relationship("CarePlanTask", back_populates="care_plan", cascade="all, delete-orphan")
+
+
+class CarePlanTask(Base):
+    __tablename__ = "care_plan_tasks"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    care_plan_id = Column(Integer, ForeignKey("care_plans.id", ondelete="CASCADE"), nullable=False, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    due_date = Column(DateTime(timezone=True), nullable=False)
+    category = Column(String(50), nullable=False)  # "lifestyle" | "medication" | "monitoring" | "visit"
+    assigned_to = Column(String(50), nullable=False, default="patient")  # "patient" | "clinician"
+    status = Column(String(20), nullable=False, default="pending", index=True)  # "pending" | "in_progress" | "completed" | "cancelled"
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    care_plan = relationship("CarePlan", back_populates="tasks")
+    patient = relationship("Patient")
+
 

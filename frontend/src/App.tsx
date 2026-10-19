@@ -28,6 +28,8 @@ import { TimelineWorkspace } from './pages/TimelineWorkspace';
 import { SimulationWorkspace } from './pages/SimulationWorkspace';
 import { TreatmentWorkspace } from './pages/TreatmentWorkspace';
 import { GovernanceWorkspace } from './pages/GovernanceWorkspace';
+import { VisitWorkspace } from './pages/VisitWorkspace';
+import { MyPlanPage } from './pages/MyPlan';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,6 +82,10 @@ export const App: React.FC = () => {
 
                 {/* My Care Team */}
                 <Route path="care-team" element={<CareTeamPage />} />
+
+                {/* Clinician Visit Workspace & Patient Care Plan */}
+                <Route path="visits" element={<VisitWorkspace />} />
+                <Route path="my-plan" element={<MyPlanPage />} />
 
                 {/* Preserved Granular Sub-Routes for Direct Deep Linking & Tests */}
                 <Route path="log" element={<LogData />} />

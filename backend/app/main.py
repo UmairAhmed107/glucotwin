@@ -26,6 +26,7 @@ from app.routers import (
     reports,
     system,
     twin,
+    visits,
 )
 from app.twin.twin_engine import load_twin_model
 
@@ -75,6 +76,7 @@ app.include_router(clinical.router)
 app.include_router(cohort.router)
 app.include_router(reports.router)
 app.include_router(replay.router)
+app.include_router(visits.router)
 
 
 
