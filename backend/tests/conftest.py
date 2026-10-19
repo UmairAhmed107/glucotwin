@@ -6,9 +6,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.auth import get_current_user
 from app.data_loader import data_loader
 from app.db import Base, get_db
 from app.main import app
+from app.models_db import User
 from app.twin.twin_engine import load_twin_model, get_twin_model
 
 # In-memory SQLite engine for tests
@@ -205,7 +207,16 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         finally:
             pass
 
+    admin_user = User(
+        id=999,
+        email="test_admin@glucotwin.org",
+        password_hash="testhash",
+        full_name="Test Admin",
+        role="admin",
+    )
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: admin_user
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+

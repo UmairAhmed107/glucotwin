@@ -507,13 +507,76 @@ class AuditLogResponse(BaseModel):
     id: int
     patient_id: Optional[int] = None
     ts: datetime
-    endpoint: str
-    inputs_hash: str
+    endpoint: Optional[str] = None
+    inputs_hash: Optional[str] = None
     model_version: Optional[str] = None
     rules_triggered: Optional[List[str]] = Field(default_factory=list)
     gemini_model: Optional[str] = None
     gemini_used: bool = False
+    user_id: Optional[int] = None
+    action: Optional[str] = None
+    resource_type: Optional[str] = None
+    resource_id: Optional[str] = None
+    timestamp: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# Auth & Care Team Schemas
+# ============================================================================
+
+class UserRegister(BaseModel):
+    email: str
+    password: str = Field(min_length=6)
+    full_name: str = Field(min_length=1)
+    role: Literal["patient", "clinician", "dietitian", "admin"] = "patient"
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    full_name: str
+    role: str
+    created_at: datetime
+    patient_id: Optional[int] = None
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+class CareTeamLinkCreate(BaseModel):
+    patient_id: Optional[int] = None
+    provider_user_id: Optional[int] = None
+    role_in_team: str = "clinician"
+
+
+class CareTeamLinkResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    patient_id: int
+    provider_user_id: int
+    provider_name: Optional[str] = None
+    provider_role: Optional[str] = None
+    patient_name: Optional[str] = None
+    role_in_team: str
+    status: str
+    created_at: datetime
+
+
+class CareTeamStatusUpdate(BaseModel):
+    status: Literal["pending", "active", "revoked"]
+
 

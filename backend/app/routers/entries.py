@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from app.audit import log_audit
+from app.auth import get_current_user, log_audit_event, verify_patient_access
 from app.db import get_db
 from app.errors import PatientNotFoundException
-from app.models_db import GlucoseReading, MealEntry, Patient
+from app.models_db import GlucoseReading, MealEntry, Patient, User
 from app.schemas import (
     GlucoseReadingCreate,
     GlucoseReadingResponse,
@@ -21,15 +22,14 @@ router = APIRouter(prefix="/patients/{patient_id}", tags=["Entries & Timeline"])
 def log_meal(
     patient_id: int,
     payload: MealEntryCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> MealEntryResponse:
     """
     Log a meal entry for a patient.
     Stores entry and calls the recompute_twin_state hook function.
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
 
     meal = MealEntry(
         patient_id=patient_id,
@@ -61,6 +61,14 @@ def log_meal(
         endpoint=f"/patients/{patient_id}/meals",
         inputs=payload.model_dump(mode="json"),
     )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="create",
+        resource_type="meal_entry",
+        resource_id=meal.id,
+        patient_id=patient_id,
+    )
 
     return MealEntryResponse.model_validate(meal)
 
@@ -69,14 +77,13 @@ def log_meal(
 def log_reading(
     patient_id: int,
     payload: GlucoseReadingCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> GlucoseReadingResponse:
     """
     Log a glucose reading for a patient.
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
 
     reading = GlucoseReading(
         patient_id=patient_id,
@@ -95,18 +102,28 @@ def log_reading(
         endpoint=f"/patients/{patient_id}/readings",
         inputs=payload.model_dump(mode="json"),
     )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="create",
+        resource_type="glucose_reading",
+        resource_id=reading.id,
+        patient_id=patient_id,
+    )
 
     return GlucoseReadingResponse.model_validate(reading)
 
 
 @router.get("/timeline", response_model=TimelineResponse)
-def get_timeline(patient_id: int, db: Session = Depends(get_db)) -> TimelineResponse:
+def get_timeline(
+    patient_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TimelineResponse:
     """
     Return merged chronological timeline of meals and readings for a patient.
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
 
     meals = (
         db.query(MealEntry)
@@ -143,5 +160,13 @@ def get_timeline(patient_id: int, db: Session = Depends(get_db)) -> TimelineResp
 
     # Sort chronologically by timestamp
     events.sort(key=lambda e: e.timestamp)
+
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="read",
+        resource_type="timeline",
+        patient_id=patient_id,
+    )
 
     return TimelineResponse(patient_id=patient_id, events=events)

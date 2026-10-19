@@ -1,7 +1,9 @@
 from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
+
 from app.audit import log_audit
+from app.auth import get_current_user, log_audit_event, verify_patient_access
 from app.data_loader import (
     BioDataUnavailableException,
     ShanghaiDataUnavailableException,
@@ -13,7 +15,7 @@ from app.errors import (
     PatientNotFoundException,
     ServiceUnavailableException,
 )
-from app.models_db import AuditLog, Patient, TwinState
+from app.models_db import AuditLog, CareTeamLink, Patient, TwinState, User
 from app.schemas import AuditLogResponse, PatientCreate, PatientDetailResponse, PatientResponse
 from app.twin.memory import recompute_twin_state
 
@@ -22,7 +24,9 @@ router = APIRouter(prefix="/patients", tags=["Patients"])
 
 @router.post("", response_model=PatientDetailResponse, status_code=status.HTTP_201_CREATED)
 def create_patient(
-    payload: PatientCreate, db: Session = Depends(get_db)
+    payload: PatientCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> PatientDetailResponse:
     """
     Create a patient via three modes:
@@ -119,6 +123,10 @@ def create_patient(
             status_code=400,
         )
 
+    # If current_user is a patient and has no profile yet, link it
+    if current_user.role == "patient":
+        patient.user_id = current_user.id
+
     db.add(patient)
     db.commit()
     db.refresh(patient)
@@ -133,6 +141,14 @@ def create_patient(
         endpoint="/patients",
         inputs=payload.model_dump(mode="json"),
     )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="create",
+        resource_type="patient",
+        resource_id=patient.id,
+        patient_id=patient.id,
+    )
 
     # Reload patient with relationships
     db.refresh(patient)
@@ -140,34 +156,88 @@ def create_patient(
 
 
 @router.get("", response_model=List[PatientResponse])
-def list_patients(db: Session = Depends(get_db)) -> List[PatientResponse]:
-    """List all registered patients."""
-    patients = db.query(Patient).order_by(Patient.id.desc()).all()
+def list_patients(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> List[PatientResponse]:
+    """List patients based on role and active care-team links."""
+    if current_user.role == "admin":
+        patients = db.query(Patient).order_by(Patient.id.desc()).all()
+    elif current_user.role == "patient":
+        patients = (
+            db.query(Patient)
+            .filter(Patient.user_id == current_user.id)
+            .order_by(Patient.id.desc())
+            .all()
+        )
+    elif current_user.role in ("clinician", "dietitian"):
+        active_patient_ids = (
+            db.query(CareTeamLink.patient_id)
+            .filter(
+                CareTeamLink.provider_user_id == current_user.id,
+                CareTeamLink.status == "active",
+            )
+            .subquery()
+        )
+        patients = (
+            db.query(Patient)
+            .filter(Patient.id.in_(active_patient_ids))
+            .order_by(Patient.id.desc())
+            .all()
+        )
+    else:
+        patients = []
+
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="read_list",
+        resource_type="patient",
+    )
     return [PatientResponse.model_validate(p) for p in patients]
 
 
 @router.get("/{patient_id}", response_model=PatientDetailResponse)
-def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientDetailResponse:
+def get_patient(
+    patient_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PatientDetailResponse:
     """Get patient profile and current twin state."""
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
+
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="read",
+        resource_type="patient",
+        resource_id=patient.id,
+        patient_id=patient.id,
+    )
     return PatientDetailResponse.model_validate(patient)
 
 
 @router.get("/{patient_id}/audit", response_model=List[AuditLogResponse])
 def get_patient_audit_log(
-    patient_id: int, db: Session = Depends(get_db)
+    patient_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> List[AuditLogResponse]:
     """Get audit trail entries for a patient."""
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
+
     entries = (
         db.query(AuditLog)
         .filter(AuditLog.patient_id == patient_id)
         .order_by(AuditLog.ts.desc())
         .limit(100)
         .all()
+    )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="read",
+        resource_type="audit_log",
+        patient_id=patient.id,
     )
     return [AuditLogResponse.model_validate(e) for e in entries]

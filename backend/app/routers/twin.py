@@ -22,10 +22,11 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.audit import log_audit
+from app.auth import get_current_user, log_audit_event, verify_patient_access
 from app.data_loader import data_loader
 from app.db import get_db
 from app.errors import AppException, PatientNotFoundException, ServiceUnavailableException
-from app.models_db import Patient
+from app.models_db import Patient, User
 from app.schemas import (
     BestTimeResponse,
     BestTimeSlot,
@@ -155,15 +156,14 @@ def predict_peak_rise(rec: MealRecommender, feature_row: Dict[str, Any]) -> Targ
 def predict_meal_response(
     patient_id: int,
     payload: PredictMealInput,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> PredictResponse:
     """
     Predict glucose response to a candidate meal for a patient.
     Checks training bounds; predicts peak_rise across 15 models with percentiles.
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
 
     rec = require_twin_model()
     mem = compute_memory(patient_id=patient_id, db=db)
@@ -200,6 +200,14 @@ def predict_meal_response(
         inputs=payload.model_dump(mode="json"),
         model_version=get_model_version(),
     )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="predict",
+        resource_type="twin_predict",
+        resource_id=patient_id,
+        patient_id=patient_id,
+    )
 
     return PredictResponse(
         provenance="TWIN_PREDICTED",
@@ -214,6 +222,7 @@ def predict_meal_response(
     )
 
 
+
 # ============================================================================
 # 2. POST /patients/{patient_id}/whatif
 # ============================================================================
@@ -222,15 +231,14 @@ def predict_meal_response(
 def simulate_whatif(
     patient_id: int,
     payload: WhatIfRequest,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> WhatIfResponse:
     """
     Evaluate what-if lifestyle interventions (carb reduction, post-meal walk).
     Recomputes calories at 4/4/9 kcal/g, predicts gains, and computes pessimistic gain (p10).
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
 
     rec = require_twin_model()
     mem = compute_memory(patient_id=patient_id, db=db)
@@ -285,6 +293,14 @@ def simulate_whatif(
         inputs=payload.model_dump(mode="json"),
         model_version=get_model_version(),
     )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="whatif",
+        resource_type="twin_whatif",
+        resource_id=patient_id,
+        patient_id=patient_id,
+    )
 
     return WhatIfResponse(
         provenance="TWIN_PREDICTED",
@@ -308,14 +324,13 @@ def simulate_whatif(
 def compare_candidate_meals(
     patient_id: int,
     payload: CompareMealsRequest,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> CompareMealsResponse:
     """
     Compare 2 to 4 candidate meals, ranked by median predicted peak rise with uncertainty bands.
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
 
     rec = require_twin_model()
     mem = compute_memory(patient_id=patient_id, db=db)
@@ -363,6 +378,15 @@ def compare_candidate_meals(
         inputs=payload.model_dump(mode="json"),
         model_version=get_model_version(),
     )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="compare_meals",
+        resource_type="twin_compare",
+        resource_id=patient_id,
+        patient_id=patient_id,
+    )
+
 
     return CompareMealsResponse(
         provenance="TWIN_PREDICTED",
@@ -387,15 +411,14 @@ def evaluate_best_time_to_eat(
     fibre_g: float = Query(0.0, ge=0.0, le=100.0),
     pre_glucose: float = Query(100.0, ge=40.0, le=500.0),
     pre_trend30: float = Query(0.0, ge=-100.0, le=100.0),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> BestTimeResponse:
     """
     Sweep time of day over 24 hours (0.0 to 23.5 in 0.5h steps) for a fixed meal.
     Returns predicted peak rise and bands per slot, identifying best and worst meal times.
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
 
     rec = require_twin_model()
     mem = compute_memory(patient_id=patient_id, db=db)
@@ -465,6 +488,14 @@ def evaluate_best_time_to_eat(
         inputs=meal_check,
         model_version=get_model_version(),
     )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="best_time",
+        resource_type="twin_best_time",
+        resource_id=patient_id,
+        patient_id=patient_id,
+    )
 
     return BestTimeResponse(
         provenance="TWIN_PREDICTED",
@@ -486,15 +517,14 @@ def evaluate_best_time_to_eat(
 def evaluate_daily_plan(
     patient_id: int,
     payload: DailyPlanRequest,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> DailyPlanResponse:
     """
     Evaluate sequence of daily meals; flag the worst meal and generate warnings
     for meals closer than 120 minutes (model assumption of isolated meal windows).
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
 
     rec = require_twin_model()
     mem = compute_memory(patient_id=patient_id, db=db)
@@ -554,6 +584,14 @@ def evaluate_daily_plan(
         inputs=payload.model_dump(mode="json"),
         model_version=get_model_version(),
     )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="daily_plan",
+        resource_type="twin_daily_plan",
+        resource_id=patient_id,
+        patient_id=patient_id,
+    )
 
     return DailyPlanResponse(
         provenance="TWIN_PREDICTED",
@@ -573,15 +611,14 @@ def evaluate_daily_plan(
 @router.get("/patients/{patient_id}/cohort-position", response_model=CohortPositionResponse)
 def get_cohort_position(
     patient_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> CohortPositionResponse:
     """
     Return percentile of patient's mem_mean_rise and mem_mean_iauc against the
     45 participants in meals_db (using each participant's final observed memory values).
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise PatientNotFoundException(patient_id)
+    patient = verify_patient_access(patient_id, current_user, db)
 
     if data_loader.meals_df is None:
         raise ServiceUnavailableException(
@@ -638,6 +675,14 @@ def get_cohort_position(
         inputs={"patient_mem_mean_rise": pat_rise, "patient_mem_mean_iauc": pat_iauc},
         model_version=get_model_version(),
     )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="cohort_position",
+        resource_type="twin_cohort",
+        resource_id=patient_id,
+        patient_id=patient_id,
+    )
 
     return CohortPositionResponse(
         provenance="TWIN_PREDICTED",
@@ -662,12 +707,28 @@ def get_cohort_position(
 @router.get("/twin-learning/{participant_id}", response_model=TwinLearningResponse)
 def get_twin_learning_progression(
     participant_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> TwinLearningResponse:
     """
     Return chronological progression data for a CGMacros participant showing
     how memory features (mem_n) and response tracking evolve across recorded meals.
     """
+    # Enforce access: if patient, must match user's linked patient
+    linked_patient = (
+        db.query(Patient)
+        .filter((Patient.cgmacros_participant_id == participant_id) | (Patient.id == participant_id))
+        .first()
+    )
+    if linked_patient:
+        verify_patient_access(linked_patient.id, current_user, db)
+    elif current_user.role == "patient":
+        raise AppException(
+            code="FORBIDDEN",
+            message="Patients may only access their own twin learning progression",
+            status_code=403,
+        )
+
     if data_loader.meals_df is None:
         raise ServiceUnavailableException(
             message="meals_db dataset is not loaded.",
@@ -726,10 +787,18 @@ def get_twin_learning_progression(
 
     log_audit(
         db=db,
-        patient_id=None,
+        patient_id=linked_patient.id if linked_patient else None,
         endpoint=f"/twin-learning/{participant_id}",
         inputs={"participant_id": participant_id},
         model_version=get_model_version(),
+    )
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="twin_learning",
+        resource_type="twin_learning",
+        resource_id=participant_id,
+        patient_id=linked_patient.id if linked_patient else None,
     )
 
     note = (
@@ -743,3 +812,4 @@ def get_twin_learning_progression(
         data_points=data_points,
         note=note,
     )
+

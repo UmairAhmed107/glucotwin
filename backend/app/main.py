@@ -12,7 +12,19 @@ from app.errors import (
     http_exception_handler,
     validation_exception_handler,
 )
-from app.routers import clinical, cohort, data, entries, patients, replay, reports, system, twin
+from app.routers import (
+    auth,
+    care_team,
+    clinical,
+    cohort,
+    data,
+    entries,
+    patients,
+    replay,
+    reports,
+    system,
+    twin,
+)
 from app.twin.twin_engine import load_twin_model
 
 
@@ -49,6 +61,8 @@ app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 
 # Register routers
 app.include_router(system.router)
+app.include_router(auth.router)
+app.include_router(care_team.router)
 app.include_router(data.router)
 app.include_router(patients.router)
 app.include_router(entries.router)
@@ -57,4 +71,5 @@ app.include_router(clinical.router)
 app.include_router(cohort.router)
 app.include_router(reports.router)
 app.include_router(replay.router)
+
 

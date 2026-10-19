@@ -22,9 +22,13 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.config import settings
+from app.db import get_db
+from app.auth import decode_access_token, get_current_user, log_audit_event, verify_patient_access
 from app.errors import AppException, ServiceUnavailableException
+from app.models_db import Patient, User
 from app.twin.memory import get_population_baseline
 from app.twin.twin_engine import get_twin_model, predict_meal
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger("glucotwin.routers.replay")
 
@@ -161,16 +165,41 @@ def _compute_twin_meal_prediction(
 def start_replay(
     participant_id: int,
     payload: Optional[ReplayStartRequest] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Initialize a CGM replay session.
     Verifies that the time series dataset is available, checks participant data,
     and returns initial stream parameters.
     """
+    linked_patient = (
+        db.query(Patient)
+        .filter((Patient.id == participant_id) | (Patient.cgmacros_participant_id == participant_id))
+        .first()
+    )
+    if linked_patient:
+        verify_patient_access(linked_patient.id, current_user, db)
+    elif current_user.role == "patient":
+        raise AppException(
+            code="FORBIDDEN",
+            message="Patients may only access their own replay sessions",
+            status_code=403,
+        )
+
     speed = payload.speed if payload and payload.speed in [1, 10, 60] else 1
     p_df = _get_replay_dataset(participant_id)
 
     total_pts = len(p_df)
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="replay_start",
+        resource_type="replay",
+        resource_id=participant_id,
+        patient_id=linked_patient.id if linked_patient else None,
+    )
+
     return ReplayStartResponse(
         status="ready",
         participant_id=participant_id,
@@ -186,6 +215,8 @@ async def stream_cgm_replay(
     participant_id: int,
     request: Request,
     speed: int = Query(1, description="Replay speed multiplier (1, 10, 60)"),
+    token: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
 ):
     """
     Server-Sent Events (SSE) stream of recorded glucose points.
@@ -193,11 +224,47 @@ async def stream_cgm_replay(
     Streams recorded points with delays adjusted by playback speed (1x, 10x, 60x).
     Arriving meal markers include the twin's predicted glycemic response.
     """
+    user = None
+    auth_header = request.headers.get("Authorization")
+    tok = None
+    if auth_header and auth_header.startswith("Bearer "):
+        tok = auth_header.split(" ", 1)[1]
+    elif token:
+        tok = token
+
+    if tok:
+        try:
+            payload = decode_access_token(tok)
+            uid = payload.get("sub")
+            if uid:
+                user = db.query(User).filter(User.id == int(uid)).first()
+        except Exception:
+            pass
+
+    if not user and get_current_user in request.app.dependency_overrides:
+        user = request.app.dependency_overrides[get_current_user]()
+
+    linked_patient = (
+        db.query(Patient)
+        .filter((Patient.id == participant_id) | (Patient.cgmacros_participant_id == participant_id))
+        .first()
+    )
+    if user:
+        if linked_patient:
+            verify_patient_access(linked_patient.id, user, db)
+        elif user.role == "patient":
+            raise AppException(
+                code="FORBIDDEN",
+                message="Patients may only access their own replay stream",
+                status_code=403,
+            )
+
     # Enforce speed choices
     if speed not in [1, 10, 60]:
         speed = 1 if speed < 5 else (10 if speed < 35 else 60)
 
     p_df = _get_replay_dataset(participant_id)
+
 
     # Base interval between readings: 0.6s at 1x, 0.06s at 10x, 0.01s at 60x
     base_delay = 0.6

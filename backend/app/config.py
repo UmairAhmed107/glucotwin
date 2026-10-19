@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     mock_gemini: bool = Field(default=True, alias="MOCK_GEMINI")
     database_url: str = Field(default="sqlite:///./glucotwin.db", alias="DATABASE_URL")
     replay_data_path: Optional[str] = Field(default=None, alias="REPLAY_DATA_PATH")
+    jwt_secret: str = Field(default="glucotwin-dev-secret-key-change-in-prod-1234567890", alias="JWT_SECRET")
+    jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
+    jwt_expire_minutes: int = Field(default=60 * 24 * 7, alias="JWT_EXPIRE_MINUTES")
 
     # Base path resolution
     backend_dir: Path = Field(default_factory=lambda: Path(__file__).resolve().parent.parent)

@@ -6,12 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.audit import log_audit_event
+from app.auth import get_current_user, log_audit_event as log_audit_rbac, verify_patient_access
 from app.clinical.fallback import get_fallback_plan
 from app.clinical.governor import run_safety_governor
 from app.clinical.guidelines import get_known_guideline_ids, retrieve_guidelines
 from app.clinical.reasoning import generate_clinical_plan
 from app.db import get_db
-from app.models_db import MealEntry, Patient, Recommendation, TwinState
+from app.models_db import MealEntry, Patient, Recommendation, TwinState, User
 from app.schemas import (
     ClinicalPlanResponse,
     CombinedPlanResponse,
@@ -96,6 +97,7 @@ def _build_patient_clinical_context(patient: Patient, db: Session) -> Dict[str, 
 @router.post("/clinical-plan", response_model=ClinicalPlanResponse)
 def get_clinical_plan(
     patient_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -103,14 +105,10 @@ def get_clinical_plan(
     Uses retrieved guideline snippets, Gemini reasoning (or cached/demo fixture),
     and validates through the deterministic Safety Governor.
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Patient with ID {patient_id} not found",
-        )
+    patient = verify_patient_access(patient_id, current_user, db)
 
     patient_context = _build_patient_clinical_context(patient, db)
+
 
     # 1. Retrieve top 3-5 guideline snippets
     snippets = retrieve_guidelines(patient_context, top_k=4)
@@ -155,6 +153,14 @@ def get_clinical_plan(
         gemini_model=model_name,
         gemini_used=gemini_used,
     )
+    log_audit_rbac(
+        db=db,
+        user_id=current_user.id,
+        action="clinical_plan",
+        resource_type="clinical_plan",
+        resource_id=rec.id,
+        patient_id=patient_id,
+    )
 
     sources_schema = [
         GuidelineSnippetSchema(id=s["id"], topic=s["topic"], text=s["text"])
@@ -179,18 +185,14 @@ def get_clinical_plan(
 @router.get("/therapy-scenarios", response_model=TherapyScenariosResponse)
 def get_therapy_scenarios(
     patient_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
     Return PROJECTION objects for permitted therapy options based ONLY on literature.
     Never passes these values to the trained twin models.
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Patient with ID {patient_id} not found",
-        )
+    patient = verify_patient_access(patient_id, current_user, db)
 
     # Look for existing recent clinical plan recommendation
     recent_rec = (
@@ -228,12 +230,22 @@ def get_therapy_scenarios(
             )
         )
 
+    log_audit_rbac(
+        db=db,
+        user_id=current_user.id,
+        action="therapy_scenarios",
+        resource_type="therapy_scenarios",
+        resource_id=patient_id,
+        patient_id=patient_id,
+    )
+
     return TherapyScenariosResponse(patient_id=patient_id, scenarios=scenarios)
 
 
 @router.post("/plan", response_model=CombinedPlanResponse)
 def generate_combined_4week_plan(
     patient_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -244,12 +256,8 @@ def generate_combined_4week_plan(
     - Clinician review point (GUIDELINE_AI)
     Every item carries its own provenance.
     """
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Patient with ID {patient_id} not found",
-        )
+    patient = verify_patient_access(patient_id, current_user, db)
+
 
     patient_context = _build_patient_clinical_context(patient, db)
     snippets = retrieve_guidelines(patient_context, top_k=4)
@@ -423,6 +431,14 @@ def generate_combined_4week_plan(
         rules_triggered=rules_triggered,
         gemini_model=model_name,
         gemini_used=gemini_used,
+    )
+    log_audit_rbac(
+        db=db,
+        user_id=current_user.id,
+        action="combined_plan",
+        resource_type="combined_plan",
+        resource_id=rec.id,
+        patient_id=patient_id,
     )
 
     return CombinedPlanResponse(

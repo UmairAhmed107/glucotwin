@@ -21,14 +21,15 @@ sys.path.insert(0, str(backend_dir))
 
 from app.data_loader import data_loader
 from app.db import SessionLocal, init_db
-from app.models_db import Patient, TwinState
+from app.models_db import CareTeamLink, Patient, TwinState, User
+from app.auth import hash_password
 from app.twin.memory import recompute_twin_state
 
 
 def seed_demo_patients():
-    print("=" * 65)
-    print("  GlucoTwin Demo Seeding - 3 Labelled Synthetic Demo Patients")
-    print("=" * 65)
+    print("=" * 70)
+    print("  GlucoTwin Demo Seeding - Users, Care Teams, & Patients")
+    print("=" * 70)
 
     # 1. Initialize DB tables
     init_db()
@@ -38,6 +39,43 @@ def seed_demo_patients():
 
     db = SessionLocal()
     try:
+        # =====================================================================
+        # 1. Seed Users (1 admin, 2 clinicians, 1 dietitian, 3 patients)
+        # =====================================================================
+        default_pwd_hash = hash_password("Password123!")
+        
+        users_to_seed = [
+            ("admin@glucotwin.org", "System Administrator", "admin"),
+            ("dr.chen@glucotwin.org", "Dr. Sarah Chen, MD", "clinician"),
+            ("dr.patel@glucotwin.org", "Dr. Rajesh Patel, MD", "clinician"),
+            ("elena.diet@glucotwin.org", "Elena Rostova, RD", "dietitian"),
+            ("patient.a@glucotwin.org", "Arthur Dent (Demo A)", "patient"),
+            ("patient.b@glucotwin.org", "Beatrix Kiddo (Demo B)", "patient"),
+            ("patient.c@glucotwin.org", "Charles Xavier (Demo C)", "patient"),
+        ]
+
+        seeded_users = {}
+        for email, full_name, role in users_to_seed:
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                user = User(
+                    email=email,
+                    full_name=full_name,
+                    role=role,
+                    password_hash=default_pwd_hash,
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+                print(f" [+] Created User: {email} ({role})")
+            else:
+                user.full_name = full_name
+                user.role = role
+                db.commit()
+                db.refresh(user)
+                print(f" [OK] Verified User: {email} ({role})")
+            seeded_users[email] = user
+
         # =====================================================================
         # (a) Demo A: Brand-new patient with cold start (mem_n=0)
         # =====================================================================
@@ -208,15 +246,62 @@ def seed_demo_patients():
             db.refresh(demo_c)
             print(f" [OK] Verified Demo C (ID: {demo_c.id}) - Shanghai profile (hypoglycemia_history=True)")
 
-        ts_c = recompute_twin_state(demo_c.id, db)
-        print(f"     Twin state: mem_n={ts_c.mem_n}, confidence={ts_c.confidence_score:.2f}")
+        # Link patient users
+        demo_a.user_id = seeded_users["patient.a@glucotwin.org"].id
+        demo_b.user_id = seeded_users["patient.b@glucotwin.org"].id
+        demo_c.user_id = seeded_users["patient.c@glucotwin.org"].id
+        db.commit()
 
-        print("=" * 65)
-        print("  Successfully seeded 3 demo patients! Ready for live demonstration.")
-        print(f"  - Demo A: #{demo_a.id} ({demo_a.display_name}) [Cold start, mem_n=0]")
-        print(f"  - Demo B: #{demo_b.id} ({demo_b.display_name}) [CGMacros #1, mem_n={ts_b.mem_n}]")
-        print(f"  - Demo C: #{demo_c.id} ({demo_c.display_name}) [Hypoglycemia flag active]")
-        print("=" * 65)
+        # =====================================================================
+        # 3. Seed Care Team Links
+        # =====================================================================
+        care_links = [
+            (demo_a.id, seeded_users["dr.chen@glucotwin.org"].id, "clinician", "active"),
+            (demo_a.id, seeded_users["elena.diet@glucotwin.org"].id, "dietitian", "active"),
+            (demo_b.id, seeded_users["dr.chen@glucotwin.org"].id, "clinician", "active"),
+            (demo_b.id, seeded_users["dr.patel@glucotwin.org"].id, "clinician", "pending"),
+            (demo_c.id, seeded_users["dr.patel@glucotwin.org"].id, "clinician", "active"),
+            (demo_c.id, seeded_users["elena.diet@glucotwin.org"].id, "dietitian", "pending"),
+        ]
+
+        for pat_id, prov_id, role_in_team, status in care_links:
+            link = (
+                db.query(CareTeamLink)
+                .filter(
+                    CareTeamLink.patient_id == pat_id,
+                    CareTeamLink.provider_user_id == prov_id,
+                )
+                .first()
+            )
+            if not link:
+                link = CareTeamLink(
+                    patient_id=pat_id,
+                    provider_user_id=prov_id,
+                    role_in_team=role_in_team,
+                    status=status,
+                )
+                db.add(link)
+                db.commit()
+            else:
+                link.role_in_team = role_in_team
+                link.status = status
+                db.commit()
+
+        print(" [+] Seeded care-team link network (active & pending links established)")
+
+        print("=" * 70)
+        print("  DEMO CREDENTIALS TABLE - GlucoTwin Authentication & RBAC")
+        print("=" * 70)
+        print(f" {'Role':<12} | {'Email':<28} | {'Password':<15} | {'Notes'}")
+        print("-" * 70)
+        print(f" {'admin':<12} | {'admin@glucotwin.org':<28} | {'Password123!':<15} | Full system access")
+        print(f" {'clinician':<12} | {'dr.chen@glucotwin.org':<28} | {'Password123!':<15} | Links: Demo A, Demo B")
+        print(f" {'clinician':<12} | {'dr.patel@glucotwin.org':<28} | {'Password123!':<15} | Links: Demo C, (Pending B)")
+        print(f" {'dietitian':<12} | {'elena.diet@glucotwin.org':<28} | {'Password123!':<15} | Links: Demo A, (Pending C)")
+        print(f" {'patient':<12} | {'patient.a@glucotwin.org':<28} | {'Password123!':<15} | Patient profile #{demo_a.id}")
+        print(f" {'patient':<12} | {'patient.b@glucotwin.org':<28} | {'Password123!':<15} | Patient profile #{demo_b.id}")
+        print(f" {'patient':<12} | {'patient.c@glucotwin.org':<28} | {'Password123!':<15} | Patient profile #{demo_c.id}")
+        print("=" * 70)
 
     finally:
         db.close()
@@ -224,3 +309,4 @@ def seed_demo_patients():
 
 if __name__ == "__main__":
     seed_demo_patients()
+

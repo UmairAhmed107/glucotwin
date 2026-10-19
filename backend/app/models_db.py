@@ -18,10 +18,31 @@ def utcnow():
     return datetime.now(timezone.utc)
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=False)
+    role = Column(String(50), nullable=False)  # "patient" | "clinician" | "dietitian" | "admin"
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="user", uselist=False)
+    care_team_memberships = relationship(
+        "CareTeamLink",
+        back_populates="provider_user",
+        foreign_keys="CareTeamLink.provider_user_id",
+        cascade="all, delete-orphan",
+    )
+
+
 class Patient(Base):
     __tablename__ = "patients"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), unique=True, nullable=True, index=True)
     display_name = Column(String(255), nullable=False)
     is_synthetic = Column(Boolean, nullable=False, default=False)
     source = Column(String(50), nullable=False)  # "cgmacros" | "shanghai_profile" | "new"
@@ -38,10 +59,26 @@ class Patient(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
 
     # Relationships
+    user = relationship("User", back_populates="patient")
+    care_team = relationship("CareTeamLink", back_populates="patient", cascade="all, delete-orphan")
     meals = relationship("MealEntry", back_populates="patient", cascade="all, delete-orphan")
     readings = relationship("GlucoseReading", back_populates="patient", cascade="all, delete-orphan")
     twin_state = relationship("TwinState", back_populates="patient", uselist=False, cascade="all, delete-orphan")
     recommendations = relationship("Recommendation", back_populates="patient", cascade="all, delete-orphan")
+
+
+class CareTeamLink(Base):
+    __tablename__ = "care_team_links"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role_in_team = Column(String(50), nullable=False, default="clinician")
+    status = Column(String(20), nullable=False, default="pending")  # "pending" | "active" | "revoked"
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+    patient = relationship("Patient", back_populates="care_team")
+    provider_user = relationship("User", back_populates="care_team_memberships", foreign_keys=[provider_user_id])
 
 
 class MealEntry(Base):
@@ -116,12 +153,20 @@ class AuditLog(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     patient_id = Column(Integer, nullable=True, index=True)
     ts = Column(DateTime(timezone=True), nullable=False, default=utcnow)
-    endpoint = Column(String(255), nullable=False)
-    inputs_hash = Column(String(64), nullable=False)
+    endpoint = Column(String(255), nullable=True)
+    inputs_hash = Column(String(64), nullable=True)
     model_version = Column(String(100), nullable=True)
     rules_triggered = Column(JSON, nullable=True)
     gemini_model = Column(String(100), nullable=True)
     gemini_used = Column(Boolean, nullable=False, default=False)
+
+    # Resource & user audit fields
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    action = Column(String(100), nullable=True)  # "read" | "create" | "update" | "delete"
+    resource_type = Column(String(100), nullable=True)  # "patient" | "meal" | "glucose" | "twin" | etc.
+    resource_id = Column(String(100), nullable=True)
+    timestamp = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
 
 
 class LLMCache(Base):
