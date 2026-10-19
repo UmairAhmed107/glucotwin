@@ -580,3 +580,35 @@ class CareTeamStatusUpdate(BaseModel):
     status: Literal["pending", "active", "revoked"]
 
 
+class AlertResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    patient_id: int
+    rule_key: str
+    severity: Literal["info", "warning", "critical"]
+    message: str
+    created_at: datetime
+    acknowledged_by: Optional[int] = None
+    acknowledged_at: Optional[datetime] = None
+    status: Literal["open", "acknowledged", "resolved"]
+    patient_name: Optional[str] = None
+
+
+class ClinicianPanelItem(BaseModel):
+    patient_id: int
+    display_name: str
+    age: Optional[int] = None
+    sex: Optional[str] = None
+    hba1c_pct: Optional[float] = None
+    risk_score: float
+    risk_level: Literal["low", "moderate", "high", "critical"]
+    time_in_range_pct: Optional[float] = None
+    last_reading_time: Optional[datetime] = None
+    open_alerts_count: int
+    alerts_by_severity: Dict[str, int]
+    twin_status: Dict[str, Any]
+    care_team_status: str
+
+
+

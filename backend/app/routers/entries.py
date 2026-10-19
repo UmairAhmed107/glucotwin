@@ -14,6 +14,7 @@ from app.schemas import (
     TimelineResponse,
 )
 from app.twin.memory import recompute_twin_state
+from app.routers.alerts import evaluate_and_sync_alerts
 
 router = APIRouter(prefix="/patients/{patient_id}", tags=["Entries & Timeline"])
 
@@ -53,6 +54,9 @@ def log_meal(
 
     # Phase 1: Call hook function (returns without error)
     recompute_twin_state(patient_id=patient_id, db=db)
+
+    # Evaluate alerts engine on new meal entry
+    evaluate_and_sync_alerts(patient_id=patient_id, db=db)
 
     # Audit log
     log_audit(
@@ -94,6 +98,9 @@ def log_reading(
     db.add(reading)
     db.commit()
     db.refresh(reading)
+
+    # Evaluate alerts engine on new glucose reading
+    evaluate_and_sync_alerts(patient_id=patient_id, db=db)
 
     # Audit log
     log_audit(

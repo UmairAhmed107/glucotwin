@@ -8,6 +8,7 @@ from sqlalchemy import (
     Integer,
     JSON,
     String,
+    Text,
     func,
 )
 from sqlalchemy.orm import relationship
@@ -65,6 +66,7 @@ class Patient(Base):
     readings = relationship("GlucoseReading", back_populates="patient", cascade="all, delete-orphan")
     twin_state = relationship("TwinState", back_populates="patient", uselist=False, cascade="all, delete-orphan")
     recommendations = relationship("Recommendation", back_populates="patient", cascade="all, delete-orphan")
+    alerts = relationship("Alert", back_populates="patient", cascade="all, delete-orphan")
 
 
 class CareTeamLink(Base):
@@ -176,4 +178,22 @@ class LLMCache(Base):
     request_prompt = Column(String, nullable=True)
     response_json = Column(JSON, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    rule_key = Column(String(64), nullable=False, index=True)
+    severity = Column(String(16), nullable=False)  # "info" | "warning" | "critical"
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+    acknowledged_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    acknowledged_at = Column(DateTime(timezone=True), nullable=True)
+    status = Column(String(16), nullable=False, default="open", index=True)  # "open" | "acknowledged" | "resolved"
+
+    # Relationships
+    patient = relationship("Patient", back_populates="alerts")
+    acknowledged_by_user = relationship("User", foreign_keys=[acknowledged_by])
 

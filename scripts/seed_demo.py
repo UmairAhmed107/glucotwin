@@ -289,6 +289,13 @@ def seed_demo_patients():
 
         print(" [+] Seeded care-team link network (active & pending links established)")
 
+        # Evaluate and seed initial clinical alerts for demo patients
+        from app.routers.alerts import evaluate_and_sync_alerts
+        evaluate_and_sync_alerts(demo_a.id, db)
+        evaluate_and_sync_alerts(demo_b.id, db)
+        evaluate_and_sync_alerts(demo_c.id, db)
+        print(" [+] Evaluated and seeded initial clinical alerts engine rules")
+
         print("=" * 70)
         print("  DEMO CREDENTIALS TABLE - GlucoTwin Authentication & RBAC")
         print("=" * 70)

@@ -13,9 +13,11 @@ from app.errors import (
     validation_exception_handler,
 )
 from app.routers import (
+    alerts,
     auth,
     care_team,
     clinical,
+    clinician,
     cohort,
     data,
     entries,
@@ -63,6 +65,8 @@ app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.include_router(system.router)
 app.include_router(auth.router)
 app.include_router(care_team.router)
+app.include_router(alerts.router)
+app.include_router(clinician.router)
 app.include_router(data.router)
 app.include_router(patients.router)
 app.include_router(entries.router)
@@ -71,5 +75,6 @@ app.include_router(clinical.router)
 app.include_router(cohort.router)
 app.include_router(reports.router)
 app.include_router(replay.router)
+
 
 
