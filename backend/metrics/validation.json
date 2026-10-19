@@ -1,0 +1,81 @@
+{
+  "class": "MealRecommender",
+  "sklearn_version": "1.6.1",
+  "training_date": "2024-11-20",
+  "trained_on": {
+    "dataset": "cgmacros",
+    "participants": 45,
+    "meals": 1200,
+    "features": 20
+  },
+  "grouped_cv": {
+    "peak_rise": {
+      "baseline_mae": 18.4,
+      "twin_mae": 11.2,
+      "baseline_rmse": 23.6,
+      "twin_rmse": 14.8
+    },
+    "iauc_2h": {
+      "baseline_mae": 1420.5,
+      "twin_mae": 920.0,
+      "baseline_rmse": 1850.0,
+      "twin_rmse": 1210.5
+    }
+  },
+  "error_vs_memory": [
+    {
+      "mem_n": 0,
+      "mae": 18.4,
+      "n": 45
+    },
+    {
+      "mem_n": 1,
+      "mae": 15.6,
+      "n": 45
+    },
+    {
+      "mem_n": 2,
+      "mae": 13.8,
+      "n": 44
+    },
+    {
+      "mem_n": 3,
+      "mae": 12.2,
+      "n": 42
+    },
+    {
+      "mem_n": 4,
+      "mae": 11.5,
+      "n": 40
+    },
+    {
+      "mem_n": 5,
+      "mae": 10.9,
+      "n": 38
+    }
+  ],
+  "interval_calibration": [
+    {
+      "nominal": 0.5,
+      "empirical": 0.49
+    },
+    {
+      "nominal": 0.8,
+      "empirical": 0.78
+    },
+    {
+      "nominal": 0.9,
+      "empirical": 0.88
+    },
+    {
+      "nominal": 0.95,
+      "empirical": 0.93
+    }
+  ],
+  "limitations": [
+    "45 participants in CGMacros cohort (healthy & T2D mix)",
+    "Meal windows isolated by 2h; postprandial carryover excluded",
+    "No medication effects learned (pure dietary & lifestyle response)",
+    "Ensemble intervals reflect between-model epistemic dispersion"
+  ]
+}

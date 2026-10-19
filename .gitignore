@@ -1,0 +1,27 @@
+# Models & pickled files
+models/*.pkl
+backend/models/*.pkl
+
+# Environment files
+.env
+
+# Database
+*.db
+*.sqlite3
+
+# Python cache & artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+ENV/
+
+# Node / Frontend
+node_modules/
+dist/
+.DS_Store
