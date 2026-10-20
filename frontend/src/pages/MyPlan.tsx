@@ -52,7 +52,7 @@ export const MyPlanPage: React.FC = () => {
 
   const handleToggleTask = (task: CarePlanTask) => {
     const nextStatus = task.status === 'completed' ? 'pending' : 'completed';
-    updateTaskMutation.mutate({ taskId: task.id, status: nextStatus });
+    updateTaskMutation.mutate({ taskId: task.id, patientId: activePatientId || task.patient_id || 1, status: nextStatus });
   };
 
   const getCategoryColor = (cat: string) => {

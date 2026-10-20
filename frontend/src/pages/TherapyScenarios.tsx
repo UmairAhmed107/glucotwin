@@ -66,20 +66,6 @@ export const TherapyScenariosPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Persistent Info Panel Explaining Why Projections are Not Twin-Predicted */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-slate-900 border border-amber-500/30 text-amber-200 space-y-2">
-        <div className="flex items-center space-x-2 text-amber-400 font-semibold text-xs uppercase tracking-wider">
-          <Info className="w-4 h-4 flex-shrink-0" />
-          <span>Why are therapy outcomes not twin-predicted?</span>
-        </div>
-        <p className="text-xs text-slate-300 leading-relaxed">
-          The Metabolic Twin bootstrap ensemble was trained exclusively on continuous glucose monitoring (CGM)
-          postprandial meal responses over 2-hour windows. The models did not learn chronic pharmacological drug response
-          dynamics across months. To maintain strict scientific integrity, all therapeutic reductions are reported as{' '}
-          <strong className="text-amber-300">literature-grounded population projections (PROJECTION)</strong> rather
-          than individualized twin forecasts.
-        </p>
-      </div>
 
       {isLoading ? (
         <LoadingSkeleton className="h-96 w-full" />

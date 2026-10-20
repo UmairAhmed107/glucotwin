@@ -1,0 +1,386 @@
+name,serving_description,carbs,protein,fat,calories,fiber,category,is_demo,disclaimer
+Roti (Whole Wheat Phulka),1 roti (35g),17.5,3.2,0.4,85,2.8,Indian Breads,true,Approximate demo data for clinical educational testing
+Butter Roti,1 roti (40g),17.5,3.2,4.5,120,2.8,Indian Breads,true,Approximate demo data for clinical educational testing
+Bajra Roti (Pearl Millet),1 roti (45g),22.0,3.8,1.5,115,3.5,Indian Breads,true,Approximate demo data for clinical educational testing
+Jowar Roti (Sorghum),1 roti (45g),23.5,3.4,0.9,112,3.2,Indian Breads,true,Approximate demo data for clinical educational testing
+Ragi Roti (Finger Millet),1 roti (45g),21.0,2.9,1.2,105,3.8,Indian Breads,true,Approximate demo data for clinical educational testing
+Makki di Roti (Cornmeal),1 roti (50g),26.0,3.5,2.5,138,3.0,Indian Breads,true,Approximate demo data for clinical educational testing
+Plain Paratha,1 paratha (60g),28.0,4.2,7.5,195,3.1,Indian Breads,true,Approximate demo data for clinical educational testing
+Aloo Paratha,1 paratha (100g),36.0,5.2,9.8,250,4.2,Indian Breads,true,Approximate demo data for clinical educational testing
+Paneer Paratha,1 paratha (110g),30.0,9.8,12.5,270,3.5,Indian Breads,true,Approximate demo data for clinical educational testing
+Gobi Paratha,1 paratha (100g),32.0,5.0,8.5,220,4.5,Indian Breads,true,Approximate demo data for clinical educational testing
+Methi Paratha (Fenugreek),1 paratha (70g),26.5,4.8,7.2,185,4.0,Indian Breads,true,Approximate demo data for clinical educational testing
+Mooli Paratha,1 paratha (90g),29.0,4.5,7.8,200,4.1,Indian Breads,true,Approximate demo data for clinical educational testing
+Plain Naan,1 naan (90g),45.0,7.5,5.0,260,2.2,Indian Breads,true,Approximate demo data for clinical educational testing
+Butter Naan,1 naan (100g),45.0,7.5,10.5,305,2.2,Indian Breads,true,Approximate demo data for clinical educational testing
+Garlic Naan,1 naan (105g),46.0,8.0,11.0,315,2.5,Indian Breads,true,Approximate demo data for clinical educational testing
+Poori,1 poori (30g),14.5,2.2,6.8,128,1.5,Indian Breads,true,Approximate demo data for clinical educational testing
+Bhature,1 bhatura (80g),42.0,6.5,14.0,320,1.8,Indian Breads,true,Approximate demo data for clinical educational testing
+Amritsari Kulcha,1 kulcha (120g),48.0,8.5,12.0,335,3.5,Indian Breads,true,Approximate demo data for clinical educational testing
+Steamed White Rice (Basmati),1 cup cooked (150g),45.0,4.2,0.6,205,0.8,Rice & Grains,true,Approximate demo data for clinical educational testing
+Steamed Brown Rice,1 cup cooked (150g),44.0,4.5,1.6,215,3.5,Rice & Grains,true,Approximate demo data for clinical educational testing
+Jeera Rice,1 cup (160g),46.0,4.4,4.5,240,1.2,Rice & Grains,true,Approximate demo data for clinical educational testing
+Vegetable Pulao,1.5 cup (200g),48.0,5.5,6.0,268,4.2,Rice & Grains,true,Approximate demo data for clinical educational testing
+Vegetable Biryani,1 plate (250g),58.0,7.8,11.5,365,5.2,Rice & Grains,true,Approximate demo data for clinical educational testing
+Chicken Dum Biryani,1 plate (300g),54.0,24.5,14.5,445,3.5,Rice & Grains,true,Approximate demo data for clinical educational testing
+Mutton Biryani,1 plate (300g),52.0,26.0,19.5,485,3.2,Rice & Grains,true,Approximate demo data for clinical educational testing
+Egg Biryani,1 plate (280g),53.0,14.5,12.8,385,3.5,Rice & Grains,true,Approximate demo data for clinical educational testing
+Curd Rice (Thayir Sadam),1 bowl (180g),38.0,5.8,5.5,225,1.2,Rice & Grains,true,Approximate demo data for clinical educational testing
+Khichdi (Moong Dal & Rice),1 bowl (200g),36.0,8.5,4.5,218,4.5,Rice & Grains,true,Approximate demo data for clinical educational testing
+Ven Pongal,1 bowl (180g),35.0,7.2,7.5,235,3.8,Rice & Grains,true,Approximate demo data for clinical educational testing
+Poha (Flattened Rice),1 plate (150g),34.0,4.5,5.8,205,2.8,Rice & Grains,true,Approximate demo data for clinical educational testing
+Sooji Upma (Semolina),1 cup (160g),32.0,4.8,5.5,195,2.2,Rice & Grains,true,Approximate demo data for clinical educational testing
+Vermicelli Upma (Sevai),1 cup (150g),30.0,4.2,4.8,180,2.0,Rice & Grains,true,Approximate demo data for clinical educational testing
+Daliya Khichdi (Broken Wheat),1 bowl (200g),33.0,7.5,3.2,190,5.5,Rice & Grains,true,Approximate demo data for clinical educational testing
+Sabudana Khichdi (Tapioca),1 plate (150g),52.0,3.2,12.5,330,1.5,Rice & Grains,true,Approximate demo data for clinical educational testing
+Lemon Rice,1 cup (160g),42.0,3.8,6.2,238,1.8,Rice & Grains,true,Approximate demo data for clinical educational testing
+Plain Dosa,1 dosa (80g),29.0,4.2,3.8,168,2.0,South Indian,true,Approximate demo data for clinical educational testing
+Masala Dosa,1 dosa with potato filling (150g),44.0,6.5,8.5,275,4.2,South Indian,true,Approximate demo data for clinical educational testing
+Rava Dosa,1 dosa (90g),31.0,4.5,6.5,200,1.8,South Indian,true,Approximate demo data for clinical educational testing
+Onion Rava Dosa,1 dosa (110g),33.0,4.8,7.2,218,2.2,South Indian,true,Approximate demo data for clinical educational testing
+Set Dosa,2 small dosas (120g),38.0,5.5,4.2,212,2.5,South Indian,true,Approximate demo data for clinical educational testing
+Steamed Idli,2 idlis (100g),26.0,4.8,0.4,128,2.2,South Indian,true,Approximate demo data for clinical educational testing
+Rava Idli,2 idlis (110g),28.0,5.2,3.5,165,2.4,South Indian,true,Approximate demo data for clinical educational testing
+Onion Uttapam,1 uttapam (120g),35.0,5.2,5.5,210,3.2,South Indian,true,Approximate demo data for clinical educational testing
+Tomato & Veg Uttapam,1 uttapam (140g),34.0,5.5,5.0,202,3.8,South Indian,true,Approximate demo data for clinical educational testing
+Medu Vada,2 vadas (90g),22.0,6.8,13.5,235,3.5,South Indian,true,Approximate demo data for clinical educational testing
+Sambar,1 bowl (180g),18.0,5.5,3.2,122,4.5,South Indian,true,Approximate demo data for clinical educational testing
+Tomato Rasam,1 bowl (150ml),8.5,1.8,1.2,52,1.5,South Indian,true,Approximate demo data for clinical educational testing
+Coconut Chutney,2 tablespoons (30g),3.2,0.9,7.5,84,1.8,South Indian,true,Approximate demo data for clinical educational testing
+Tomato Onion Chutney,2 tablespoons (30g),4.5,0.8,2.2,41,1.2,South Indian,true,Approximate demo data for clinical educational testing
+Pesarattu (Green Gram Dosa),1 dosa (90g),24.0,9.2,3.5,165,4.8,South Indian,true,Approximate demo data for clinical educational testing
+Appam,1 appam (60g),20.0,2.2,1.8,105,0.8,South Indian,true,Approximate demo data for clinical educational testing
+Idiyappam (String Hoppers),2 pieces (80g),26.0,2.0,0.5,116,1.0,South Indian,true,Approximate demo data for clinical educational testing
+Neer Dosa,2 dosas (80g),24.0,2.5,1.2,118,0.8,South Indian,true,Approximate demo data for clinical educational testing
+Adai (Mixed Lentil Dosa),1 adai (100g),28.0,8.5,4.2,185,4.5,South Indian,true,Approximate demo data for clinical educational testing
+Kootu (Mixed Veg & Lentils),1 bowl (160g),15.0,6.2,4.0,120,4.2,South Indian,true,Approximate demo data for clinical educational testing
+Yellow Dal Tadka,1 cup (180g),22.0,8.5,4.5,162,5.2,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Dal Fry,1 cup (180g),24.0,8.8,6.2,188,5.0,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Dal Makhani,1 cup (200g),26.0,9.8,14.5,275,6.5,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Moong Dal (Yellow Split),1 cup (180g),20.0,9.2,2.8,142,5.8,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Green Moong Dal (Whole),1 cup (180g),22.0,10.5,2.5,152,7.2,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Chana Dal (Bengal Gram),1 cup (180g),26.0,10.2,3.8,178,6.8,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Toor Dal (Pigeon Pea),1 cup (180g),23.0,8.6,3.2,155,5.5,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Punjabi Rajma (Kidney Beans),1 cup (200g),28.0,10.5,5.2,202,7.8,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Chole (Punjabi Chickpea Curry),1 cup (200g),32.0,11.2,6.8,234,8.2,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Pindi Chole,1 cup (180g),30.0,11.0,7.5,232,7.5,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Kadhi Pakora,1 bowl (200g),18.0,6.5,11.2,198,2.5,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Gujarati Kadhi,1 bowl (160ml),14.0,4.2,3.5,105,0.8,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Urad Dal (Split Black Gram),1 cup (180g),21.0,9.0,3.5,152,5.5,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Masoor Dal (Red Lentil),1 cup (180g),22.5,9.4,2.8,154,5.2,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Panchmel Dal (Five Lentils),1 cup (190g),24.0,9.8,4.5,175,6.2,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Kala Chana Curry (Black Chickpeas),1 cup (190g),27.0,10.8,4.2,190,8.5,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Lobia Curry (Black-Eyed Peas),1 cup (180g),25.0,9.5,3.8,172,6.5,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Matar Ghugni (Dried Yellow Peas),1 bowl (180g),28.0,8.8,3.2,176,7.0,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Dal Palak (Lentils with Spinach),1 cup (180g),19.0,8.8,3.5,142,6.2,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Methi Dal,1 cup (180g),20.0,8.6,3.5,145,5.8,Dals & Legumes,true,Approximate demo data for clinical educational testing
+Palak Paneer,1 bowl (200g),9.5,14.5,16.5,245,4.5,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Paneer Butter Masala,1 bowl (200g),14.0,13.5,22.0,310,3.2,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Kadai Paneer,1 bowl (200g),11.0,14.0,17.5,260,3.8,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Shahi Paneer,1 bowl (200g),15.0,13.0,21.0,302,2.8,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Matar Paneer,1 bowl (200g),16.5,12.8,14.0,244,4.2,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Paneer Bhurji,1 bowl (150g),6.5,15.2,16.0,232,2.2,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Aloo Gobi (Potato Cauliflower),1 bowl (180g),22.0,4.2,6.5,162,5.1,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Aloo Matar,1 bowl (180g),25.0,4.8,5.8,172,4.8,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Aloo Jeera,1 bowl (150g),26.0,2.8,6.2,170,3.2,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Bhindi Masala (Okra),1 bowl (160g),12.0,3.2,6.8,122,4.8,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Baingan Bharta (Roasted Eggplant),1 bowl (180g),13.5,3.0,6.5,125,5.5,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Mix Vegetable Curry,1 bowl (200g),16.0,4.5,7.2,148,5.2,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Mushroom Masala,1 bowl (180g),11.5,5.2,7.0,130,3.8,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Mushroom Matar,1 bowl (190g),16.0,6.2,6.5,148,4.5,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Malai Kofta,2 koftas with gravy (200g),22.0,8.5,24.0,340,3.2,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Navratan Korma,1 bowl (200g),21.0,6.5,18.5,278,4.2,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Dum Aloo,1 bowl (180g),26.0,3.8,12.0,228,3.8,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Gobi Masala,1 bowl (160g),14.0,3.8,6.2,128,4.2,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Lauki Chana Dal (Bottle Gourd),1 bowl (190g),18.0,6.8,3.8,134,4.8,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Torai Ki Sabzi (Ridge Gourd),1 bowl (160g),10.0,2.2,4.0,85,3.8,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Karela Masala (Bitter Gourd),1 bowl (150g),12.5,2.8,5.5,110,4.2,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Arbi Masala (Colocasia),1 bowl (150g),28.0,2.5,6.8,184,4.5,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Methi Malai Matar,1 bowl (180g),15.0,5.8,14.5,215,3.8,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Corn Palak,1 bowl (180g),18.0,5.2,7.5,160,4.5,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Sarson Ka Saag (Mustard Greens),1 bowl (200g),12.0,5.5,9.5,156,6.2,Vegetarian Curries,true,Approximate demo data for clinical educational testing
+Butter Chicken (Murgh Makhani),1 bowl (220g),12.0,28.5,19.5,340,2.2,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Chicken Tikka Masala,1 bowl (220g),11.5,29.0,16.0,310,2.4,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Chicken Curry (Home Style),1 bowl (220g),8.5,28.0,11.0,248,2.0,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Kadai Chicken,1 bowl (220g),9.5,29.5,13.5,280,2.8,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Chicken Korma,1 bowl (220g),12.5,26.5,21.0,345,2.0,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Chicken Saagwala (with Spinach),1 bowl (220g),7.5,29.0,12.0,255,4.2,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Tandoori Chicken (Leg Quarter),1 piece (180g),3.5,32.0,8.5,220,0.8,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Chicken Tikka (Dry),6 pieces (150g),4.2,28.0,6.5,190,1.2,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Chicken Malai Tikka,6 pieces (160g),5.0,27.5,12.5,245,0.8,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Chicken Seekh Kebab,2 skewers (140g),5.5,24.0,10.5,215,1.5,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Mutton Rogan Josh,1 bowl (220g),9.0,28.0,22.0,350,1.8,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Mutton Korma,1 bowl (220g),11.0,26.5,24.5,375,1.6,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Mutton Keema Matar,1 bowl (200g),12.5,26.0,18.0,318,3.2,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Goan Fish Curry,1 bowl (220g),8.5,24.5,14.5,265,2.2,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Bengali Fish Curry (Macher Jhol),1 bowl (220g),7.0,25.0,8.5,205,1.8,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Fish Tikka (Tandoori),6 pieces (150g),3.0,27.0,5.5,172,0.5,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Prawn Curry (Malabar / Coconut),1 bowl (200g),9.5,22.0,13.0,245,1.8,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Egg Curry (2 Eggs with Gravy),1 bowl (200g),9.0,15.5,14.5,230,1.8,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Egg Bhurji (Scrambled Spiced),2 eggs (130g),4.5,14.0,12.5,188,1.2,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Boiled Egg (Large),1 egg (50g),0.6,6.3,5.0,74,0.0,Non-Veg Curries,true,Approximate demo data for clinical educational testing
+Samosa (Potato & Peas),1 piece (80g),28.0,3.8,14.5,258,2.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Kachori (Moong Dal),1 piece (75g),26.0,4.5,13.0,240,2.8,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Khaman Dhokla,2 pieces (80g),18.0,4.8,3.5,124,2.2,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Khandvi,4 rolls (80g),14.0,4.2,4.5,114,2.0,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Onion Pakora / Bhajiya,4 pieces (80g),18.0,3.5,14.0,214,2.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Paneer Pakora,3 pieces (90g),15.0,9.5,16.0,244,1.8,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Pav Bhaji,2 pav + 1 bowl bhaji (250g),54.0,8.5,16.5,400,6.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Vada Pav,1 vada pav (120g),42.0,6.5,12.0,305,3.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Misal Pav,2 pav + 1 bowl misal (240g),52.0,11.5,14.0,385,7.2,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Pani Puri / Golgappa,6 puris with water (120g),24.0,2.5,4.2,145,2.0,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Bhel Puri,1 plate (120g),34.0,4.5,6.8,218,3.2,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Sev Puri,6 pieces (120g),36.0,4.8,9.5,250,3.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Dahi Puri,6 pieces (150g),38.0,6.2,8.5,255,3.0,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Dahi Vada,2 vadas with yogurt (180g),32.0,8.5,7.5,230,3.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Aloo Tikki Chaat,1 plate (160g),38.0,5.5,9.5,260,4.0,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Papdi Chaat,1 plate (160g),40.0,6.5,11.0,288,3.2,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Paneer Tikka (Tandoori),5 cubes (150g),8.5,16.5,15.0,235,2.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Hara Bhara Kebab,3 kebabs (90g),18.0,5.5,7.5,162,4.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Corn Tikki / Cutlet,2 cutlets (90g),24.0,3.8,6.5,170,3.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Veg Spring Roll,2 pieces (100g),28.0,4.2,11.0,230,2.8,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Medu Vada Sambar,2 vadas with sambar (220g),32.0,9.5,14.5,298,5.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Mathri,2 pieces (50g),26.0,3.5,13.5,242,1.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Murukku / Chakli,3 pieces (45g),25.0,3.2,12.0,222,1.8,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Roasted Makhana (Fox Nuts),1 bowl (30g),20.0,3.0,2.5,115,2.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Roasted Chana (Chickpeas with skin),1 handful (35g),19.5,6.8,1.8,122,5.5,Snacks & Street Food,true,Approximate demo data for clinical educational testing
+Gulab Jamun,2 pieces (80g),46.0,3.2,11.5,302,0.8,Indian Sweets,true,Approximate demo data for clinical educational testing
+Rasgulla,2 pieces (80g),38.0,4.5,1.2,182,0.4,Indian Sweets,true,Approximate demo data for clinical educational testing
+Rasmalai,2 pieces (100g),32.0,6.8,9.5,242,0.5,Indian Sweets,true,Approximate demo data for clinical educational testing
+Kaju Katli,2 pieces (35g),18.5,3.8,8.5,166,0.8,Indian Sweets,true,Approximate demo data for clinical educational testing
+Jalebi,3 pieces (60g),44.0,1.5,8.5,260,0.4,Indian Sweets,true,Approximate demo data for clinical educational testing
+Motichoor Ladoo,1 ladoo (40g),26.0,2.8,8.5,192,1.0,Indian Sweets,true,Approximate demo data for clinical educational testing
+Besan Ladoo,1 ladoo (45g),25.0,4.5,11.0,218,2.0,Indian Sweets,true,Approximate demo data for clinical educational testing
+Gajar Ka Halwa (Carrot Halwa),1 small bowl (100g),34.0,4.2,10.5,248,2.8,Indian Sweets,true,Approximate demo data for clinical educational testing
+Rice Kheer,1 bowl (150g),36.0,5.2,6.5,225,0.8,Indian Sweets,true,Approximate demo data for clinical educational testing
+Moong Dal Halwa,1 small bowl (80g),32.0,5.5,14.5,282,2.5,Indian Sweets,true,Approximate demo data for clinical educational testing
+Sooji Ka Halwa,1 small bowl (80g),35.0,3.5,11.0,254,1.2,Indian Sweets,true,Approximate demo data for clinical educational testing
+Shrikhand,1 small bowl (80g),28.0,5.8,7.5,204,0.2,Indian Sweets,true,Approximate demo data for clinical educational testing
+Sandesh (Bengali Chena Sweet),2 pieces (50g),19.0,5.2,4.8,140,0.2,Indian Sweets,true,Approximate demo data for clinical educational testing
+Mysore Pak,1 piece (40g),24.0,2.5,14.0,234,1.2,Indian Sweets,true,Approximate demo data for clinical educational testing
+Rabri,1 small cup (80g),22.0,6.5,9.8,204,0.0,Indian Sweets,true,Approximate demo data for clinical educational testing
+Kulfi (Pista/Malai),1 kulfi stick (70g),24.0,4.5,8.2,188,0.5,Indian Sweets,true,Approximate demo data for clinical educational testing
+Peda,2 pieces (40g),25.0,4.2,6.5,176,0.2,Indian Sweets,true,Approximate demo data for clinical educational testing
+Kalakand,1 piece (45g),20.0,5.8,6.8,165,0.4,Indian Sweets,true,Approximate demo data for clinical educational testing
+Modak (Steamed/Ukadiche),2 pieces (70g),32.0,2.5,4.5,180,2.2,Indian Sweets,true,Approximate demo data for clinical educational testing
+Sewaiyan Kheer (Vermicelli),1 bowl (150g),35.0,4.8,5.5,210,1.0,Indian Sweets,true,Approximate demo data for clinical educational testing
+Masala Chai (with Sugar & Milk),1 cup (150ml),14.5,3.2,3.5,102,0.0,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Chai (Unsweetened with Milk),1 cup (150ml),5.5,3.2,3.5,68,0.0,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+South Indian Filter Coffee,1 tumbler (150ml),15.0,3.5,3.8,110,0.0,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Sweet Lassi,1 glass (250ml),38.0,6.5,7.5,245,0.0,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Salted Chaas (Buttermilk),1 glass (250ml),6.5,4.2,2.0,62,0.4,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Plain Curd / Dahi (Cow Milk),1 cup (150g),7.2,5.5,4.8,95,0.0,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Greek Style Dahi / Hung Curd,1 cup (150g),5.5,12.5,6.5,132,0.0,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Raw Paneer (Cottage Cheese),50g,2.2,9.5,11.5,152,0.0,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Cow Milk (Boiled),1 cup (240ml),11.5,7.8,7.5,145,0.0,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Toned Milk (3% Fat),1 cup (240ml),12.0,7.6,3.6,112,0.0,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Coconut Water (Fresh),1 glass (250ml),11.0,1.8,0.5,54,2.5,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Nimbu Pani (Sweet & Salted),1 glass (250ml),18.0,0.4,0.1,74,0.5,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Jaljeera,1 glass (250ml),6.5,0.8,0.4,32,1.2,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Badam Milk (Almond Milk drink),1 glass (200ml),24.0,5.8,6.5,178,1.5,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Thandai,1 glass (200ml),32.0,5.2,8.5,226,1.8,Beverages & Dairy,true,Approximate demo data for clinical educational testing
+Rolled Oats (Cooked in water),1 cup (230g),27.0,6.0,3.5,160,4.0,International Grains,true,Approximate demo data for clinical educational testing
+Steel Cut Oats (Cooked),1 cup (240g),28.0,7.0,3.0,170,5.0,International Grains,true,Approximate demo data for clinical educational testing
+Cooked Quinoa,1 cup (185g),39.0,8.0,3.5,222,5.2,International Grains,true,Approximate demo data for clinical educational testing
+Whole Wheat Bread,2 slices (60g),24.0,7.5,2.0,140,4.0,International Grains,true,Approximate demo data for clinical educational testing
+White Bread,2 slices (55g),26.0,4.5,1.8,140,1.2,International Grains,true,Approximate demo data for clinical educational testing
+Sourdough Bread,1 slice (50g),23.0,5.0,0.8,120,1.8,International Grains,true,Approximate demo data for clinical educational testing
+Multigrain Bread,2 slices (65g),26.0,8.0,2.5,160,4.5,International Grains,true,Approximate demo data for clinical educational testing
+Rye Bread,1 slice (40g),19.0,3.2,0.8,95,2.8,International Grains,true,Approximate demo data for clinical educational testing
+Plain Bagel,1 medium bagel (100g),54.0,10.0,1.5,275,2.2,International Grains,true,Approximate demo data for clinical educational testing
+Whole Wheat Bagel,1 bagel (100g),48.0,11.5,2.0,255,6.0,International Grains,true,Approximate demo data for clinical educational testing
+English Muffin,1 muffin (60g),26.0,5.0,1.0,135,2.0,International Grains,true,Approximate demo data for clinical educational testing
+Corn Tortilla,2 small tortillas (50g),22.0,3.0,1.5,110,3.0,International Grains,true,Approximate demo data for clinical educational testing
+Flour Tortilla (Large),1 tortilla (70g),35.0,5.5,4.5,200,2.0,International Grains,true,Approximate demo data for clinical educational testing
+Whole Wheat Pasta (Cooked),1 cup (140g),37.0,7.5,1.5,174,6.0,International Grains,true,Approximate demo data for clinical educational testing
+White Pasta / Spaghetti (Cooked),1 cup (140g),43.0,8.0,1.2,220,2.5,International Grains,true,Approximate demo data for clinical educational testing
+Egg Noodles (Cooked),1 cup (160g),40.0,7.2,2.4,212,1.8,International Grains,true,Approximate demo data for clinical educational testing
+Brown Rice Noodles (Cooked),1 cup (175g),42.0,3.2,0.8,190,2.2,International Grains,true,Approximate demo data for clinical educational testing
+Couscous (Cooked),1 cup (157g),36.0,6.0,0.4,176,2.2,International Grains,true,Approximate demo data for clinical educational testing
+Bulgur Wheat (Cooked),1 cup (180g),34.0,5.6,0.5,151,8.2,International Grains,true,Approximate demo data for clinical educational testing
+Muesli (Unsweetened),1/2 cup (50g),32.0,6.0,3.5,185,5.0,International Grains,true,Approximate demo data for clinical educational testing
+Granola,1/2 cup (55g),36.0,5.0,9.0,245,4.0,International Grains,true,Approximate demo data for clinical educational testing
+Bran Flakes Cereal,1 cup (45g),33.0,4.5,1.0,145,7.0,International Grains,true,Approximate demo data for clinical educational testing
+Corn Flakes,1 cup (35g),29.0,2.5,0.4,130,1.0,International Grains,true,Approximate demo data for clinical educational testing
+Boiled Sweet Potato,1 medium (130g),27.0,2.0,0.2,115,4.0,International Grains,true,Approximate demo data for clinical educational testing
+Baked Russet Potato,1 medium (170g),37.0,4.5,0.2,165,3.8,International Grains,true,Approximate demo data for clinical educational testing
+Grilled Chicken Breast (Skinless),150g,0.0,46.0,5.2,240,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Roast Turkey Breast,140g,0.0,42.0,2.5,195,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Grilled Salmon Fillet,150g,0.0,34.0,18.0,305,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Canned Tuna (in Water),1 can drained (120g),0.0,30.0,1.2,135,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Baked Cod Fillet,150g,0.0,32.0,1.5,145,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Steamed Shrimp / Prawns,120g,1.0,26.0,1.5,120,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Lean Sirloin Steak (Beef),150g,0.0,42.0,11.0,275,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Lean Pork Tenderloin,140g,0.0,36.0,4.8,195,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Scrambled Eggs,2 large eggs (100g),1.5,12.5,14.0,185,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Egg White Omelet,3 egg whites (100g),0.8,11.0,0.2,52,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Fried Egg (Sunny Side Up),1 large egg (50g),0.4,6.3,7.2,92,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Firm Tofu (Pan Fried),150g,4.0,18.0,11.0,190,2.5,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Silken Tofu,150g,3.0,10.5,4.2,95,1.2,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Tempeh (Cooked),100g,9.0,19.0,11.0,195,6.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Edamame (Steamed in Pods),1 cup (150g),12.0,17.0,8.0,188,8.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Seitan (Wheat Gluten),100g,8.0,25.0,1.5,145,1.5,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Boiled Black Beans,1 cup (170g),40.0,15.0,0.9,227,15.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Boiled Chickpeas (Garbanzo),1 cup (164g),45.0,14.5,4.2,269,12.5,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Cooked Brown Lentils,1 cup (198g),40.0,18.0,0.8,230,15.5,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Hummus with Tahini,1/4 cup (60g),12.0,4.8,10.5,165,3.8,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Falafel Patties,3 pieces (75g),24.0,7.5,12.0,230,4.5,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Whey Protein Shake,1 scoop in water (30g),3.0,24.0,1.5,120,0.5,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Plant Protein Shake,1 scoop in water (35g),4.0,22.0,2.5,130,2.5,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Cottage Cheese (Low Fat),1 cup (220g),8.0,28.0,2.5,165,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Grilled Turkey Burger Patty,1 patty (110g),0.0,24.0,9.5,185,0.0,Proteins & Meats,true,Approximate demo data for clinical educational testing
+Steamed Broccoli,1 cup (150g),6.0,3.8,0.6,45,3.8,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Steamed Cauliflower,1 cup (125g),5.0,2.4,0.3,30,2.5,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Cooked Spinach,1 cup (180g),7.0,5.3,0.8,41,4.3,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Raw Baby Spinach Salad,2 cups (60g),2.2,1.8,0.2,14,1.4,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Mixed Green Salad (No Dressing),2 cups (80g),3.0,1.5,0.3,20,2.0,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Caesar Salad with Dressing,1 bowl (180g),9.0,6.0,18.0,220,2.8,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Greek Salad with Feta & Olives,1 bowl (200g),10.0,6.5,15.0,200,3.5,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Tomato & Cucumber Salad,1 bowl (150g),7.0,1.8,2.5,55,2.2,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Sliced Hass Avocado,1/2 medium (100g),8.5,2.0,14.5,160,6.7,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Steamed Asparagus,1 cup (180g),7.0,4.3,0.4,40,3.6,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Steamed Green Beans,1 cup (125g),8.0,2.2,0.3,40,3.5,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Roasted Carrots,1 cup (150g),14.0,1.5,3.0,85,4.2,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Sautéed Zucchini,1 cup (180g),6.0,2.0,3.5,60,2.2,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Grilled Bell Peppers,1 cup (150g),9.0,1.5,2.5,65,3.0,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Sautéed White Button Mushrooms,1 cup (150g),5.0,4.0,3.0,60,2.5,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Cauliflower Rice,1 cup (110g),5.0,2.0,0.3,25,2.5,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Boiled Sweet Corn,1 cup (150g),32.0,5.0,2.0,145,4.0,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Steamed Green Peas,1 cup (160g),25.0,8.5,0.5,134,8.8,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Coleslaw (Cabbage with light mayo),1 cup (120g),14.0,1.5,9.0,140,2.5,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Roasted Brussels Sprouts,1 cup (150g),14.0,4.5,4.0,105,5.0,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Cooked Kale,1 cup (130g),7.0,2.5,0.7,36,2.6,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Baked Eggplant Slices,1 cup (160g),9.0,1.5,3.5,70,4.0,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Fresh Tomato Slices,1 medium tomato (120g),4.8,1.1,0.2,22,1.4,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Fresh Cucumber Slices,1 cup (100g),3.6,0.7,0.1,16,0.5,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Boiled Beets,1 cup (170g),17.0,2.8,0.3,75,3.8,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Celery Sticks,2 large stalks (80g),2.4,0.6,0.1,12,1.3,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Kimchi (Fermented Cabbage),1/2 cup (80g),4.0,1.5,0.5,25,2.0,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Sauerkraut,1/2 cup (75g),3.5,1.0,0.2,18,2.2,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Roasted Butternut Squash,1 cup (200g),21.0,1.8,3.0,110,4.0,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Vegetable Clear Broth Soup,1 bowl (240ml),6.0,2.0,1.0,40,1.5,Vegetables & Salads,true,Approximate demo data for clinical educational testing
+Medium Red Apple (with Skin),1 apple (180g),25.0,0.5,0.3,95,4.4,Fruits,true,Approximate demo data for clinical educational testing
+Medium Banana,1 banana (118g),27.0,1.3,0.4,105,3.1,Fruits,true,Approximate demo data for clinical educational testing
+Orange,1 medium orange (130g),15.0,1.2,0.2,62,3.1,Fruits,true,Approximate demo data for clinical educational testing
+Fresh Strawberries,1 cup halved (150g),11.5,1.0,0.4,49,3.0,Fruits,true,Approximate demo data for clinical educational testing
+Blueberries,1 cup (150g),21.0,1.1,0.5,84,3.6,Fruits,true,Approximate demo data for clinical educational testing
+Blackberries,1 cup (140g),14.0,2.0,0.7,62,7.6,Fruits,true,Approximate demo data for clinical educational testing
+Red / Green Grapes,1 cup (150g),27.0,1.1,0.2,104,1.4,Fruits,true,Approximate demo data for clinical educational testing
+Ripe Mango Slices,1 cup (165g),25.0,1.4,0.6,99,2.6,Fruits,true,Approximate demo data for clinical educational testing
+Papaya Cubes,1 cup (145g),16.0,0.9,0.4,62,2.5,Fruits,true,Approximate demo data for clinical educational testing
+Watermelon Chunks,1.5 cup (220g),17.0,1.3,0.3,66,0.9,Fruits,true,Approximate demo data for clinical educational testing
+Cantaloupe / Muskmelon,1 cup cubes (160g),13.0,1.3,0.3,54,1.4,Fruits,true,Approximate demo data for clinical educational testing
+Pineapple Chunks,1 cup (165g),22.0,0.9,0.2,82,2.3,Fruits,true,Approximate demo data for clinical educational testing
+Guava,1 medium guava (100g),14.0,2.6,1.0,68,5.4,Fruits,true,Approximate demo data for clinical educational testing
+Pomegranate Seeds,1/2 cup (87g),16.0,1.5,1.0,72,3.5,Fruits,true,Approximate demo data for clinical educational testing
+Kiwi Fruit,2 medium kiwis (140g),20.0,1.6,0.7,84,4.2,Fruits,true,Approximate demo data for clinical educational testing
+Pear (with Skin),1 medium pear (180g),27.0,0.6,0.2,102,5.5,Fruits,true,Approximate demo data for clinical educational testing
+Fresh Peach,1 medium peach (150g),14.0,1.4,0.4,59,2.3,Fruits,true,Approximate demo data for clinical educational testing
+Plum,2 medium plums (130g),15.0,0.9,0.4,60,1.8,Fruits,true,Approximate demo data for clinical educational testing
+Medjool Dates,2 dates pitted (48g),36.0,1.2,0.1,133,3.2,Fruits,true,Approximate demo data for clinical educational testing
+Dried Figs (Anjeer),3 dried figs (60g),38.0,2.0,0.6,150,5.8,Fruits,true,Approximate demo data for clinical educational testing
+Raisins,1/4 cup (40g),32.0,1.3,0.2,120,1.6,Fruits,true,Approximate demo data for clinical educational testing
+Sweet Cherries,1 cup with pits (140g),22.0,1.4,0.3,87,2.9,Fruits,true,Approximate demo data for clinical educational testing
+Grapefruit,1/2 medium (120g),13.0,0.9,0.2,52,2.0,Fruits,true,Approximate demo data for clinical educational testing
+Fresh Apricots,3 apricots (105g),12.0,1.5,0.4,50,2.1,Fruits,true,Approximate demo data for clinical educational testing
+Lemon / Lime Juice,2 tablespoons (30ml),2.5,0.1,0.0,10,0.1,Fruits,true,Approximate demo data for clinical educational testing
+Raw Almonds,1 handful (30g / ~23 nuts),6.0,6.0,15.0,170,3.5,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Roasted Salted Almonds,30g,6.0,6.0,15.5,175,3.5,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+English Walnuts,1/4 cup halves (30g),4.0,4.5,20.0,195,2.0,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Cashew Nuts (Kaju),30g (~18 nuts),9.0,5.5,13.5,165,1.0,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Pistachios (In Shell),1/2 cup with shell / 30g kernels,8.0,6.0,13.0,160,3.0,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Roasted Peanuts,1 handful (30g),5.0,7.5,14.5,170,2.5,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Chia Seeds,1 tablespoon (12g),5.0,2.0,3.5,60,4.0,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Flaxseeds (Ground),1 tablespoon (10g),3.0,1.9,4.2,55,2.8,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Pumpkin Seeds (Pepitas),2 tablespoons (20g),3.0,6.0,9.5,115,1.5,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Sunflower Seeds,2 tablespoons (20g),4.0,4.2,10.0,118,1.8,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+White Sesame Seeds (Til),1 tablespoon (10g),2.3,1.8,5.0,58,1.2,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Natural Peanut Butter (No Sugar),2 tablespoons (32g),7.0,8.0,16.0,190,2.5,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Almond Butter,2 tablespoons (32g),6.0,7.0,18.0,200,3.5,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Extra Virgin Olive Oil,1 tablespoon (15ml),0.0,0.0,14.0,120,0.0,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Desi Ghee (Clarified Butter),1 tablespoon (15g),0.0,0.0,15.0,135,0.0,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Unsalted Butter,1 tablespoon (14g),0.1,0.1,11.5,102,0.0,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Virgin Coconut Oil,1 tablespoon (15ml),0.0,0.0,14.0,120,0.0,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Mustard Oil (Kachi Ghani),1 tablespoon (15ml),0.0,0.0,14.0,120,0.0,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Tahini (Sesame Paste),2 tablespoons (30g),6.0,5.0,16.0,180,2.5,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Mixed Trail Mix (Nuts & Dried Fruits),1/4 cup (40g),18.0,5.0,13.0,195,2.5,Nuts & Seeds,true,Approximate demo data for clinical educational testing
+Margherita Pizza,1 slice (105g),32.0,11.0,9.5,250,2.0,Popular International,true,Approximate demo data for clinical educational testing
+Cheeseburger (Single patty with bun),1 burger (180g),36.0,22.0,18.0,390,2.5,Popular International,true,Approximate demo data for clinical educational testing
+Grilled Chicken Wrap,1 wrap (220g),38.0,28.0,12.0,370,4.0,Popular International,true,Approximate demo data for clinical educational testing
+"Veggie Burrito Bowl (Rice, beans, salsa)",1 bowl (320g),62.0,14.0,12.0,410,11.0,Popular International,true,Approximate demo data for clinical educational testing
+Chicken Burrito Bowl (No sour cream),1 bowl (340g),52.0,36.0,14.0,475,9.0,Popular International,true,Approximate demo data for clinical educational testing
+California Sushi Roll,6 pieces (180g),38.0,7.5,7.0,255,4.0,Popular International,true,Approximate demo data for clinical educational testing
+Salmon Avocado Sushi Roll,6 pieces (190g),36.0,14.0,10.5,300,3.5,Popular International,true,Approximate demo data for clinical educational testing
+Chicken Stir-Fry with Veggies & Rice,1 plate (300g),46.0,28.0,9.5,380,4.5,Popular International,true,Approximate demo data for clinical educational testing
+Tofu Veggie Stir-Fry with Noodles,1 plate (300g),48.0,16.0,11.0,355,5.5,Popular International,true,Approximate demo data for clinical educational testing
+Minestrone Soup,1 bowl (250ml),22.0,5.0,2.5,130,4.5,Popular International,true,Approximate demo data for clinical educational testing
+Tomato Basil Soup,1 bowl (240ml),18.0,3.0,4.5,120,2.5,Popular International,true,Approximate demo data for clinical educational testing
+Chicken Noodle Soup,1 bowl (240ml),16.0,12.0,3.5,145,1.5,Popular International,true,Approximate demo data for clinical educational testing
+Lentil Vegetable Soup,1 bowl (250ml),26.0,9.0,3.0,165,6.0,Popular International,true,Approximate demo data for clinical educational testing
+Avocado Toast on Whole Wheat,1 slice (110g),22.0,6.0,12.5,215,6.5,Popular International,true,Approximate demo data for clinical educational testing
+Avocado Toast with Poached Egg,1 slice + 1 egg (160g),23.0,12.5,17.5,290,6.5,Popular International,true,Approximate demo data for clinical educational testing
+"Club Sandwich (Turkey, Bacon, Lettuce)",1 sandwich (230g),42.0,26.0,18.0,430,3.5,Popular International,true,Approximate demo data for clinical educational testing
+Falafel Wrap (Tahini & Salad),1 wrap (240g),54.0,14.0,16.0,415,7.5,Popular International,true,Approximate demo data for clinical educational testing
+Spaghetti Bolognese,1 plate (320g),52.0,24.0,14.0,430,5.0,Popular International,true,Approximate demo data for clinical educational testing
+Penne all'Arrabbiata,1 plate (280g),54.0,9.5,8.5,330,4.5,Popular International,true,Approximate demo data for clinical educational testing
+Pad Thai (Tofu & Peanuts),1 plate (280g),58.0,14.0,15.0,425,3.8,Popular International,true,Approximate demo data for clinical educational testing
+Thepla (Gujarati Spiced Flatbread),2 theplas (70g),28.0,4.8,6.5,190,3.5,Regional Indian,true,Approximate demo data for clinical educational testing
+Thalipeeth (Maharashtrian Multigrain),1 thalipeeth (90g),32.0,6.2,8.5,230,5.2,Regional Indian,true,Approximate demo data for clinical educational testing
+Handvo (Savory Vegetable Cake),1 slice (100g),24.0,6.5,7.8,192,3.8,Regional Indian,true,Approximate demo data for clinical educational testing
+Akki Roti (Rice Flour Flatbread),1 roti (80g),34.0,3.2,3.5,180,2.0,Regional Indian,true,Approximate demo data for clinical educational testing
+Bisi Bele Bath (Spiced Lentil Rice),1 bowl (220g),44.0,7.5,8.2,280,4.8,Regional Indian,true,Approximate demo data for clinical educational testing
+Puttu with Kadala Curry,1 cup puttu + kadala (250g),58.0,11.5,6.5,335,7.2,Regional Indian,true,Approximate demo data for clinical educational testing
+Appam with Vegetable Stew,2 appams + stew (220g),42.0,4.5,9.5,270,3.5,Regional Indian,true,Approximate demo data for clinical educational testing
+Appam with Chicken Stew,2 appams + stew (240g),40.0,18.5,11.0,335,2.8,Regional Indian,true,Approximate demo data for clinical educational testing
+Ragi Mudde (Finger Millet Ball),1 ball (150g),38.0,4.5,1.2,185,6.5,Regional Indian,true,Approximate demo data for clinical educational testing
+Dal Baati Churma,1 baati with dal & churma (200g),65.0,10.5,18.0,465,5.5,Regional Indian,true,Approximate demo data for clinical educational testing
+Litti Chokha (Sattu Stuffed),2 littis with chokha (220g),52.0,12.0,10.5,350,7.8,Regional Indian,true,Approximate demo data for clinical educational testing
+Sindhi Koki,1 koki (80g),35.0,4.5,9.0,240,3.2,Regional Indian,true,Approximate demo data for clinical educational testing
+Dal Pakwan,1 pakwan + chana dal (180g),48.0,9.5,16.5,380,5.2,Regional Indian,true,Approximate demo data for clinical educational testing
+Mysore Masala Dosa,1 dosa with spicy chutney (160g),46.0,7.2,9.5,298,4.5,Regional Indian,true,Approximate demo data for clinical educational testing
+Mirchi Bajji (Stuffed Chili Fritters),2 pieces (90g),22.0,3.8,12.5,215,3.0,Regional Indian,true,Approximate demo data for clinical educational testing
+Mysore Bonda,3 pieces (90g),28.0,4.5,11.0,230,2.2,Regional Indian,true,Approximate demo data for clinical educational testing
+Egg Dosa,1 dosa with egg (140g),30.0,10.5,8.5,240,2.2,Regional Indian,true,Approximate demo data for clinical educational testing
+Keema Dosa,1 dosa with minced meat (180g),32.0,18.0,12.5,315,2.5,Regional Indian,true,Approximate demo data for clinical educational testing
+Kathal Ki Sabzi (Raw Jackfruit),1 bowl (180g),22.0,3.5,6.2,160,5.8,Regional Indian,true,Approximate demo data for clinical educational testing
+Soya Chunks Curry,1 bowl (180g),14.0,22.0,5.5,195,6.5,Regional Indian,true,Approximate demo data for clinical educational testing
+Tinda Masala (Apple Gourd),1 bowl (150g),9.5,2.0,4.5,86,3.5,Regional Indian,true,Approximate demo data for clinical educational testing
+Kundru Fry (Ivy Gourd),1 bowl (140g),11.0,2.2,5.5,102,4.0,Regional Indian,true,Approximate demo data for clinical educational testing
+Drumstick Sambar (Moringa),1 bowl (180g),17.0,5.2,3.0,115,5.2,Regional Indian,true,Approximate demo data for clinical educational testing
+Raw Banana Fry (Vazhakkai),1 bowl (140g),28.0,1.8,6.0,172,4.2,Regional Indian,true,Approximate demo data for clinical educational testing
+Dal Bukhara,1 cup (200g),25.0,10.2,15.0,275,6.8,Regional Indian,true,Approximate demo data for clinical educational testing
+Mint Coriander Chutney,2 tablespoons (30g),1.5,0.8,0.5,15,1.0,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Sweet Tamarind Chutney,2 tablespoons (30g),16.0,0.3,0.1,66,0.5,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Mango Pickle (Achar),1 tablespoon (15g),1.2,0.3,3.5,38,0.4,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Lime Pickle,1 tablespoon (15g),1.0,0.2,2.8,30,0.5,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Roasted Papad,1 papad (15g),8.5,3.8,0.3,52,2.0,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Fried Papad,1 papad (20g),9.0,3.8,6.0,105,2.0,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Masala Papad (with Onions & Tomato),1 papad (60g),12.0,4.5,1.5,80,2.8,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Boondi Raita,1 bowl (150g),14.0,4.5,6.5,132,0.5,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Cucumber Raita,1 bowl (150g),6.5,4.8,3.5,78,0.8,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Mixed Vegetable Raita,1 bowl (150g),8.0,5.0,3.5,84,1.4,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Pineapple Raita,1 bowl (150g),16.0,4.2,3.2,110,0.8,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Guacamole Dip,1/4 cup (60g),5.0,1.2,9.5,105,3.8,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Fresh Tomato Salsa,1/4 cup (60g),4.0,0.8,0.2,20,1.2,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Tzatziki Sauce,1/4 cup (60g),2.5,2.5,3.5,52,0.3,Condiments & Dips,true,Approximate demo data for clinical educational testing
+Green Tea (Unsweetened),1 cup (240ml),0.2,0.1,0.0,2,0.0,Healthy Additions,true,Approximate demo data for clinical educational testing
+Black Coffee (No Sugar),1 cup (240ml),0.0,0.3,0.0,2,0.0,Healthy Additions,true,Approximate demo data for clinical educational testing
+Chia Seed Pudding (Almond Milk),1 cup (180g),14.0,5.0,8.5,150,8.0,Healthy Additions,true,Approximate demo data for clinical educational testing
+Overnight Oats with Berries,1 jar (220g),38.0,9.0,5.5,235,6.5,Healthy Additions,true,Approximate demo data for clinical educational testing
+Acai Bowl with Granola & Fruit,1 bowl (250g),48.0,5.5,8.0,285,6.0,Healthy Additions,true,Approximate demo data for clinical educational testing
+Plain Rice Cakes,2 cakes (18g),15.0,1.4,0.5,70,0.6,Healthy Additions,true,Approximate demo data for clinical educational testing
+Lentil Pasta (Chickpea / Red Lentil),1 cup cooked (140g),34.0,13.0,2.0,195,7.0,Healthy Additions,true,Approximate demo data for clinical educational testing
+Turkey Bacon,2 strips (30g),0.6,6.0,4.5,65,0.0,Healthy Additions,true,Approximate demo data for clinical educational testing
+Salmon Burger Patty,1 patty (110g),2.0,22.0,9.0,175,0.0,Healthy Additions,true,Approximate demo data for clinical educational testing
+Chicken Quesadilla,1 quesadilla (180g),32.0,24.0,16.0,370,2.5,Healthy Additions,true,Approximate demo data for clinical educational testing
+Veggie Cheese Quesadilla,1 quesadilla (160g),34.0,14.0,15.0,330,3.5,Healthy Additions,true,Approximate demo data for clinical educational testing
+Fish Tacos (Corn Tortilla),2 tacos (180g),28.0,18.0,9.0,265,3.2,Healthy Additions,true,Approximate demo data for clinical educational testing
+Vegetable Lasagna,1 slice (250g),36.0,14.0,12.0,310,4.5,Healthy Additions,true,Approximate demo data for clinical educational testing
+Low Carb Protein Bar,1 bar (60g),18.0,20.0,7.0,210,10.0,Healthy Additions,true,Approximate demo data for clinical educational testing
+Almond Milk (Unsweetened),1 cup (240ml),1.2,1.0,2.5,30,0.8,Healthy Additions,true,Approximate demo data for clinical educational testing
+Oat Milk (Barista Blend),1 cup (240ml),16.0,3.0,5.0,120,2.0,Healthy Additions,true,Approximate demo data for clinical educational testing
+Soy Milk (Unsweetened),1 cup (240ml),4.0,7.0,4.0,80,2.0,Healthy Additions,true,Approximate demo data for clinical educational testing
+Brazil Nuts,3 nuts (15g),1.8,2.1,10.0,100,1.1,Healthy Additions,true,Approximate demo data for clinical educational testing
+Macadamia Nuts,10 nuts (28g),3.9,2.2,21.5,204,2.4,Healthy Additions,true,Approximate demo data for clinical educational testing
+Dark Chocolate (70% Cocoa),3 squares (30g),13.0,2.2,12.8,170,3.1,Healthy Additions,true,Approximate demo data for clinical educational testing
+Air Popped Popcorn,3 cups (24g),18.0,3.0,1.2,95,3.5,Healthy Additions,true,Approximate demo data for clinical educational testing

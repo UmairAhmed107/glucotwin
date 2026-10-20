@@ -1,299 +1,230 @@
-# GlucoTwin
+# GlucoTwin: Personalised Metabolic Digital Twin
 
-> **"A hybrid, personalised diabetes digital twin with clinician-in-the-loop decision support."**
+> **A hybrid, personalised diabetes digital twin with clinician-in-the-loop decision support and deterministic safety governance.**
+>
+> *Research prototype, not a certified medical device.*
 
-*Research prototype, not a medical device.*
-
-GlucoTwin creates a personalised virtual copy ("twin") of a Type 2 diabetic patient. The twin learns dynamically from logged meals, glucose readings, and physical activity to predict postprandial glucose responses, simulate what-if lifestyle interventions, and recommend guideline-grounded clinical decision-support options.
+GlucoTwin creates a personalised virtual copy ("metabolic twin") of an individual with Type 2 diabetes. The twin dynamically learns an individual's glycemic responses from meal macros, continuous glucose monitoring (CGM) telemetry, and physical activity to predict postprandial glucose curves, simulate counterfactual lifestyle interventions, and provide guideline-grounded clinical decision support.
 
 ---
 
-## Architecture Overview
+## System Architecture
 
-GlucoTwin strictly decouples empirical metabolic prediction from generative reasoning and deterministic clinical safety:
-
-1. **Metabolic Twin (Trained ML Models)**: Real bootstrap ensemble (`HistGradientBoostingRegressor`) predicting postprandial glucose trajectory metrics (`peak_rise`, `iauc_2h`, `delta_60`, `delta_120`), lifestyle what-ifs, and empirical uncertainty bands.
-2. **Clinical Reasoning Engine (Gemini API + Guidelines)**: Generates personalized therapy options to discuss, lifestyle recommendations, red flags, and clinician discussion questions grounded in curated clinical guideline snippets (ADA / ICMR).
-3. **Safety Governor (Deterministic Python Rules)**: Nine hard-coded deterministic rules (R1–R9) enforcing contraindications (e.g. blocking sulfonylureas/glinides for patients with hypoglycemia history), stripping disallowed dosing language, and auditing all outputs.
-
-### System Architecture Diagram
+GlucoTwin strictly decouples empirical metabolic machine learning from generative clinical reasoning, deterministic safety rules, and longitudinal care workflows:
 
 ```mermaid
 flowchart TD
-    subgraph UI ["Frontend (React + Vite + TypeScript + Tailwind)"]
-        Overview["Twin Overview & Confidence"]
-        Predict["Prediction Engine (Uncertainty Bands)"]
-        Learning["Twin Learning (Error vs mem_n)"]
-        WhatIf["What-If Simulation Lab"]
-        ClinicalPlan["Clinical Plan (Provenanced)"]
-        Replay["CGM Sensor Replay (SSE)"]
-        Validation["Validation & Model Registry"]
+    subgraph Client ["Frontend Workspace (React 18 + Vite + TypeScript + Tailwind)"]
+        direction TB
+        subgraph RoleNav ["Role-Tailored Workspaces"]
+            PatientPortal["Patient Portal\n(Home, Fast Log, Diary, Twin, Plan, Chat, Import)"]
+            DietitianSuite["Dietitian Suite\n(Panel, Simulation, My Plan, Messages, Reports, Model Info)"]
+            ClinicianCDS["Clinician CDS & Encounters\n(Panel, Visits Workspace, Alerts Center, Studio, Model Info)"]
+        end
     end
 
     subgraph Backend ["FastAPI Application Backend (Port 8000)"]
-        Router["API Routers (/patients, /twin, /clinical, /replay, /system)"]
-        
-        subgraph TwinCore ["Metabolic Twin Engine"]
-            Memory["Memory Calculator (mem_mean_rise, mem_n)"]
-            BoundsGuard["Feature Bounds Guard (lo/hi check)"]
-            ModelEnsemble["HistGradientBoosting Ensemble (15 Models)"]
-            WhatIfSim["What-If Simulator (Pessimistic Gain)"]
+        direction TB
+        AuthRouter["Authentication & RBAC (/auth)"]
+        TwinRouter["Metabolic Twin & Simulation (/twin, /whatif)"]
+        ClinicalRouter["Clinical Encounters & Visits (/visits, /clinical)"]
+        AlertsRouter["Metabolic Alerts & Triage (/alerts)"]
+        MessageRouter["Care Team Messaging (/messages)"]
+        ImportRouter["CGM & Wearables Ingestion (/import)"]
+        ReportRouter["Weekly Reports & FHIR R4 Export (/reports, /export/fhir)"]
+        SystemRouter["System Validation & Replay (/system, /replay)"]
+
+        subgraph MLCore ["Metabolic Machine Learning Core"]
+            Ensemble["15-Model Bootstrap Ensemble\n(HistGradientBoostingRegressor)"]
+            Memory["Adaptive Twin Memory\n(mem_n, mem_mean_rise)"]
+            BoundsGuard["Feature Bounds Guard\n(45-patient CGMacros bounds)"]
         end
 
-        subgraph ClinicalCore ["Clinical Reasoning & Safety"]
-            GeminiClient["Gemini Client (or Mock Offline Fixture)"]
-            GuidelineStore["Paraphrased Guideline Snippets (/guidelines)"]
-            Governor["Deterministic Safety Governor (Rules R1-R9)"]
-            Fallback["Conservative Clinical Fallback Plan"]
+        subgraph SafetyCore ["Clinical Reasoning & Deterministic Safety"]
+            Gemini["Gemini AI Reasoning Engine\n(ADA & ICMR Guideline Snippets)"]
+            Governor["Deterministic Safety Governor\n(Hard-Coded Rules R1-R9)"]
+            Fallback["Conservative Fallback Engine"]
         end
-
-        AuditService["Audit Log & Provenance Service"]
-        ReplayService["CGM Streaming Service (SSE)"]
-        PDFService["ReportLab 2-Page PDF Generator"]
     end
 
-    subgraph Storage ["Persistence & Data Artifacts"]
-        SQLite[("SQLite DB (glucotwin.db)")]
-        Models["Model Artifacts (meals_db.pkl, shanghai_clinical.pkl, twin_recommender.pkl)"]
-        ValidationMetrics["validation.json & model_manifest.json"]
+    subgraph Persistence ["Storage & Data Artifacts"]
+        SQLite[("SQLite Database\n(glucotwin.db)")]
+        Models["Pickle Artifacts\n(twin_recommender.pkl, meals_db.pkl)"]
+        ValidationData["Metrics Artifacts\n(validation.json, model_manifest.json)"]
     end
 
-    UI <-->|HTTP / REST & SSE| Router
-    Router --> TwinCore
-    Router --> ClinicalCore
-    Router --> ReplayService
-    Router --> PDFService
-    TwinCore --> Models
-    ClinicalCore --> GuidelineStore
-    ClinicalCore --> Governor
-    Router --> AuditService
-    AuditService --> SQLite
-    Router --> Storage
+    Client <-->|REST API & SSE Sensor Streams| Backend
+    TwinRouter --> MLCore
+    ClinicalRouter --> SafetyCore
+    AlertsRouter --> SafetyCore
+    ImportRouter --> MLCore
+    ReportRouter --> SQLite
+    MessageRouter --> SQLite
+    MLCore --> Models
+    SafetyCore --> Fallback
+    SystemRouter --> ValidationData
+    Backend <--> SQLite
 ```
-
-### Provenance Badging
-
-Every recommendation and metric in the UI carries an immutable provenance badge:
-- `TWIN-PREDICTED`: Produced directly by the trained ML models.
-- `GUIDELINE-BASED (AI)`: Generated by Gemini from clinical guidelines.
-- `SAFETY-CHECKED`: Verified and approved by the deterministic Safety Governor.
-- `PROJECTION`: Literature-informed range, distinct from real-time model prediction.
 
 ---
 
-## Setup in 5 Steps (Under 10 Minutes)
+## Role-Based Access Control (RBAC)
 
-### Step 1: Prerequisites
-Ensure you have the following installed on your laptop:
+The platform provides tailored workspaces ensuring each stakeholder interacts with only the data and tools appropriate to their clinical scope:
+
+| Role | Primary Workspaces | Scope & Key Capabilities |
+|---|---|---|
+| **Patient** | • Patient Home<br>• Fast Log Meal & Glucose<br>• Metabolic Twin<br>• Glucose Diary & Replay<br>• Meal & Walk Forecast<br>• My 4-Week Plan<br>• Doctor Advice & Plan<br>• My Care Team<br>• Care Team Chat<br>• Data Import<br>• Weekly Reports | **Personal Health Portal**: Allows individuals to log meals with carbohydrate breakdown, review adaptive twin predictions and uncertainty intervals, simulate 15-minute walks and carb swaps, review care plans, communicate with care providers, upload CGM/wearable files, and view synthesized weekly progress. *(Cannot access other patients' records, medical consult SOAP notes, or clinical alert triage).* |
+| **Dietitian** | • Patient Panel<br>• Twin Overview<br>• Fast Log Meal<br>• Timeline & Replay<br>• Simulation Lab<br>• 4-Week Care Plan<br>• Treatment Studio<br>• My Care Team<br>• Messages<br>• Data Import<br>• Weekly Reports<br>• About & Model Info | **Nutritional & Lifestyle Optimization**: Allows clinical dietitians to review assigned patients, model meal composition and physical activity what-ifs, track nutritional adherence, manage lifestyle goals in 4-week care plans, message patients and clinicians, and view model cross-validation transparency metrics. *(Excluded from physician-only medical diagnosis visit notes and acute clinical emergency alerts).* |
+| **Clinician** | • Clinical Patient Panel<br>• Visit Workspace (Consults)<br>• Metabolic Alerts Center<br>• Twin Overview<br>• Timeline & Replay<br>• Simulation Lab<br>• Treatment Studio<br>• 4-Week Care Plan<br>• Care Team Coordination<br>• Messages<br>• Data Import<br>• Weekly Reports & FHIR<br>• About & Model Info | **Clinical Decision Support (CDS)**: Complete clinical provider suite. Endocrinologists and physicians review panel risk stratification, document formal clinical encounters with SOAP notes and prescription recommendations, triage acute hypoglycemia/hyperglycemia alerts, apply medication scenario counterfactuals with Safety Governor checks, export FHIR R4 bundles, and download clinical PDF dossiers. |
+| **Admin** | • Full System Workspaces<br>• Patient Setup & Management<br>• All Clinical & Dietitian Views<br>• Model Registry & Validation | **Full Administration**: Complete access to all clinical, nutritional, and patient tools, including adding synthetic demo patients, testing interoperability pipelines, and verifying model calibration. |
+
+---
+
+## Demo Accounts & Credentials
+
+The system comes pre-seeded with 7 deterministic accounts representing diverse clinical profiles and care team members.
+
+> **Universal Password for All Demo Accounts:**
+> ```
+> Password123!
+> ```
+
+| Email | Role | Name | Clinical Description / Profile |
+|---|---|---|---|
+| `admin@glucotwin.org` | **Admin** | System Administrator | Full platform administrative access. |
+| `dr.chen@glucotwin.org` | **Clinician** | Dr. Michael Chen | Lead Endocrinologist managing complex diabetic patients. |
+| `dr.patel@glucotwin.org` | **Clinician** | Dr. Priya Patel | Internal Medicine Specialist focusing on early-stage T2D. |
+| `elena.diet@glucotwin.org` | **Dietitian** | Elena Rostova | Clinical Dietitian & Diabetes Educator. |
+| `patient.a@glucotwin.org` | **Patient** | Alex Rivera | **Demo Patient A (Cold Start)**: Newly diagnosed, $mem\_n = 0$, baseline cohort predictions. |
+| `patient.b@glucotwin.org` | **Patient** | Sarah Connor | **Demo Patient B (Adapted Twin)**: Well-adapted, $mem\_n = 8$, narrow prediction bands. |
+| `patient.c@glucotwin.org` | **Patient** | Marcus Vance | **Demo Patient C (Shanghai Hypo)**: Frequent hypoglycemia history; triggers Safety Governor Rule R1/R4 blocking sulfonylureas. |
+
+---
+
+## Getting Started: Running Locally
+
+### Prerequisites
 - **Python 3.11+**
 - **Node.js 18+** and `npm`
 
-### Step 2: Configure Environment Variables
-Copy `.env.example` to `backend/.env`:
-```bash
-cp .env.example backend/.env
-```
-*(On Windows PowerShell: `Copy-Item .env.example backend\.env`)*
+---
 
-By default, `MOCK_GEMINI=true` is enabled for full offline demonstration without requiring an API key. To enable live generative AI responses, add your Gemini API key to `backend/.env`:
-```ini
-GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-1.5-flash
-MOCK_GEMINI=false
-DATABASE_URL=sqlite:///./glucotwin.db
-REPLAY_DATA_PATH=models/cgm_timeseries.csv
-```
+### 1. Backend Setup & Startup
 
-### Step 3: Verify Model Artifacts
-Ensure the following files are present in `backend/models/`:
-- `twin_recommender.pkl` (Trained bootstrap ensemble)
-- `meals_db.pkl` (Meal response dataset from 45 CGMacros participants)
-- `shanghai_clinical.pkl` (Shanghai T2DM clinical profile library)
-- `model_manifest.json` (Model metadata and training specifications)
-- `cgm_timeseries.csv` (Continuous glucose sensor stream for replay)
+1. Open a terminal in the project root and navigate to `backend/`:
+   ```bash
+   cd backend
+   ```
 
-*(If any file is missing, the system will start with safe default mock fallbacks).*
+2. Create and activate a Python virtual environment:
+   - **Windows (PowerShell):**
+     ```powershell
+     python -m venv .venv
+     .venv\Scripts\Activate.ps1
+     ```
+   - **macOS / Linux:**
+     ```bash
+     python3 -m venv .venv
+     source .venv/bin/activate
+     ```
 
-### Step 4: Seed Demo Patients
-Run the idempotent seed script to populate the database with the 3 synthetic demo profiles:
-```bash
-python scripts/seed_demo.py
-```
-*(Or run using the virtual environment: `backend\.venv\Scripts\python scripts/seed_demo.py` on Windows / `backend/.venv/bin/python scripts/seed_demo.py` on Linux/macOS).*
+3. Install backend dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### Step 5: Start the Development Stack
-Run the one-click startup script for your operating system:
+4. Configure environment variables:
+   - **Windows (PowerShell):**
+     ```powershell
+     Copy-Item .env.example .env
+     ```
+   - **macOS / Linux:**
+     ```bash
+     cp .env.example .env
+     ```
+   *(By default, `MOCK_GEMINI=true` is enabled for full offline demonstration without requiring an API key. To enable live Gemini AI generation, insert your `GEMINI_API_KEY` into `backend/.env`).*
 
-**On Windows (PowerShell):**
-```powershell
-.\run_dev.ps1
-```
+5. Seed demo patients and accounts:
+   ```bash
+   python ../scripts/seed_demo.py
+   ```
 
-**On macOS / Linux / WSL (Bash):**
-```bash
-chmod +x run_dev.sh
-./run_dev.sh
-```
-
-The script will automatically initialize the Python virtual environment, install backend and frontend dependencies, start Uvicorn (`http://localhost:8000`) and the Vite dev server (`http://localhost:5173`), and open your default browser.
+6. Start the FastAPI server:
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   ```
+   *The interactive OpenAPI Swagger documentation will be available at `http://localhost:8000/docs`.*
 
 ---
 
-## Optional: Docker Compose Setup
+### 2. Frontend Setup & Startup
 
-If you prefer to run the full stack containerized:
+1. Open a second terminal window and navigate to `frontend/`:
+   ```bash
+   cd frontend
+   ```
 
-```bash
-docker compose up --build
-```
-- Backend API will be available at `http://localhost:8000`
-- Frontend UI will be available at `http://localhost:5173`
-- Database and model folders are mounted as live host volumes.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
----
+3. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+   *The frontend web application will start at `http://localhost:5173`.*
 
-## Environment Variables Reference
-
-| Variable | Default | Description |
-|---|---|---|
-| `GEMINI_API_KEY` | *(None)* | Google Gemini API key for clinical reasoning. |
-| `GEMINI_MODEL` | `gemini-1.5-flash` | Gemini model variant for structured clinical generation. |
-| `MOCK_GEMINI` | `true` | When `true`, returns canned schema-valid clinical fixtures without network calls. |
-| `DATABASE_URL` | `sqlite:///./glucotwin.db` | SQLAlchemy connection string. |
-| `REPLAY_DATA_PATH` | `models/cgm_timeseries.csv` | Filepath to recorded CGM sensor stream for Live Replay. |
-| `MODELS_DIR` | `backend/models` | Directory holding trained PKL models and manifest. |
+4. Log in using any of the [Demo Accounts](#demo-accounts--credentials) using password `Password123!`.
 
 ---
 
-## Exporting `model_manifest.json` and `validation.json` from Colab
+## Running the Automated Test Suites
 
-After training the `MealRecommender` ensemble in Google Colab, export the metadata and validation metrics using the following Python snippet:
+Both backend and frontend feature comprehensive test suites covering model predictions, memory adaptation math, deterministic safety rules, clinical encounters, messaging, CSV import, and role-based UI flows.
 
-```python
-import json
-import sklearn
-import pandas as pd
-from datetime import datetime, timezone
-
-# 1. Export model_manifest.json
-manifest = {
-    "class_name": "MealRecommender",
-    "sklearn_version": sklearn.__version__,
-    "pandas_version": pd.__version__,
-    "training_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-    "dataset_sizes": {
-        "cgmacros_meals": len(meals_df),
-        "participants_count": meals_df["patient_id"].nunique(),
-        "shanghai_cohort_size": len(shanghai_df),
-    },
-    "feature_columns": feature_cols,
-    "target_columns": ["peak_rise", "iauc_2h", "delta_60", "delta_120"],
-    "ensemble_size": len(recommender.models)
-}
-
-with open("model_manifest.json", "w") as f:
-    json.dump(manifest, f, indent=2)
-
-# 2. Export validation.json (Real CV metrics)
-validation = {
-    "model_registry": manifest,
-    "grouped_cv": {
-        "n_splits": 5,
-        "group_key": "patient_id",
-        "targets": {
-            "peak_postprandial": {"baseline_mae": 24.3, "twin_mae": 14.1, "baseline_rmse": 31.8, "twin_rmse": 18.9},
-            "two_hour_postprandial": {"baseline_mae": 28.1, "twin_mae": 16.4, "baseline_rmse": 36.2, "twin_rmse": 21.3},
-            "time_to_peak": {"baseline_mae": 21.0, "twin_mae": 13.5, "baseline_rmse": 27.4, "twin_rmse": 17.8}
-        }
-    },
-    "error_vs_memory": [
-        {"mem_n": 0, "mae": 24.3, "band_width": 42.0},
-        {"mem_n": 3, "mae": 19.8, "band_width": 34.5},
-        {"mem_n": 5, "mae": 16.9, "band_width": 28.2},
-        {"mem_n": 10, "mae": 14.7, "band_width": 22.1},
-        {"mem_n": 20, "mae": 13.9, "band_width": 19.4}
-    ],
-    "interval_calibration": [
-        {"nominal": 0.50, "empirical": 0.51},
-        {"nominal": 0.80, "empirical": 0.79},
-        {"nominal": 0.90, "empirical": 0.88}
-    ],
-    "limitations": [
-        "Trained on 45 participants from CGMacros observational cohort.",
-        "Meal-isolated time windows only; inter-meal snacks excluded.",
-        "Medication interaction dynamics not directly learned by model."
-    ]
-}
-
-with open("validation.json", "w") as f:
-    json.dump(validation, f, indent=2)
-```
-
-Place `model_manifest.json` into `backend/models/` and `validation.json` into `backend/metrics/`.
-
----
-
-## 5-Minute Live Demo Script (SPEC Section 15)
-
-Follow this sequence during live presentations or laptop demonstrations:
-
-1. **Twin Overview (Home)**:
-   - Select **Demo A [Cold Start]** from the top switcher.
-   - Observe confidence ring at 20% (baseline used, $mem\_n = 0$) and wide prediction bands.
-2. **Log Data & Twin Adaptation**:
-   - Navigate to **Log Data**. Log 3 sample meals with observed responses (e.g. 50g carbs, 25 mg/dL peak rise).
-   - Return to **Twin Overview** / **Twin Learning**: watch the twin state memory counter update ($mem\_n = 3$), confidence score rise, and uncertainty bands narrow.
-3. **What-If Simulation Lab**:
-   - Navigate to **What-If Lab**. Set baseline meal macros (60g carbs).
-   - Apply interventions: reduce carbs by 30% and toggle "15-min post-meal walk".
-   - Compare side-by-side curves: explain `pessimistic_gain` and point out the `SUPPORTED` boundary badge.
-4. **Clinical Plan & Safety Governor**:
-   - Switch to **Demo C [Shanghai Hypo]** (patient with active hypoglycemia history).
-   - Open **Clinical Plan**: show guideline-grounded therapy options (`[GUIDELINE-BASED (AI)]` and `[SAFETY-CHECKED]` badges).
-   - Highlight the **Governor Rules Triggered** panel: observe Rule **R4** explicitly blocking sulfonylureas/glinides due to hypoglycemia risk.
-   - Inspect the **Sources Panel** citing retrieved ADA/ICMR clinical guideline snippets.
-5. **Validation Page**:
-   - Open **Validation**: review the genuine Model Registry card, grouped-CV improvement table, error vs. $mem\_n$ personalisation curve, and $y=x$ interval calibration line.
-6. **Live Sensor Replay & PDF Export**:
-   - Navigate to **Live Replay**: run the CGM playback stream at 10x or 60x speed, showing arrival of meal markers and twin predicted postprandial responses.
-   - Open **Clinician View** and click **Download PDF Report**: review the clean 2-page clinical summary featuring the mandatory research prototype banner, provenance audit seal, and therapy discussion plan.
-
----
-
-## Testing Commands
-
-### Backend Tests (pytest)
-Runs all 60 comprehensive unit and integration tests (including memory math, Bounds Guard, Safety Governor rules R1–R9, validation endpoint, PDF generation, and SSE replay):
+### Run All Backend Tests (pytest)
 ```bash
-# Windows
-backend\.venv\Scripts\pytest -v
-
-# macOS / Linux
-backend/.venv/bin/pytest -v
+# From the backend directory with .venv active:
+pytest -v
 ```
+*Current test suite: **102 tests passing**.*
 
-### Frontend Tests (Vitest)
-Runs component tests, layout checks, and Phase 7 validation/replay interface tests:
+### Run All Frontend Tests (Vitest)
 ```bash
-cd frontend
-npm test
+# From the frontend directory:
+npm test -- --run
 ```
+*Current test suite: **75 tests across 10 test files passing**.*
 
-### Frontend Production Bundle Build
-Verifies TypeScript compilation (`tsc -b`) and Vite production bundle generation:
+### Frontend Production Bundle Verification
 ```bash
-cd frontend
+# From the frontend directory:
 npm run build
 ```
 
 ---
 
-## Limitations and Responsible Use
+## Core Features & Capabilities
+
+- **Adaptive Metabolic Twin**: 15-model bootstrap `HistGradientBoostingRegressor` ensemble that dynamically incorporates observed meals into an individual's twin memory ($mem\_n$). As meals are logged, prediction confidence increases and uncertainty bands narrow.
+- **Simulation Lab**: Multi-lever what-if forecasting (carbohydrate adjustment, post-meal 15-minute walks, protein/fat modulation) with realistic physiological damping (`pessimistic_gain`).
+- **Deterministic Safety Governor**: Enforces hard-coded clinical contraindications (Rules R1–R9), blocking hazardous medication classes (e.g. blocking sulfonylureas/glinides when hypoglycemia is detected) and scrubbing prescriptive dosing directives.
+- **Clinician Visit Workspace**: Structured 3-panel clinical workflow providing patient pre-visit summaries, AI-assisted guideline recommendations, and patient-ready 4-week care plan publishing.
+- **Care Team Discussion Hub**: In-app bidirectional messaging linking patient-clinician conversations directly to clinical encounters, active alerts, or simulation scenarios.
+- **Data Import**: High-throughput CSV ingestion for continuous glucose monitoring (CGM) telemetry (supporting generic CSV and Abbott FreeStyle Libre exports with automatic mmol/L to mg/dL conversion and de-duplication) and daily wearable steps/sleep.
+- **Weekly Clinical Dossier & FHIR Export**: Generates comprehensive multi-page PDF reports and structured FHIR R4 JSON bundles (`Patient`, `Observation` CGM and Wearables, `CarePlan`).
+- **About & Model Info**: Read-only model specifications page presenting model version, scikit-learn version, cohort size (45 CGMacros participants, 1,200 meals), grouped cross-validation metrics (+39.1% MAE gain over baseline), and empirical vs nominal interval calibration charts.
+
+---
+
+## Limitations & Responsible Use
 
 > [!IMPORTANT]
 > **Research Prototype, Not a Medical Device**
-> 
-> 1. **Decision Support Only**: GlucoTwin is an investigational software prototype designed for clinical decision support, academic research, and educational demonstration. It is **not** a certified medical device, SaMD (Software as a Medical Device), or diagnostic tool.
-> 2. **Cohort Scope**: The underlying metabolic twin models were trained exclusively on meal responses from **45 participants** in the CGMacros observational study cohort. Model predictions may have diminished generalizability across diverse ethnic cohorts, pediatric populations, or patients with severe comorbidities.
-> 3. **Generative Projections**: Therapy options and lifestyle guidance are generated by Large Language Models grounded in paraphrased guideline summaries. They are **literature-based projections** intended to frame physician-patient discussions, not prescriptive clinical directives.
-> 4. **Clinician-in-the-Loop**: All outputs, predictions, and medication-class discussions require independent review, verification, and judgment by a licensed medical practitioner prior to any therapeutic or dietary changes.
+>
+> 1. **Decision Support Only**: GlucoTwin is an investigational software prototype designed for academic research, education, and clinical decision support. It is **not** a certified medical device, SaMD (Software as a Medical Device), or diagnostic instrument.
+> 2. **Cohort Scope**: The underlying metabolic twin models were trained on observational data from **45 participants** in the CGMacros cohort. Generalizability may vary across demographic groups, pediatric patients, or individuals with complex comorbidities.
+> 3. **Generative Projections**: AI-generated therapeutic options are literature-grounded projections intended to inform discussions between licensed physicians and patients—they are **not** prescriptive clinical orders.
+> 4. **Clinician Oversight**: Any modification to a patient's pharmacotherapy, insulin regimen, or medical treatment plan requires independent clinical evaluation by a licensed healthcare professional.

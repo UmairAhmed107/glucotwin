@@ -14,6 +14,7 @@ All endpoints enforce provenance = TWIN_PREDICTED, safety_checked = True,
 model_version string from manifest, bounds checking, and audit logging.
 """
 
+from datetime import datetime, timedelta, timezone
 import logging
 from typing import Any, Dict, List, Optional
 import numpy as np
@@ -26,8 +27,9 @@ from app.auth import get_current_user, log_audit_event, verify_patient_access
 from app.data_loader import data_loader
 from app.db import get_db
 from app.errors import AppException, PatientNotFoundException, ServiceUnavailableException
-from app.models_db import Patient, User
+from app.models_db import CarePlan, CarePlanTask, Patient, SavedScenario, User
 from app.schemas import (
+    ApplyGoalPlanRequest,
     BestTimeResponse,
     BestTimeSlot,
     CohortPositionResponse,
@@ -38,16 +40,32 @@ from app.schemas import (
     DailyPlanMeal,
     DailyPlanRequest,
     DailyPlanResponse,
+    PlanGoalRequest,
+    PlanGoalResponse,
     PredictMealInput,
     PredictResponse,
+    ReconcileResponse,
+    SavedScenarioCreate,
+    SavedScenarioResponse,
+    ScenarioCompareComparison,
+    ScenarioCompareRequest,
+    ScenarioCompareResponse,
     TargetPrediction,
+    TwinAccuracyResponse,
     TwinLearningDataPoint,
     TwinLearningResponse,
+    TwinMaturityResponse,
     WhatIfRequest,
     WhatIfResponse,
 )
 from app.twin.bounds import check_bounds
+from app.twin.lifecycle import (
+    compute_twin_maturity,
+    get_twin_accuracy_summary,
+    reconcile_patient_predictions,
+)
 from app.twin.memory import compute_confidence_score, compute_memory
+from app.twin.planner import plan_goal
 from app.twin.twin_engine import (
     MealRecommender,
     get_model_version,
@@ -260,6 +278,10 @@ def simulate_whatif(
         carb_reduction_pct=payload.interventions.carb_reduction_pct,
         post_meal_walk=payload.interventions.post_meal_walk,
         margin=payload.interventions.margin,
+        meal_order=payload.interventions.meal_order,
+        walk_duration_min=payload.interventions.walk_duration_min,
+        walk_intensity=payload.interventions.walk_intensity,
+        timing_shift_hours=payload.interventions.timing_shift_hours,
     )
 
     base_stat = res["baseline"]
@@ -313,6 +335,8 @@ def simulate_whatif(
         new_macros=res["new_macros"],
         gains=res["gains"],
         reason=res["reason"],
+        adjustments=res.get("adjustments", []),
+        is_estimated_adjustment=res.get("is_estimated_adjustment", False),
     )
 
 
@@ -812,4 +836,389 @@ def get_twin_learning_progression(
         data_points=data_points,
         note=note,
     )
+
+
+# ============================================================================
+# Digital Twin Lifecycle Endpoints
+# ============================================================================
+
+@router.get("/twin/{patient_id}/accuracy", response_model=TwinAccuracyResponse)
+def get_twin_accuracy(
+    patient_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TwinAccuracyResponse:
+    """
+    Retrieve prediction accuracy and error history for patient's digital twin:
+    - History of predictions vs actual postprandial responses
+    - Overall MAE and 20-point rolling MAE
+    - P10-P90 interval coverage percentage
+    - Active model drift detection status and root causes
+    """
+    verify_patient_access(patient_id, current_user, db)
+    summary = get_twin_accuracy_summary(patient_id=patient_id, db=db)
+
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="read",
+        resource_type="twin_accuracy",
+        resource_id=patient_id,
+        patient_id=patient_id,
+    )
+    return TwinAccuracyResponse.model_validate(summary)
+
+
+@router.get("/twin/{patient_id}/maturity", response_model=TwinMaturityResponse)
+def get_twin_maturity(
+    patient_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TwinMaturityResponse:
+    """
+    Retrieve the maturity score, current tier (Population, Learning, Personalized, Well-calibrated),
+    and historical milestone progression for the patient's metabolic twin.
+    """
+    verify_patient_access(patient_id, current_user, db)
+    maturity = compute_twin_maturity(patient_id=patient_id, db=db)
+
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="read",
+        resource_type="twin_maturity",
+        resource_id=patient_id,
+        patient_id=patient_id,
+    )
+    return TwinMaturityResponse.model_validate(maturity)
+
+
+@router.post("/twin/{patient_id}/reconcile", response_model=ReconcileResponse)
+def reconcile_twin_predictions(
+    patient_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ReconcileResponse:
+    """
+    Manually trigger reconciliation of any unreconciled predictions against available glucose readings.
+    Idempotent: reconciling twice changes nothing.
+    """
+    verify_patient_access(patient_id, current_user, db)
+    count = reconcile_patient_predictions(patient_id=patient_id, db=db)
+
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="reconcile",
+        resource_type="twin_reconcile",
+        resource_id=patient_id,
+        patient_id=patient_id,
+    )
+    return ReconcileResponse(
+        patient_id=patient_id,
+        reconciled_count=count,
+        message=f"Reconciliation completed. {count} new prediction(s) reconciled." if count > 0 else "Reconciliation completed. No new predictions to reconcile.",
+    )
+
+
+# ============================================================================
+# 9. Saved Scenarios Endpoints
+# ============================================================================
+
+@router.post("/patients/{patient_id}/scenarios", response_model=SavedScenarioResponse, status_code=status.HTTP_201_CREATED)
+def save_scenario(
+    patient_id: int,
+    payload: SavedScenarioCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> SavedScenarioResponse:
+    """Save a what-if simulation scenario with inputs, baseline, and intervention outputs."""
+    verify_patient_access(patient_id, current_user, db)
+
+    scenario = SavedScenario(
+        patient_id=patient_id,
+        name=payload.name,
+        description=payload.description,
+        inputs=payload.inputs,
+        baseline_output=payload.baseline_output,
+        intervention_output=payload.intervention_output,
+    )
+    db.add(scenario)
+    db.commit()
+    db.refresh(scenario)
+
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="save_scenario",
+        resource_type="saved_scenario",
+        resource_id=scenario.id,
+        patient_id=patient_id,
+    )
+
+    return scenario
+
+
+@router.get("/patients/{patient_id}/scenarios", response_model=List[SavedScenarioResponse])
+def list_saved_scenarios(
+    patient_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> List[SavedScenarioResponse]:
+    """List all saved scenarios for a patient, ordered by created_at descending."""
+    verify_patient_access(patient_id, current_user, db)
+
+    scenarios = (
+        db.query(SavedScenario)
+        .filter(SavedScenario.patient_id == patient_id)
+        .order_by(SavedScenario.created_at.desc())
+        .all()
+    )
+    return scenarios
+
+
+@router.get("/patients/{patient_id}/scenarios/{scenario_id}", response_model=SavedScenarioResponse)
+def get_saved_scenario(
+    patient_id: int,
+    scenario_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> SavedScenarioResponse:
+    """Retrieve a single saved scenario by ID."""
+    verify_patient_access(patient_id, current_user, db)
+
+    scenario = (
+        db.query(SavedScenario)
+        .filter(SavedScenario.id == scenario_id, SavedScenario.patient_id == patient_id)
+        .first()
+    )
+    if not scenario:
+        raise AppException(
+            code="SCENARIO_NOT_FOUND",
+            message=f"Saved scenario with id {scenario_id} not found.",
+            status_code=404,
+        )
+    return scenario
+
+
+@router.delete("/patients/{patient_id}/scenarios/{scenario_id}")
+def delete_saved_scenario(
+    patient_id: int,
+    scenario_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a saved scenario."""
+    verify_patient_access(patient_id, current_user, db)
+
+    scenario = (
+        db.query(SavedScenario)
+        .filter(SavedScenario.id == scenario_id, SavedScenario.patient_id == patient_id)
+        .first()
+    )
+    if not scenario:
+        raise AppException(
+            code="SCENARIO_NOT_FOUND",
+            message=f"Saved scenario with id {scenario_id} not found.",
+            status_code=404,
+        )
+
+    db.delete(scenario)
+    db.commit()
+
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="delete_scenario",
+        resource_type="saved_scenario",
+        resource_id=scenario_id,
+        patient_id=patient_id,
+    )
+
+    return {"message": "Scenario deleted successfully", "id": scenario_id}
+
+
+@router.post("/patients/{patient_id}/scenarios/compare", response_model=ScenarioCompareResponse)
+def compare_saved_scenarios(
+    patient_id: int,
+    payload: ScenarioCompareRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ScenarioCompareResponse:
+    """Compare two saved scenarios side-by-side with statistical delta and summary."""
+    verify_patient_access(patient_id, current_user, db)
+
+    scen_a = (
+        db.query(SavedScenario)
+        .filter(SavedScenario.id == payload.scenario_id_a, SavedScenario.patient_id == patient_id)
+        .first()
+    )
+    scen_b = (
+        db.query(SavedScenario)
+        .filter(SavedScenario.id == payload.scenario_id_b, SavedScenario.patient_id == patient_id)
+        .first()
+    )
+
+    if not scen_a or not scen_b:
+        raise AppException(
+            code="SCENARIOS_NOT_FOUND",
+            message="One or both scenarios to compare could not be found for this patient.",
+            status_code=404,
+        )
+
+    a_med = float((scen_a.intervention_output or scen_a.baseline_output or {}).get("median", 0.0))
+    b_med = float((scen_b.intervention_output or scen_b.baseline_output or {}).get("median", 0.0))
+    a_p10 = float((scen_a.intervention_output or scen_a.baseline_output or {}).get("p10", 0.0))
+    b_p10 = float((scen_b.intervention_output or scen_b.baseline_output or {}).get("p10", 0.0))
+    a_p90 = float((scen_a.intervention_output or scen_a.baseline_output or {}).get("p90", 0.0))
+    b_p90 = float((scen_b.intervention_output or scen_b.baseline_output or {}).get("p90", 0.0))
+
+    median_diff = round(b_med - a_med, 2)
+    p10_diff = round(b_p10 - a_p10, 2)
+    p90_diff = round(b_p90 - a_p90, 2)
+
+    a_carb = float((scen_a.inputs.get("interventions") or {}).get("carb_reduction_pct", 0.0))
+    b_carb = float((scen_b.inputs.get("interventions") or {}).get("carb_reduction_pct", 0.0))
+    carb_diff = round(b_carb - a_carb, 1)
+
+    if median_diff < -0.5:
+        summary = f"{scen_b.name} yields a {abs(median_diff):.1f} mg/dL lower predicted peak rise than {scen_a.name}."
+    elif median_diff > 0.5:
+        summary = f"{scen_a.name} yields a {median_diff:.1f} mg/dL lower predicted peak rise than {scen_b.name}."
+    else:
+        summary = f"Both scenarios produce equivalent predicted peak rises ({a_med:.1f} mg/dL)."
+
+    comparison = ScenarioCompareComparison(
+        median_diff_mgdl=median_diff,
+        p10_diff_mgdl=p10_diff,
+        p90_diff_mgdl=p90_diff,
+        carb_reduction_diff_pct=carb_diff,
+        summary=summary,
+    )
+
+    return ScenarioCompareResponse(
+        scenario_a=SavedScenarioResponse.model_validate(scen_a),
+        scenario_b=SavedScenarioResponse.model_validate(scen_b),
+        comparison=comparison,
+    )
+
+
+# ============================================================================
+# 10. Goal-Based Planner Endpoints
+# ============================================================================
+
+@router.post("/twin/plan-goal", response_model=PlanGoalResponse)
+def plan_glycemic_goal(
+    payload: PlanGoalRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PlanGoalResponse:
+    """
+    Goal-based lifestyle and meal planner.
+    Searches combinations of meal choice, portion scaling (50-100%), timing,
+    and post-meal walk options to meet the target peak rise limit.
+    Every plan passes through the deterministic Safety Governor before returning.
+    """
+    verify_patient_access(payload.patient_id, current_user, db)
+    rec = require_twin_model()
+
+    patient = db.query(Patient).filter(Patient.id == payload.patient_id).first()
+    if not patient:
+        raise PatientNotFoundException(patient_id=payload.patient_id)
+
+    patient_data = {
+        "id": patient.id,
+        "hypoglycemia_history": patient.hypoglycemia_history,
+        "kidney_flag": patient.kidney_flag,
+        "current_meds": patient.current_meds or [],
+    }
+
+    meals_dict = [m.model_dump() for m in payload.candidate_meals]
+
+    plan_res = plan_goal(
+        rec=rec,
+        patient_id=payload.patient_id,
+        patient_data=patient_data,
+        target_peak_rise_limit=payload.target_peak_rise_limit,
+        candidate_meals=meals_dict,
+        carb_ceiling_g=payload.carb_ceiling_g,
+        foods_to_avoid=payload.foods_to_avoid,
+        min_portion_pct=payload.min_portion_pct,
+        max_portion_pct=payload.max_portion_pct,
+        allow_timing_shift=payload.allow_timing_shift,
+        allow_walk=payload.allow_walk,
+        allow_meal_order=payload.allow_meal_order,
+        seed=payload.seed if payload.seed is not None else 42,
+    )
+
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="plan_goal",
+        resource_type="twin_plan_goal",
+        resource_id=payload.patient_id,
+        patient_id=payload.patient_id,
+    )
+
+    return PlanGoalResponse(**plan_res)
+
+
+@router.post("/twin/apply-plan")
+def apply_plan_to_care_plan(
+    payload: ApplyGoalPlanRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Add planned care-plan tasks directly to the patient's care plan.
+    Auto-creates an active CarePlan if one does not exist.
+    """
+    verify_patient_access(payload.patient_id, current_user, db)
+
+    care_plan = (
+        db.query(CarePlan)
+        .filter(CarePlan.patient_id == payload.patient_id, CarePlan.status == "active")
+        .first()
+    )
+
+    if not care_plan:
+        care_plan = CarePlan(
+            patient_id=payload.patient_id,
+            title="Goal-Based Glycemic Optimization Plan",
+            status="active",
+        )
+        db.add(care_plan)
+        db.flush()
+
+    due_dt = datetime.now(timezone.utc) + timedelta(days=7)
+    created_tasks = []
+    for t in payload.tasks:
+        task = CarePlanTask(
+            care_plan_id=care_plan.id,
+            patient_id=payload.patient_id,
+            title=t.get("title", "Lifestyle task"),
+            category=t.get("category", "lifestyle"),
+            due_date=due_dt,
+            assigned_to=t.get("assigned_to", "patient"),
+            status="pending",
+        )
+        db.add(task)
+        created_tasks.append(task)
+
+    db.commit()
+
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="apply_goal_plan",
+        resource_type="care_plan",
+        resource_id=care_plan.id,
+        patient_id=payload.patient_id,
+    )
+
+    return {
+        "message": f"Successfully added {len(created_tasks)} care-plan tasks.",
+        "care_plan_id": care_plan.id,
+        "task_count": len(created_tasks),
+    }
 

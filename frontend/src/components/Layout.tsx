@@ -11,18 +11,22 @@ import {
   ClipboardList,
   Cpu,
   Database,
+  FileText,
   FlaskConical,
   GraduationCap,
   History,
+  Home,
   Layers,
   LineChart,
   LogOut,
+  MessageSquare,
   PlusCircle,
   ShieldAlert,
   Sliders,
   Sparkles,
   Stethoscope,
   TrendingUp,
+  UploadCloud,
   User,
   Users,
   Utensils,
@@ -32,26 +36,62 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { usePatients, useAlerts, useAcknowledgeAlert } from '../api/queries';
 import { subscribeToToasts } from '../api/client';
+import { UserRole } from '../api/types';
 
 interface NavItem {
   to: string;
   label: string;
   patientLabel?: string;
   icon: React.ElementType;
+  roles?: UserRole[];
   clinicianOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/panel', label: 'Patient Panel', icon: Users, clinicianOnly: true },
-  { to: '/', label: 'Twin Overview', patientLabel: 'My Twin Overview', icon: Activity },
-  { to: '/visits', label: 'Visit Workspace', icon: Stethoscope, clinicianOnly: true },
-  { to: '/my-plan', label: 'My Care Plan', patientLabel: 'My 4-Week Plan', icon: ClipboardList },
-  { to: '/alerts', label: 'Alerts Center', icon: ShieldAlert, clinicianOnly: true },
-  { to: '/timeline', label: 'Timeline & Replay', patientLabel: 'Glucose Diary & Replay', icon: History },
-  { to: '/simulation', label: 'Simulation Lab', patientLabel: 'Meal & Walk Forecast', icon: Sliders },
-  { to: '/treatment', label: 'Treatment Studio', patientLabel: 'Doctor Advice & Plan', icon: Sparkles },
-  { to: '/care-team', label: 'My Care Team', patientLabel: 'My Care Team', icon: Users },
-  { to: '/governance', label: 'SCM Governance', icon: Database, clinicianOnly: true },
+  // Patient Panel: Clinicians, Dietitians, Admins
+  { to: '/panel', label: 'Patient Panel', icon: Users, roles: ['clinician', 'dietitian', 'admin'] },
+
+  // Patient Home: Patients only (Clinicians/Dietitians use /panel and /twin)
+  { to: '/', label: 'Patient Home', patientLabel: 'Patient Home', icon: Home, roles: ['patient'] },
+
+  // Core Metabolic Twin: All roles
+  { to: '/twin', label: 'Twin Overview', patientLabel: 'Metabolic Twin', icon: Activity, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+
+  // Fast Meal & Glucose Logging: All roles
+  { to: '/log', label: 'Log Meal & Glucose', patientLabel: 'Fast Log Meal', icon: Utensils, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+
+  // Timeline & Sensor Replay: All roles
+  { to: '/timeline', label: 'Timeline & Replay', patientLabel: 'Glucose Diary & Replay', icon: History, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+
+  // Simulation Lab: All roles
+  { to: '/simulation', label: 'Simulation Lab', patientLabel: 'Meal & Walk Forecast', icon: Sliders, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+
+  // Clinician Visit Workspace: Clinicians and Admins only (Excluded for Dietitians and Patients)
+  { to: '/visits', label: 'Visit Workspace', icon: Stethoscope, roles: ['clinician', 'admin'], clinicianOnly: true },
+
+  // Acute Metabolic Alerts: Clinicians and Admins only (Excluded for Dietitians and Patients)
+  { to: '/alerts', label: 'Alerts Center', icon: ShieldAlert, roles: ['clinician', 'admin'], clinicianOnly: true },
+
+  // 4-Week Care Plan: All roles
+  { to: '/my-plan', label: 'My Care Plan', patientLabel: 'My 4-Week Plan', icon: ClipboardList, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+
+  // Treatment & Lifestyle Studio: All roles
+  { to: '/treatment', label: 'Treatment Studio', patientLabel: 'Doctor Advice & Plan', icon: Sparkles, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+
+  // Care Team: All roles
+  { to: '/care-team', label: 'My Care Team', patientLabel: 'My Care Team', icon: Users, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+
+  // Care Team Messaging: All roles
+  { to: '/messages', label: 'Messages', patientLabel: 'Care Team Chat', icon: MessageSquare, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+
+  // Ingest CGM & Wearables: All roles
+  { to: '/import', label: 'Import Data', patientLabel: 'Data Import', icon: UploadCloud, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+
+  // Weekly Metabolic Reports: All roles
+  { to: '/reports', label: 'Weekly Reports', patientLabel: 'Weekly Reports', icon: FileText, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+
+  // About & Model Info: Clinicians, Dietitians, Admins
+  { to: '/governance', label: 'About & Model Info', icon: Database, roles: ['clinician', 'dietitian', 'admin'] },
 ];
 
 const ROUTE_TITLES: Record<string, string> = {
@@ -63,7 +103,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/timeline': 'Glucose Timeline & Sensor Replay',
   '/simulation': 'Metabolic Simulation Lab',
   '/treatment': 'Clinical Care & Treatment Studio',
-  '/governance': 'SCM Governance & Model Registry',
+  '/governance': 'About & Model Info',
   '/patients/setup': 'Patient Setup',
   '/log': 'Log Data',
   '/predict': 'Prediction Engine',
@@ -77,6 +117,9 @@ const ROUTE_TITLES: Record<string, string> = {
   '/validation': 'Validation & Model Registry',
   '/replay': 'CGM Sensor Replay',
   '/clinician-view': 'Clinician Decision Support View',
+  '/messages': 'Care Team Messages',
+  '/import': 'Clinical Data Import',
+  '/reports': 'Weekly Metabolic Reports & Interoperability',
 };
 
 export const Layout: React.FC = () => {
@@ -114,7 +157,9 @@ export const Layout: React.FC = () => {
   }, [patients, activePatientId, setActivePatientId]);
 
   const activePatient = patients?.find((p) => p.id === activePatientId);
-  const isPatientUser = user?.role === 'patient';
+  const effectiveRole: UserRole = (user?.role as UserRole) || (viewMode === 'patient' ? 'patient' : 'clinician');
+  const isPatientUser = effectiveRole === 'patient';
+  const isDietitianUser = effectiveRole === 'dietitian';
 
   // Alerts notification state for clinicians / providers
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
@@ -123,7 +168,12 @@ export const Layout: React.FC = () => {
   const unreadAlertsCount = openAlerts.length;
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
-    if (isPatientUser && item.clinicianOnly) return false;
+    if (item.roles && !item.roles.includes(effectiveRole) && effectiveRole !== 'admin') {
+      return false;
+    }
+    if (isPatientUser && item.clinicianOnly) {
+      return false;
+    }
     return true;
   });
 
@@ -173,7 +223,11 @@ export const Layout: React.FC = () => {
           <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
             {!isSidebarCollapsed && (
               <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                {viewMode === 'patient' ? 'Patient Portal' : 'Clinical Decision Support'}
+                {effectiveRole === 'patient'
+                  ? 'Patient Portal'
+                  : effectiveRole === 'dietitian'
+                  ? 'Dietitian Nutrition Suite'
+                  : 'Clinical Decision Support'}
               </div>
             )}
             {visibleNavItems.map((item, idx) => {
@@ -280,7 +334,6 @@ export const Layout: React.FC = () => {
                     {patients?.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.display_name} (#{p.id} • {p.age}y {p.sex} • HbA1c {p.hba1c_pct}%)
-                        {p.is_synthetic ? ' [Synthetic]' : ''}
                       </option>
                     ))}
                   </select>
@@ -289,34 +342,34 @@ export const Layout: React.FC = () => {
                   </div>
                 </div>
               )}
-
-              {activePatient?.is_synthetic && (
-                <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                  Synthetic demo patient
-                </span>
-              )}
             </div>
 
             {/* Right: Authenticated User Badge & Logout (Persona toggle removed per prompt) */}
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border border-slate-800 bg-slate-900/60">
-                {viewMode === 'clinician' ? (
+                {effectiveRole === 'patient' ? (
+                  <>
+                    <User className="w-3.5 h-3.5 text-teal-400" />
+                    <span className="text-teal-300 font-semibold">Patient Portal:</span>
+                    <span className="text-slate-400">Personal Simulations</span>
+                  </>
+                ) : effectiveRole === 'dietitian' ? (
+                  <>
+                    <Utensils className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-amber-300 font-semibold">Dietitian View:</span>
+                    <span className="text-slate-400">Nutrition & Lifestyle Guidance</span>
+                  </>
+                ) : (
                   <>
                     <Stethoscope className="w-3.5 h-3.5 text-indigo-400" />
                     <span className="text-indigo-300 font-semibold capitalize">{user?.role || 'Clinician'}:</span>
                     <span className="text-slate-400">CDS & Safety Governor Active</span>
                   </>
-                ) : (
-                  <>
-                    <User className="w-3.5 h-3.5 text-teal-400" />
-                    <span className="text-teal-300 font-semibold">Patient Mode:</span>
-                    <span className="text-slate-400">Personal Simulations</span>
-                  </>
                 )}
               </div>
 
-              {/* Alert Notification Bell & Dropdown for Clinicians */}
-              {!isPatientUser && (
+              {/* Alert Notification Bell & Dropdown for Clinicians and Admins */}
+              {!isPatientUser && !isDietitianUser && (
                 <div className="relative">
                   <button
                     type="button"

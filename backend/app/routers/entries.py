@@ -14,6 +14,7 @@ from app.schemas import (
     TimelineResponse,
 )
 from app.twin.memory import recompute_twin_state
+from app.twin.lifecycle import create_prediction_record_for_meal, reconcile_patient_predictions
 from app.routers.alerts import evaluate_and_sync_alerts
 
 router = APIRouter(prefix="/patients/{patient_id}", tags=["Entries & Timeline"])
@@ -28,7 +29,7 @@ def log_meal(
 ) -> MealEntryResponse:
     """
     Log a meal entry for a patient.
-    Stores entry and calls the recompute_twin_state hook function.
+    Stores entry, generates a digital twin prediction record, reconciles, and updates memory.
     """
     patient = verify_patient_access(patient_id, current_user, db)
 
@@ -52,11 +53,16 @@ def log_meal(
     db.commit()
     db.refresh(meal)
 
-    # Phase 1: Call hook function (returns without error)
+    # Twin Lifecycle: Generate prediction record and run reconciliation
+    create_prediction_record_for_meal(meal=meal, patient_id=patient_id, db=db)
+    reconcile_patient_predictions(patient_id=patient_id, db=db)
+
+    # Recompute twin state
     recompute_twin_state(patient_id=patient_id, db=db)
 
     # Evaluate alerts engine on new meal entry
     evaluate_and_sync_alerts(patient_id=patient_id, db=db)
+    db.refresh(meal)
 
     # Audit log
     log_audit(
@@ -98,6 +104,9 @@ def log_reading(
     db.add(reading)
     db.commit()
     db.refresh(reading)
+
+    # Reconcile any pending meal predictions covering this glucose reading
+    reconcile_patient_predictions(patient_id=patient_id, db=db)
 
     # Evaluate alerts engine on new glucose reading
     evaluate_and_sync_alerts(patient_id=patient_id, db=db)

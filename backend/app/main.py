@@ -20,7 +20,13 @@ from app.routers import (
     clinician,
     cohort,
     data,
+    data_import,
     entries,
+    export,
+    foods,
+    medications,
+    messaging,
+    patient_home,
     patients,
     replay,
     reports,
@@ -37,6 +43,19 @@ async def lifespan(app: FastAPI):
     init_db()
     data_loader.load_all()
     load_twin_model()
+
+    # Seed food items & demo medications
+    from app.db import SessionLocal
+    from app.food_seeder import seed_foods, seed_demo_medications
+    db = SessionLocal()
+    try:
+        seed_foods(db)
+        seed_demo_medications(db)
+    except Exception as e:
+        print(f"Warning during food/medication seeding: {e}")
+    finally:
+        db.close()
+
     yield
     # Shutdown logic (if any)
 
@@ -75,8 +94,14 @@ app.include_router(twin.router)
 app.include_router(clinical.router)
 app.include_router(cohort.router)
 app.include_router(reports.router)
+app.include_router(messaging.router)
+app.include_router(data_import.router)
+app.include_router(export.router)
 app.include_router(replay.router)
 app.include_router(visits.router)
+app.include_router(foods.router)
+app.include_router(medications.router)
+app.include_router(patient_home.router)
 
 
 

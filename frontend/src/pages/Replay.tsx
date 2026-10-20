@@ -251,15 +251,14 @@ export const ReplayPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* MANDATORY DISCLAIMER LABEL */}
-      <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs text-amber-200">
+      <div className="py-2.5 px-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs text-slate-400">
         <div className="flex items-center space-x-2.5">
-          <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-          <span className="font-semibold tracking-wide uppercase text-[11px] text-amber-300">
+          <span className="inline-block w-2 h-2 rounded-full bg-teal-400" />
+          <span className="font-medium text-slate-300 text-xs">
             Replay of recorded data, not live monitoring
           </span>
-          <span className="text-slate-400 hidden sm:inline">
-            &bull; Streaming recorded interstitial glucose measurements from clinical trial dataset.
+          <span className="text-slate-500 hidden sm:inline">
+            &bull; Historical interstitial glucose telemetry
           </span>
         </div>
         <ProvenanceBadge kind="TWIN_PREDICTED" safetyChecked={true} size="sm" />

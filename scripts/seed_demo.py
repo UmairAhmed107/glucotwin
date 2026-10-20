@@ -253,15 +253,18 @@ def seed_demo_patients():
         db.commit()
 
         # =====================================================================
-        # 3. Seed Care Team Links
+        # 3. Seed Care Team Links (All Active for Smooth Demonstrations)
         # =====================================================================
         care_links = [
             (demo_a.id, seeded_users["dr.chen@glucotwin.org"].id, "clinician", "active"),
+            (demo_a.id, seeded_users["dr.patel@glucotwin.org"].id, "clinician", "active"),
             (demo_a.id, seeded_users["elena.diet@glucotwin.org"].id, "dietitian", "active"),
             (demo_b.id, seeded_users["dr.chen@glucotwin.org"].id, "clinician", "active"),
-            (demo_b.id, seeded_users["dr.patel@glucotwin.org"].id, "clinician", "pending"),
+            (demo_b.id, seeded_users["dr.patel@glucotwin.org"].id, "clinician", "active"),
+            (demo_b.id, seeded_users["elena.diet@glucotwin.org"].id, "dietitian", "active"),
+            (demo_c.id, seeded_users["dr.chen@glucotwin.org"].id, "clinician", "active"),
             (demo_c.id, seeded_users["dr.patel@glucotwin.org"].id, "clinician", "active"),
-            (demo_c.id, seeded_users["elena.diet@glucotwin.org"].id, "dietitian", "pending"),
+            (demo_c.id, seeded_users["elena.diet@glucotwin.org"].id, "dietitian", "active"),
         ]
 
         for pat_id, prov_id, role_in_team, status in care_links:
@@ -287,7 +290,7 @@ def seed_demo_patients():
                 link.status = status
                 db.commit()
 
-        print(" [+] Seeded care-team link network (active & pending links established)")
+        print(" [+] Seeded care-team link network (all active provider partnerships)")
 
         # Evaluate and seed initial clinical alerts for demo patients
         from app.routers.alerts import evaluate_and_sync_alerts
@@ -316,4 +319,6 @@ def seed_demo_patients():
 
 if __name__ == "__main__":
     seed_demo_patients()
+    from seed_comprehensive_demo import run_comprehensive_seeder
+    run_comprehensive_seeder()
 

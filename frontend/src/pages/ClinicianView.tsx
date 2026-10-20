@@ -118,11 +118,6 @@ export const ClinicianViewPage: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <h1 className="text-xl font-bold text-white tracking-tight">{patient?.display_name}</h1>
                 <span className="text-xs font-mono text-slate-400">ID #{patient?.id}</span>
-                {patient?.is_synthetic && (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                    Synthetic Demo
-                  </span>
-                )}
               </div>
               <div className="text-xs text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                 <span>
@@ -239,27 +234,27 @@ export const ClinicianViewPage: React.FC = () => {
             <div className="flex items-center space-x-4">
               <ConfidenceRing score={conf} size={64} strokeWidth={6} />
               <div className="text-xs space-y-0.5">
-                <div className="text-white font-bold">{Math.round(conf * 100)}% Ensemble Reliability</div>
+                <div className="text-white font-bold">{Math.round(conf * 100)}% Twin Model Confidence</div>
                 <div className="text-slate-400 font-mono">
-                  mem_n: <strong className="text-teal-400">{memN}</strong> observed meals
+                  Logged Meals: <strong className="text-teal-400">{memN}</strong> observed
                 </div>
                 <div className="text-slate-400 font-mono">
-                  Running Rise:{' '}
+                  Baseline Rise:{' '}
                   <strong className="text-white">
-                    {twin?.mem_mean_rise != null ? `${twin.mem_mean_rise} mg/dL` : 'Population Prior'}
+                    {twin?.mem_mean_rise != null ? `${twin.mem_mean_rise} mg/dL` : 'Population Reference'}
                   </strong>
                 </div>
               </div>
             </div>
 
             <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
-              <span className="text-slate-400">Conditioning Prior:</span>
+              <span className="text-slate-400">Baseline Calibration:</span>
               <span
                 className={`font-semibold ${
                   memN === 0 ? 'text-amber-400' : 'text-teal-400'
                 }`}
               >
-                {memN === 0 ? 'Population Baseline (meals_db)' : 'Personalised Dynamic Memory'}
+                {memN === 0 ? 'Population Cohort Baseline' : 'Personalised Dynamic Memory'}
               </span>
             </div>
           </div>
@@ -280,25 +275,25 @@ export const ClinicianViewPage: React.FC = () => {
             {activePred && activePred.targets.peak_rise ? (
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1 font-mono text-xs">
                 <div className="flex justify-between text-slate-400">
-                  <span>Ensemble Median Peak Rise:</span>
+                  <span>Predicted Median Peak Rise:</span>
                   <span className="font-bold text-teal-400">
                     +{activePred.targets.peak_rise.median} mg/dL
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>80% Bootstrap Envelope:</span>
+                  <span>Expected Response (80% CI):</span>
                   <span className="text-slate-200">
                     [{activePred.targets.peak_rise.p10} - {activePred.targets.peak_rise.p90}] mg/dL
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Ensemble Dispersion:</span>
+                  <span>Variance Band:</span>
                   <span className="text-slate-300">{activePred.targets.peak_rise.band_width} mg/dL</span>
                 </div>
               </div>
             ) : (
               <p className="text-xs text-slate-400">
-                Click "Test 50g Carb Meal" to probe the bootstrap ensemble's current postprandial trajectory.
+                Click "Test 50g Carb Meal" to simulate the patient's predicted postprandial trajectory.
               </p>
             )}
           </div>

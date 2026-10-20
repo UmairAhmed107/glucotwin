@@ -105,11 +105,7 @@ export const ClinicalPlanPage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <h1 className="text-2xl font-bold text-white tracking-tight">Clinical Decision Support Plan</h1>
             <ProvenanceBadge provenance="GUIDELINE_AI" safetyChecked={true} />
-            {planResult?.demo_fixture && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                DemoFixture
-              </span>
-            )}
+
           </div>
           <p className="text-sm text-slate-400 mt-1">
             Guideline-concordant therapy options and lifestyle recommendations synthesized under strict deterministic
@@ -560,8 +556,8 @@ export const ClinicalPlanPage: React.FC = () => {
                   className="space-y-2 pt-2 border-t border-slate-800 overflow-hidden"
                 >
                   <p className="text-[11px] text-slate-400 mb-3">
-                    Every AI plan passes through deterministic rules (R1 to R9) that strip dosing, withhold
-                    hypoglycemia-inducing agents, and enforce guideline grounding.
+                    Clinical plans are validated against evidence-based safety rules to prevent adverse drug interactions,
+                    withhold hypoglycemia-inducing agents, and enforce guideline grounding.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     {planResult.governor_trace.rules_triggered.map((ruleId) => {
@@ -596,10 +592,7 @@ export const ClinicalPlanPage: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* Mandatory Footer Disclaimer */}
-          <div className="p-3 text-center text-xs font-medium text-slate-400 border-t border-slate-800 pt-4">
-            Options for clinician review. This is not a prescription.
-          </div>
+
         </div>
       )}
 

@@ -294,14 +294,79 @@ def check_renal_metformin(patient_data: Dict[str, Any]) -> Optional[AlertEvaluat
     return None
 
 
+def check_twin_model_drift(
+    predictions: List[Dict[str, Any]],
+    rolling_n: int = 20,
+) -> Optional[AlertEvaluation]:
+    """
+    Rule 7: Twin Model Drift Detection.
+    Evaluates rolling window of up to 20 reconciled predictions.
+    Triggers when MAE rises > 30% above earlier baseline OR interval coverage drops < 60%.
+    Message suggests possible causes: medication change, illness, sensor issue.
+    """
+    if not predictions:
+        return None
+
+    # Filter reconciled
+    reconciled = [p for p in predictions if p.get("error") is not None]
+    if len(reconciled) < 5:
+        return None
+
+    window = reconciled[-rolling_n:]
+    window_errors = [abs(p["error"]) for p in window if p.get("error") is not None]
+    if not window_errors:
+        return None
+
+    recent_mae = float(sum(window_errors) / len(window_errors))
+    in_range_count = sum(1 for p in window if p.get("in_range") is True)
+    coverage = float(in_range_count / len(window))
+
+    # Baseline MAE
+    if len(reconciled) > rolling_n:
+        earlier = reconciled[:-rolling_n]
+        earlier_errors = [abs(p["error"]) for p in earlier if p.get("error") is not None]
+        baseline_mae = float(sum(earlier_errors) / len(earlier_errors)) if earlier_errors else 14.0
+    elif len(reconciled) >= 6:
+        half = len(reconciled) // 2
+        initial_errors = [abs(p["error"]) for p in reconciled[:half] if p.get("error") is not None]
+        baseline_mae = float(sum(initial_errors) / len(initial_errors)) if initial_errors else 14.0
+    else:
+        baseline_mae = 14.0
+
+    drift_triggered = False
+    reasons = []
+    if baseline_mae > 0 and recent_mae > (1.30 * baseline_mae):
+        drift_triggered = True
+        pct = ((recent_mae - baseline_mae) / baseline_mae) * 100.0
+        reasons.append(f"MAE rose {pct:.0f}% above baseline ({recent_mae:.1f} vs {baseline_mae:.1f} mg/dL)")
+
+    if coverage < 0.60:
+        drift_triggered = True
+        reasons.append(f"interval coverage fell to {coverage*100:.0f}% (< 60% threshold)")
+
+    if drift_triggered:
+        reason_txt = "; ".join(reasons)
+        severity = "critical" if (coverage < 0.40 and recent_mae > 1.50 * baseline_mae) else "warning"
+        return AlertEvaluation(
+            rule_key="TWIN_MODEL_DRIFT",
+            severity=severity,
+            message=(
+                f"Twin model drift detected ({reason_txt}). "
+                f"Suggested potential causes: medication change, illness, sensor issue."
+            ),
+        )
+    return None
+
+
 def evaluate_all_rules(
     patient_data: Dict[str, Any],
     entries: List[Dict[str, Any]],
     now: Optional[datetime] = None,
     previous_hba1c: Optional[float] = None,
+    predictions: Optional[List[Dict[str, Any]]] = None,
 ) -> List[AlertEvaluation]:
     """
-    Pure orchestration function that evaluates all 6 metabolic safety rules.
+    Pure orchestration function that evaluates all metabolic and twin safety rules.
     Returns a list of AlertEvaluation results for all triggered rules.
     """
     alerts: List[AlertEvaluation] = []
@@ -339,6 +404,12 @@ def evaluate_all_rules(
     r6 = check_renal_metformin(patient_data)
     if r6:
         alerts.append(r6)
+
+    # Rule 7: Twin model drift (Prompt 2 alerts module)
+    if predictions:
+        r7 = check_twin_model_drift(predictions)
+        if r7:
+            alerts.append(r7)
 
     return alerts
 

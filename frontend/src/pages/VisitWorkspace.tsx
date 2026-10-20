@@ -48,7 +48,7 @@ import { DraftStatus, RecommendationDraft, Visit } from '../api/types';
 import { useApp } from '../context/AppContext';
 
 export const VisitWorkspace: React.FC = () => {
-  const { activePatientId, currentPatient } = useApp();
+  const { activePatientId } = useApp();
   const navigate = useNavigate();
 
   // Selected visit ID (or null to show latest/create)

@@ -89,6 +89,22 @@ export interface MealEntryCreatePayload {
   activity_after_min?: number | null;
 }
 
+export interface PredictionRecord {
+  id: number;
+  patient_id: number;
+  meal_id?: number | null;
+  predicted_peak_rise: number;
+  p10: number;
+  p90: number;
+  model_version: string;
+  created_at: string;
+  actual_peak_rise?: number | null;
+  actual_iauc_2h?: number | null;
+  error?: number | null;
+  in_range?: boolean | null;
+  reconciled_at?: string | null;
+}
+
 export interface MealEntry {
   id: number;
   patient_id: number;
@@ -105,6 +121,7 @@ export interface MealEntry {
   observed_delta_60?: number | null;
   observed_delta_120?: number | null;
   activity_after_min?: number | null;
+  prediction?: PredictionRecord | null;
 }
 
 export interface GlucoseReadingCreatePayload {
@@ -182,6 +199,102 @@ export interface WhatIfResponse {
     per_member_gains: number[];
   };
   reason?: string;
+  adjustments?: Array<{
+    lever: string;
+    name: string;
+    adjustment_pct: number;
+    applied_delta_mgdl: number;
+    description: string;
+    citation?: string;
+  }>;
+  is_estimated_adjustment?: boolean;
+}
+
+export interface SavedScenario {
+  id: number;
+  patient_id: number;
+  name: string;
+  description?: string | null;
+  inputs: Record<string, any>;
+  baseline_output: Record<string, any>;
+  intervention_output?: Record<string, any> | null;
+  created_at: string;
+}
+
+export interface ScenarioComparison {
+  median_diff_mgdl: number;
+  p10_diff_mgdl: number;
+  p90_diff_mgdl: number;
+  carb_reduction_diff_pct: number;
+  summary: string;
+}
+
+export interface ScenarioCompareResponse {
+  scenario_a: SavedScenario;
+  scenario_b: SavedScenario;
+  comparison: ScenarioComparison;
+}
+
+export interface PlannedMealItem {
+  meal_name: string;
+  portion_pct: number;
+  scaled_carbs: number;
+  scaled_kcal: number;
+  walk_option: string;
+  walk_duration_min: number;
+  walk_intensity: string;
+  meal_order: string;
+  meal_order_label: string;
+  timing_shift_hours: number;
+  pred_median: number;
+  pred_p10: number;
+  pred_p90: number;
+}
+
+export interface GoalPlanOption {
+  plan_id: string;
+  title: string;
+  strategy_type: string;
+  target_peak_rise_limit: number;
+  goal_met: boolean;
+  predicted_peak: {
+    median: number;
+    p10: number;
+    p90: number;
+    band_width: number;
+  };
+  meals: PlannedMealItem[];
+  tradeoffs: string[];
+  adjustments?: Array<{
+    lever: string;
+    name: string;
+    adjustment_pct: number;
+    applied_delta_mgdl: number;
+    description: string;
+    citation?: string;
+  }>;
+  is_estimated_adjustment?: boolean;
+  governor_trace: {
+    clean: boolean;
+    blocked: boolean;
+    rules_triggered: string[];
+    reason?: string;
+  };
+  care_plan_tasks: Array<{
+    title: string;
+    category: string;
+    due_date?: string;
+    assigned_to?: string;
+  }>;
+}
+
+export interface PlanGoalResponse {
+  provenance: 'TWIN_PREDICTED';
+  safety_checked: boolean;
+  patient_id: number;
+  target_peak_rise_limit: number;
+  seed: number;
+  plans: GoalPlanOption[];
 }
 
 export interface TherapyOption {
@@ -683,6 +796,389 @@ export interface CarePlan {
   created_at: string;
   updated_at: string;
   tasks: CarePlanTask[];
+}
+
+// ============================================================================
+// Phase 7: Fast Food Logging, Saved Meals & Patient Home Types
+// ============================================================================
+
+export interface FoodItem {
+  id: number;
+  name: string;
+  serving_description: string;
+  carbs: number;
+  protein: number;
+  fat: number;
+  calories: number;
+  fiber: number;
+  category?: string | null;
+  is_demo: boolean;
+  disclaimer: string;
+}
+
+export interface FoodSearchResponse {
+  items: FoodItem[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+export interface SavedMealItem {
+  food_id: number;
+  servings: number;
+  name?: string | null;
+  carbs?: number | null;
+  protein?: number | null;
+  fat?: number | null;
+  calories?: number | null;
+  fiber?: number | null;
+}
+
+export interface SavedMeal {
+  id: number;
+  patient_id: number;
+  name: string;
+  items: SavedMealItem[];
+  computed_carbs: number;
+  computed_protein: number;
+  computed_fat: number;
+  computed_calories: number;
+  computed_fiber: number;
+  created_at: string;
+}
+
+export interface PhotoMealEstimateItem {
+  name: string;
+  portion: string;
+  carbs: number;
+  protein: number;
+  fat: number;
+  calories: number;
+  fiber: number;
+}
+
+export interface PhotoMealEstimate {
+  draft_id: string;
+  food_items: PhotoMealEstimateItem[];
+  estimated_macros: {
+    carbs_g: number;
+    protein_g: number;
+    fat_g: number;
+    calories: number;
+    fibre_g: number;
+    carbs?: number;
+    protein?: number;
+    fat?: number;
+    fiber?: number;
+  };
+  confidence: number;
+  rationale: string;
+  confirmed: boolean;
+  is_mock: boolean;
+  disclaimer: string;
+}
+
+export interface Medication {
+  id: number;
+  patient_id: number;
+  name: string;
+  dosage: string;
+  schedule: string;
+  frequency_per_day: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface DoseLog {
+  id: number;
+  medication_id: number;
+  patient_id: number;
+  medication_name?: string | null;
+  dose: string;
+  scheduled_time: string;
+  taken_at?: string | null;
+  status: 'taken' | 'skipped' | 'pending';
+  notes?: string | null;
+}
+
+export interface AdherenceStats {
+  patient_id: number;
+  days_window: number;
+  total_scheduled_doses: number;
+  total_taken_doses: number;
+  total_missed_doses: number;
+  adherence_rate_pct: number;
+  current_streak_days: number;
+  today_doses: DoseLog[];
+}
+
+export interface PatientHomeSummary {
+  patient_id: number;
+  today_glucose: {
+    current_value: number;
+    min_value: number;
+    max_value: number;
+    mean_value: number;
+    readings_count: number;
+    trend: 'rising' | 'falling' | 'stable';
+    unit: string;
+    last_reading_time: string;
+  };
+  time_in_range_ring: {
+    in_range_pct: number;
+    below_range_pct: number;
+    above_range_pct: number;
+    total_readings: number;
+    target_in_range_pct: number;
+    status: 'on_track' | 'attention_needed';
+    window_label: string;
+  };
+  last_meal?: {
+    id: number;
+    logged_at: string;
+    carbs_g: number;
+    protein_g: number;
+    fat_g: number;
+    fiber_g: number;
+    calories: number;
+    observed_peak_rise: number;
+    predicted_peak_rise: number;
+    delta_mgdl: number;
+    response_badge: string;
+    badge_color: string;
+    pre_glucose: number;
+  } | null;
+  circadian_suggestion: {
+    meal_type: string;
+    optimal_window: string;
+    predicted_rise_reduction_mgdl: number;
+    rationale: string;
+    circadian_advantage: string;
+  };
+  medications_today: DoseLog[];
+  weekly_streak: {
+    current_streak_days: number;
+    target_days: number;
+    is_streak_active_today: boolean;
+    history: Array<{
+      day: string;
+      date: string;
+      active: boolean;
+      glucose_count: number;
+      meal_count: number;
+      dose_count: number;
+    }>;
+    encouragement: string;
+  };
+}
+
+export interface PredictionHistoryItem {
+  id: number;
+  meal_id?: number | null;
+  created_at?: string | null;
+  predicted_peak_rise: number;
+  p10: number;
+  p90: number;
+  actual_peak_rise?: number | null;
+  actual_iauc_2h?: number | null;
+  error?: number | null;
+  in_range?: boolean | null;
+  reconciled_at?: string | null;
+  rolling_mae?: number | null;
+  model_version: string;
+}
+
+export interface DriftDetails {
+  reason?: string | null;
+  baseline_mae?: number | null;
+  recent_mae?: number | null;
+  coverage_pct?: number | null;
+  suggested_causes: string[];
+}
+
+export interface TwinAccuracyResponse {
+  patient_id: number;
+  total_predictions: number;
+  reconciled_count: number;
+  overall_mae?: number | null;
+  rolling_mae_20?: number | null;
+  interval_coverage_pct?: number | null;
+  drift_detected: boolean;
+  drift_details?: DriftDetails | null;
+  history: PredictionHistoryItem[];
+}
+
+export interface MaturityTimelineItem {
+  level: string;
+  reached_at?: string | null;
+  description: string;
+  unlocked: boolean;
+}
+
+export interface TwinMaturityResponse {
+  patient_id: number;
+  score: number;
+  level: 'Population' | 'Learning' | 'Personalized' | 'Well-calibrated';
+  description: string;
+  components: {
+    memory_score: number;
+    accuracy_score: number;
+    calibration_score: number;
+    mem_n: number;
+    recent_mae?: number | null;
+    coverage_pct?: number | null;
+    formula?: string;
+  };
+  next_milestone: string;
+  timeline: MaturityTimelineItem[];
+}
+
+export interface ReconcileResponse {
+  patient_id: number;
+  reconciled_count: number;
+  message: string;
+}
+
+// ---------------------------------------------------------------------------
+// Platform Glue Types: Messaging
+// ---------------------------------------------------------------------------
+
+export interface Message {
+  id: number;
+  thread_id: number;
+  sender_id?: number | null;
+  sender_name?: string | null;
+  sender_role?: string | null;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface MessageThread {
+  id: number;
+  patient_id: number;
+  patient_name?: string | null;
+  title: string;
+  topic_type?: 'general' | 'visit' | 'alert' | 'scenario' | null;
+  topic_id?: string | null;
+  topic_title?: string | null;
+  created_by?: number | null;
+  creator_name?: string | null;
+  unread_count: number;
+  last_message?: string | null;
+  last_message_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  messages?: Message[];
+}
+
+export interface ThreadCreatePayload {
+  patient_id: number;
+  title: string;
+  initial_message?: string;
+  topic_type?: 'general' | 'visit' | 'alert' | 'scenario';
+  topic_id?: string;
+  topic_title?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Platform Glue Types: Data Import & Wearables
+// ---------------------------------------------------------------------------
+
+export interface CGMImportReport {
+  patient_id: number;
+  rows_accepted: number;
+  rows_skipped: number;
+  errors: string[];
+  units_detected: string;
+  alerts_evaluated: number;
+  predictions_reconciled: number;
+  message: string;
+}
+
+export interface WearableImportReport {
+  patient_id: number;
+  rows_accepted: number;
+  rows_skipped: number;
+  errors: string[];
+  message: string;
+}
+
+export interface WearableDailyItem {
+  id: number;
+  patient_id: number;
+  date: string;
+  steps: number;
+  sleep_hours: number;
+  source: string;
+  created_at: string;
+}
+
+// ---------------------------------------------------------------------------
+// Platform Glue Types: Weekly Report
+// ---------------------------------------------------------------------------
+
+export interface WeeklyReportMealItem {
+  meal_id?: number;
+  logged_at?: string;
+  meal_type?: string;
+  carbs_g: number;
+  calories: number;
+  pre_glucose: number;
+  observed_peak_rise?: number | null;
+  actual_peak_rise?: number | null;
+  rating?: 'best' | 'worst';
+}
+
+export interface WeeklyReport {
+  patient_id: number;
+  patient_name: string;
+  generated_at: string;
+  period_days: number;
+  tir_stats: {
+    tir_pct: number;
+    tar_pct: number;
+    tbr_pct: number;
+    mean_glucose: number;
+    total_readings: number;
+    target_tir_pct?: number;
+    target_tbr_pct?: number;
+  };
+  best_meals: WeeklyReportMealItem[];
+  worst_meals: WeeklyReportMealItem[];
+  twin_accuracy: {
+    mean_error: number;
+    in_range_pct: number;
+    total_predictions: number;
+    calibrated: boolean;
+    confidence_score?: number;
+  };
+  adherence: {
+    doses_taken: number;
+    doses_total: number;
+    adherence_pct: number;
+    meals_logged: number;
+  };
+  alerts: Array<{
+    id: number;
+    rule_key: string;
+    severity: 'info' | 'warning' | 'critical';
+    message: string;
+    status: string;
+    created_at: string;
+  }>;
+  plan_progress: {
+    title: string;
+    completed_tasks: number;
+    total_tasks: number;
+    progress_pct: number;
+  };
+  wearables_summary?: {
+    avg_steps: number;
+    avg_sleep_hours: number;
+    days_recorded: number;
+  } | null;
 }
 
 

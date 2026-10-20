@@ -15,8 +15,14 @@ from app.errors import (
     PatientNotFoundException,
     ServiceUnavailableException,
 )
-from app.models_db import AuditLog, CareTeamLink, Patient, TwinState, User
-from app.schemas import AuditLogResponse, PatientCreate, PatientDetailResponse, PatientResponse
+from app.models_db import AuditLog, CareTeamLink, Patient, TwinState, User, WearableDaily
+from app.schemas import (
+    AuditLogResponse,
+    PatientCreate,
+    PatientDetailResponse,
+    PatientResponse,
+    WearableDailyItem,
+)
 from app.twin.memory import recompute_twin_state
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
@@ -241,3 +247,22 @@ def get_patient_audit_log(
         patient_id=patient.id,
     )
     return [AuditLogResponse.model_validate(e) for e in entries]
+
+
+@router.get("/{patient_id}/wearables", response_model=List[WearableDailyItem])
+def get_patient_wearables(
+    patient_id: int,
+    limit: int = 30,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> List[WearableDailyItem]:
+    """Retrieve daily wearable telemetry (steps, sleep hours) for display context."""
+    patient = verify_patient_access(patient_id, current_user, db)
+    items = (
+        db.query(WearableDaily)
+        .filter(WearableDaily.patient_id == patient.id)
+        .order_by(WearableDaily.date.desc())
+        .limit(limit)
+        .all()
+    )
+    return items

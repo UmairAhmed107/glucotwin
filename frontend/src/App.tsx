@@ -30,6 +30,10 @@ import { TreatmentWorkspace } from './pages/TreatmentWorkspace';
 import { GovernanceWorkspace } from './pages/GovernanceWorkspace';
 import { VisitWorkspace } from './pages/VisitWorkspace';
 import { MyPlanPage } from './pages/MyPlan';
+import { PatientHome } from './pages/PatientHome';
+import { MessagesPage } from './pages/Messages';
+import { DataImportPage } from './pages/DataImport';
+import { ReportsPage } from './pages/ReportsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,7 +47,7 @@ const queryClient = new QueryClient({
 const HomeRoute: React.FC = () => {
   const { user } = useAuth();
   if (user?.role === 'patient') {
-    return <TwinOverview />;
+    return <PatientHome />;
   }
   return <PatientPanel />;
 };
@@ -69,6 +73,7 @@ export const App: React.FC = () => {
                 }
               >
                 <Route index element={<HomeRoute />} />
+                <Route path="home" element={<PatientHome />} />
                 <Route path="panel" element={<PatientPanel />} />
                 <Route path="twin" element={<TwinOverview />} />
                 <Route path="alerts" element={<AlertsPage />} />
@@ -86,6 +91,11 @@ export const App: React.FC = () => {
                 {/* Clinician Visit Workspace & Patient Care Plan */}
                 <Route path="visits" element={<VisitWorkspace />} />
                 <Route path="my-plan" element={<MyPlanPage />} />
+
+                {/* Platform Glue: Messages, Data Import, and Weekly Reports */}
+                <Route path="messages" element={<MessagesPage />} />
+                <Route path="import" element={<DataImportPage />} />
+                <Route path="reports" element={<ReportsPage />} />
 
                 {/* Preserved Granular Sub-Routes for Direct Deep Linking & Tests */}
                 <Route path="log" element={<LogData />} />

@@ -140,8 +140,7 @@ export const PredictionPage: React.FC = () => {
             )}
           </div>
           <p className="text-sm text-slate-400 mt-1">
-            Simulate prospective glucose excursions across the 15-model bootstrap ensemble conditioned on patient
-            metabolic history.
+            Forecast postprandial glucose response based on meal composition and personalized metabolic history.
           </p>
         </div>
 
@@ -298,7 +297,7 @@ export const PredictionPage: React.FC = () => {
                 {predictMutation.isPending ? (
                   <>
                     <Activity className="w-4 h-4 animate-spin" />
-                    <span>Evaluating Ensemble...</span>
+                    <span>Simulating Response...</span>
                   </>
                 ) : (
                   <>
@@ -323,10 +322,9 @@ export const PredictionPage: React.FC = () => {
               <div className="flex items-center space-x-3 text-amber-400">
                 <AlertTriangle className="w-6 h-6 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-white">Out of Training Distribution Bounds</h3>
+                  <h3 className="font-semibold text-white">Meal Inputs Exceed Standard Range</h3>
                   <p className="text-xs text-amber-300/90 mt-0.5">
-                    {outOfRangeError.message} To preserve clinical safety, numerical twin forecasts are withheld for
-                    unseen combinations.
+                    {outOfRangeError.message} To preserve clinical safety, forecasts are withheld for inputs beyond safe validation bounds.
                   </p>
                 </div>
               </div>
@@ -357,8 +355,7 @@ export const PredictionPage: React.FC = () => {
               <div className="max-w-md mx-auto">
                 <h3 className="text-lg font-semibold text-white">Ready to Predict Prandial Excursion</h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Adjust candidate meal macros on the left and click "Run Twin Prediction" to generate 80% bootstrap
-                  uncertainty envelopes.
+                  Adjust candidate meal macros on the left and click "Run Twin Prediction" to simulate the expected post-meal glucose curve.
                 </p>
               </div>
             </div>
@@ -377,7 +374,7 @@ export const PredictionPage: React.FC = () => {
                       <span>{Math.round(predictionResult.confidence_score * 100)}% reliability</span>
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      Band width: <span className="font-mono text-slate-300">{peak.band_width} mg/dL</span> | Mem N:{' '}
+                      Band: <span className="font-mono text-slate-300">±{Math.round((peak.band_width || 0) / 2)} mg/dL</span> | Logged Meals:{' '}
                       <span className="font-mono text-slate-300">
                         {predictionResult.confidence_components?.mem_n ?? 0}
                       </span>
@@ -481,8 +478,8 @@ export const PredictionPage: React.FC = () => {
 
               {/* Uncertainty Trajectory Chart */}
               <SectionCard
-                title="Postprandial Glucose Trajectory (80% Bootstrap Uncertainty Band)"
-                description="Simulated post-meal curve: solid line is ensemble median; shaded band indicates 10th-90th percentiles."
+                title="Postprandial Glucose Trajectory"
+                description="Simulated post-meal curve: solid line represents expected glucose; shaded band indicates typical response range."
               >
                 <UncertaintyChart
                   data={curvePoints}

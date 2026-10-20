@@ -39,11 +39,14 @@ export async function apiRequest<T>(
   const url = `${BASE_URL}${endpoint}`;
   const token = localStorage.getItem('glucotwin_token');
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...((options.headers as Record<string, string>) || {}),
   };
+
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
 
 
   try {

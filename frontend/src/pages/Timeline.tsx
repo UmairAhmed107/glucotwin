@@ -174,7 +174,7 @@ export const TimelinePage: React.FC = () => {
 
                   {/* Meal Event Summary */}
                   {isMeal && (
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-white">
                           Meal Intake ({event.data.calories || 0} kcal)
@@ -189,6 +189,42 @@ export const TimelinePage: React.FC = () => {
                         {event.data.carbs_g}g C • {event.data.protein_g}g P • {event.data.fat_g}g F • Pre:{' '}
                         {event.data.pre_glucose} mg/dL
                       </div>
+
+                      {/* Predicted vs Actual Reconciliation Badge */}
+                      {event.data.prediction && (
+                        <div className="mt-2 pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-2 text-xs">
+                          <span className="text-[11px] font-semibold text-slate-400">Twin Forecast:</span>
+                          <span className="font-mono px-2 py-0.5 rounded bg-slate-800/80 text-teal-300 font-medium">
+                            Predicted +{event.data.prediction.predicted_peak_rise} mg/dL
+                          </span>
+                          {event.data.prediction.reconciled_at ? (
+                            <>
+                              <span className="text-slate-500">vs</span>
+                              <span className="font-mono px-2 py-0.5 rounded bg-slate-800/80 text-blue-300 font-medium">
+                                Actual +{event.data.prediction.actual_peak_rise} mg/dL
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  event.data.prediction.in_range
+                                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                    : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                                }`}
+                              >
+                                {event.data.prediction.in_range ? '✓ In P10-P90' : '⚠ Out of Range'}
+                                {event.data.prediction.error != null && (
+                                  <span className="font-mono ml-1 font-normal opacity-85">
+                                    ({event.data.prediction.error > 0 ? `+${event.data.prediction.error}` : event.data.prediction.error} mg/dL)
+                                  </span>
+                                )}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 border border-slate-700">
+                              Awaiting 3h window reading(s)
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 

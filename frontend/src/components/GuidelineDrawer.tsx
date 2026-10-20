@@ -66,16 +66,6 @@ export const GuidelineDrawer: React.FC<GuidelineDrawerProps> = ({
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
-                <div className="flex items-center space-x-1.5 text-slate-400 font-medium">
-                  <ShieldAlert className="w-4 h-4 text-amber-400" />
-                  <span>Clinical Prototype Source Notice</span>
-                </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  These snippets are paraphrased educational summaries for research prototype use. Verify against
-                  current ADA Standards of Care and national ICMR clinical guidelines before clinical implementation.
-                </p>
-              </div>
             </div>
 
             {/* Footer */}

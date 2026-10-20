@@ -139,6 +139,24 @@ class MealEntryCreate(BaseModel):
         return self
 
 
+class PredictionRecordResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    patient_id: int
+    meal_id: Optional[int] = None
+    predicted_peak_rise: float
+    p10: float
+    p90: float
+    model_version: str
+    created_at: datetime
+    actual_peak_rise: Optional[float] = None
+    actual_iauc_2h: Optional[float] = None
+    error: Optional[float] = None
+    in_range: Optional[bool] = None
+    reconciled_at: Optional[datetime] = None
+
+
 class MealEntryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -157,6 +175,7 @@ class MealEntryResponse(BaseModel):
     observed_delta_60: Optional[float] = None
     observed_delta_120: Optional[float] = None
     activity_after_min: Optional[float] = None
+    prediction: Optional[PredictionRecordResponse] = None
 
 
 # ============================================================================
@@ -286,11 +305,24 @@ class WhatIfInterventions(BaseModel):
     carb_reduction_pct: float = Field(default=0.0, ge=0.0, le=50.0)
     post_meal_walk: bool = False
     margin: float = 15.0
+    meal_order: Literal["standard", "veggies_first", "protein_first", "veggies_protein_first"] = "standard"
+    walk_duration_min: float = Field(default=0.0, ge=0.0, le=60.0)
+    walk_intensity: Literal["none", "light", "moderate", "brisk"] = "none"
+    timing_shift_hours: float = Field(default=0.0, ge=-4.0, le=4.0)
 
 
 class WhatIfRequest(BaseModel):
     meal: PredictMealInput
     interventions: WhatIfInterventions
+
+
+class EstimatedAdjustment(BaseModel):
+    lever: str
+    name: str
+    adjustment_pct: float
+    applied_delta_mgdl: float
+    description: str
+    citation: Optional[str] = None
 
 
 class WhatIfResponse(BaseModel):
@@ -304,6 +336,127 @@ class WhatIfResponse(BaseModel):
     new_macros: Optional[dict] = None
     gains: Optional[dict] = None
     reason: Optional[str] = None
+    adjustments: List[Dict[str, Any]] = Field(default_factory=list)
+    is_estimated_adjustment: bool = False
+
+
+# ============================================================================
+# Saved Scenarios Schemas
+# ============================================================================
+
+class SavedScenarioCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    inputs: Dict[str, Any]
+    baseline_output: Dict[str, Any]
+    intervention_output: Optional[Dict[str, Any]] = None
+
+
+class SavedScenarioResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    patient_id: int
+    name: str
+    description: Optional[str] = None
+    inputs: Dict[str, Any]
+    baseline_output: Dict[str, Any]
+    intervention_output: Optional[Dict[str, Any]] = None
+    created_at: datetime
+
+
+class ScenarioCompareRequest(BaseModel):
+    scenario_id_a: int
+    scenario_id_b: int
+
+
+class ScenarioCompareComparison(BaseModel):
+    median_diff_mgdl: float  # scenario_b - scenario_a (negative means B has a lower predicted peak rise)
+    p10_diff_mgdl: float
+    p90_diff_mgdl: float
+    carb_reduction_diff_pct: float
+    summary: str
+
+
+class ScenarioCompareResponse(BaseModel):
+    scenario_a: SavedScenarioResponse
+    scenario_b: SavedScenarioResponse
+    comparison: ScenarioCompareComparison
+
+
+# ============================================================================
+# Goal-Based Planner Schemas
+# ============================================================================
+
+class PlanGoalCandidateMeal(BaseModel):
+    name: Optional[str] = "Meal"
+    carbs_g: float = Field(..., ge=0.0)
+    protein_g: float = Field(..., ge=0.0)
+    fat_g: float = Field(..., ge=0.0)
+    calories: Optional[float] = None
+    time_of_day: float = Field(default=12.0, ge=0.0, le=24.0)
+    pre_glucose: float = Field(default=100.0, ge=40.0, le=400.0)
+    pre_trend30: float = Field(default=0.0)
+
+
+class PlanGoalRequest(BaseModel):
+    patient_id: int
+    target_peak_rise_limit: float = Field(..., ge=5.0, le=150.0, description="Target postprandial peak rise limit in mg/dL")
+    candidate_meals: List[PlanGoalCandidateMeal] = Field(..., min_length=1)
+    carb_ceiling_g: Optional[float] = Field(default=None, ge=0.0)
+    foods_to_avoid: Optional[List[str]] = Field(default_factory=list)
+    min_portion_pct: float = Field(default=50.0, ge=50.0, le=100.0)
+    max_portion_pct: float = Field(default=100.0, ge=50.0, le=100.0)
+    allow_timing_shift: bool = True
+    allow_walk: bool = True
+    allow_meal_order: bool = True
+    seed: Optional[int] = 42
+
+
+class PlannedMealItem(BaseModel):
+    meal_name: str
+    portion_pct: float
+    scaled_carbs: float
+    scaled_kcal: float
+    walk_option: str
+    walk_duration_min: float
+    walk_intensity: str
+    meal_order: str
+    meal_order_label: str
+    timing_shift_hours: float
+    pred_median: float
+    pred_p10: float
+    pred_p90: float
+
+
+class GoalPlanOption(BaseModel):
+    plan_id: str
+    title: str
+    strategy_type: str
+    target_peak_rise_limit: float
+    goal_met: bool
+    predicted_peak: Dict[str, float]  # median, p10, p90, band_width
+    meals: List[PlannedMealItem]
+    tradeoffs: List[str]
+    adjustments: List[Dict[str, Any]] = Field(default_factory=list)
+    is_estimated_adjustment: bool = False
+    governor_trace: Dict[str, Any]
+    care_plan_tasks: List[Dict[str, Any]]
+
+
+class PlanGoalResponse(BaseModel):
+    provenance: Literal["TWIN_PREDICTED"] = "TWIN_PREDICTED"
+    safety_checked: bool = True
+    patient_id: int
+    target_peak_rise_limit: float
+    seed: int
+    plans: List[GoalPlanOption]
+
+
+class ApplyGoalPlanRequest(BaseModel):
+    patient_id: int
+    plan_id: str
+    tasks: List[Dict[str, Any]]
 
 
 class CompareMealsRequest(BaseModel):
@@ -693,6 +846,333 @@ class VisitResponse(BaseModel):
 
 class TaskUpdateRequest(BaseModel):
     status: Literal["pending", "in_progress", "completed", "cancelled"]
+
+
+# ============================================================================
+# Phase 7: Fast Food Logging, Saved Meals & Patient Home Schemas
+# ============================================================================
+
+class FoodItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    serving_description: str
+    carbs: float
+    protein: float
+    fat: float
+    calories: float
+    fiber: float = 0.0
+    category: Optional[str] = None
+    is_demo: bool = True
+    disclaimer: str = "Approximate demo data for clinical educational testing"
+
+
+class FoodSearchResponse(BaseModel):
+    items: List[FoodItemResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int
+
+
+class SavedMealItem(BaseModel):
+    food_id: int
+    servings: float = 1.0
+    name: Optional[str] = None
+    carbs: Optional[float] = None
+    protein: Optional[float] = None
+    fat: Optional[float] = None
+    calories: Optional[float] = None
+    fiber: Optional[float] = None
+
+
+class SavedMealCreate(BaseModel):
+    name: str
+    items: List[SavedMealItem]
+
+
+class SavedMealResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    patient_id: int
+    name: str
+    items: List[Dict[str, Any]]
+    computed_carbs: float
+    computed_protein: float
+    computed_fat: float
+    computed_calories: float
+    computed_fiber: float
+    created_at: datetime
+
+
+class PhotoMealEstimateItem(BaseModel):
+    name: str
+    portion: str
+    carbs: float
+    protein: float
+    fat: float
+    calories: float
+    fiber: float = 0.0
+
+
+class PhotoMealEstimateResponse(BaseModel):
+    draft_id: str
+    food_items: List[PhotoMealEstimateItem]
+    estimated_macros: Dict[str, float]
+    confidence: float
+    rationale: str
+    confirmed: bool = False
+    is_mock: bool = True
+    disclaimer: str = "AI draft estimate - please review and verify before logging"
+
+
+class MedicationCreate(BaseModel):
+    name: str
+    dosage: str
+    schedule: str
+    frequency_per_day: int = 1
+
+
+class MedicationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    patient_id: int
+    name: str
+    dosage: str
+    schedule: str
+    frequency_per_day: int
+    is_active: bool
+    created_at: datetime
+
+
+class DoseLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    medication_id: int
+    patient_id: int
+    medication_name: Optional[str] = None
+    dose: str
+    scheduled_time: datetime
+    taken_at: Optional[datetime] = None
+    status: Literal["taken", "skipped", "pending"]
+    notes: Optional[str] = None
+
+
+class DoseLogUpdate(BaseModel):
+    status: Literal["taken", "skipped", "pending"]
+    taken_at: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class AdherenceStatsResponse(BaseModel):
+    patient_id: int
+    days_window: int
+    total_scheduled_doses: int
+    total_taken_doses: int
+    total_missed_doses: int
+    adherence_rate_pct: float
+    current_streak_days: int
+    today_doses: List[DoseLogResponse] = Field(default_factory=list)
+
+
+class PatientHomeSummaryResponse(BaseModel):
+    patient_id: int
+    today_glucose: Dict[str, Any]
+    time_in_range_ring: Dict[str, Any]
+    last_meal: Optional[Dict[str, Any]] = None
+    circadian_suggestion: Dict[str, Any]
+    medications_today: List[DoseLogResponse] = Field(default_factory=list)
+    weekly_streak: Dict[str, Any]
+
+
+# ============================================================================
+# Digital Twin Lifecycle Schemas
+# ============================================================================
+
+class PredictionHistoryItem(BaseModel):
+    id: int
+    meal_id: Optional[int] = None
+    created_at: Optional[str] = None
+    predicted_peak_rise: float
+    p10: float
+    p90: float
+    actual_peak_rise: Optional[float] = None
+    actual_iauc_2h: Optional[float] = None
+    error: Optional[float] = None
+    in_range: Optional[bool] = None
+    reconciled_at: Optional[str] = None
+    rolling_mae: Optional[float] = None
+    model_version: str
+
+
+class DriftDetails(BaseModel):
+    reason: Optional[str] = None
+    baseline_mae: Optional[float] = None
+    recent_mae: Optional[float] = None
+    coverage_pct: Optional[float] = None
+    suggested_causes: List[str] = Field(default_factory=list)
+
+
+class TwinAccuracyResponse(BaseModel):
+    patient_id: int
+    total_predictions: int
+    reconciled_count: int
+    overall_mae: Optional[float] = None
+    rolling_mae_20: Optional[float] = None
+    interval_coverage_pct: Optional[float] = None
+    drift_detected: bool
+    drift_details: Optional[DriftDetails] = None
+    history: List[PredictionHistoryItem] = Field(default_factory=list)
+
+
+class MaturityTimelineItem(BaseModel):
+    level: str
+    reached_at: Optional[str] = None
+    description: str
+    unlocked: bool
+
+
+class TwinMaturityResponse(BaseModel):
+    patient_id: int
+    score: float
+    level: str
+    description: str
+    components: Dict[str, Any]
+    next_milestone: str
+    timeline: List[MaturityTimelineItem] = Field(default_factory=list)
+
+
+class ReconcileResponse(BaseModel):
+    patient_id: int
+    reconciled_count: int
+    message: str
+
+
+# ---------------------------------------------------------------------------
+# Platform Glue: Messaging Schemas
+# ---------------------------------------------------------------------------
+
+class MessageCreate(BaseModel):
+    content: str
+
+
+class MessageResponse(BaseModel):
+    id: int
+    thread_id: int
+    sender_id: Optional[int] = None
+    sender_name: Optional[str] = None
+    sender_role: Optional[str] = None
+    content: str
+    is_read: bool = False
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ThreadCreate(BaseModel):
+    patient_id: int
+    title: str
+    initial_message: Optional[str] = None
+    topic_type: Optional[str] = None  # "general" | "visit" | "alert" | "scenario"
+    topic_id: Optional[str] = None
+    topic_title: Optional[str] = None
+
+
+class ThreadResponse(BaseModel):
+    id: int
+    patient_id: int
+    patient_name: Optional[str] = None
+    title: str
+    topic_type: Optional[str] = None
+    topic_id: Optional[str] = None
+    topic_title: Optional[str] = None
+    created_by: Optional[int] = None
+    creator_name: Optional[str] = None
+    unread_count: int = 0
+    last_message: Optional[str] = None
+    last_message_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ThreadDetailResponse(ThreadResponse):
+    messages: List[MessageResponse] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Platform Glue: Data Import & Wearables Schemas
+# ---------------------------------------------------------------------------
+
+class CGMImportReport(BaseModel):
+    patient_id: int
+    rows_accepted: int
+    rows_skipped: int
+    errors: List[str] = Field(default_factory=list)
+    units_detected: str
+    alerts_evaluated: int = 0
+    predictions_reconciled: int = 0
+    message: str
+
+
+class WearableImportReport(BaseModel):
+    patient_id: int
+    rows_accepted: int
+    rows_skipped: int
+    errors: List[str] = Field(default_factory=list)
+    message: str
+
+
+class WearableDailyItem(BaseModel):
+    id: int
+    patient_id: int
+    date: str
+    steps: int
+    sleep_hours: float
+    source: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
+# Platform Glue: Weekly Report Schemas
+# ---------------------------------------------------------------------------
+
+class WeeklyReportMealItem(BaseModel):
+    meal_id: Optional[int] = None
+    logged_at: Optional[datetime] = None
+    meal_type: Optional[str] = None
+    carbs_g: float
+    calories: float
+    pre_glucose: float
+    observed_peak_rise: Optional[float] = None
+    actual_peak_rise: Optional[float] = None
+    rating: Optional[str] = None  # "best" | "worst"
+
+
+class WeeklyReportResponse(BaseModel):
+    patient_id: int
+    patient_name: str
+    generated_at: datetime
+    period_days: int = 7
+    tir_stats: Dict[str, Any]  # tir_pct, tar_pct, tbr_pct, mean_glucose, total_readings
+    best_meals: List[WeeklyReportMealItem] = Field(default_factory=list)
+    worst_meals: List[WeeklyReportMealItem] = Field(default_factory=list)
+    twin_accuracy: Dict[str, Any]  # mean_error, in_range_pct, total_predictions, calibrated
+    adherence: Dict[str, Any]  # doses_taken, doses_total, adherence_pct, meals_logged
+    alerts: List[Dict[str, Any]] = Field(default_factory=list)
+    plan_progress: Dict[str, Any]  # completed_tasks, total_tasks, progress_pct
+    wearables_summary: Optional[Dict[str, Any]] = None  # avg_steps, avg_sleep_hours, days_recorded
+
 
 
 

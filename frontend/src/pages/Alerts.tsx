@@ -27,7 +27,7 @@ import { useApp } from '../context/AppContext';
 
 export const AlertsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { activePatientId, setActivePatientId, currentPatient } = useApp();
+  const { activePatientId, setActivePatientId } = useApp();
 
   const [statusTab, setStatusTab] = useState<AlertStatus | 'all'>('open');
   const [severityFilter, setSeverityFilter] = useState<AlertSeverity | 'all'>('all');
@@ -185,7 +185,7 @@ export const AlertsPage: React.FC = () => {
               onClick={handleManualEvaluate}
               disabled={evaluateMutation.isPending}
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium transition shadow-sm disabled:opacity-50"
-              title={`Evaluate metabolic rules for ${currentPatient?.display_name || `Patient #${activePatientId}`}`}
+              title={`Evaluate metabolic rules for Patient #${activePatientId}`}
             >
               <Play className={`w-4 h-4 ${evaluateMutation.isPending ? 'animate-spin' : ''}`} />
               <span>Evaluate Patient #{activePatientId}</span>

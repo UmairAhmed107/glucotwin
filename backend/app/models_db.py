@@ -74,6 +74,13 @@ class Patient(Base):
     alerts = relationship("Alert", back_populates="patient", cascade="all, delete-orphan")
     visits = relationship("Visit", back_populates="patient", cascade="all, delete-orphan")
     care_plans = relationship("CarePlan", back_populates="patient", cascade="all, delete-orphan")
+    saved_meals = relationship("SavedMeal", back_populates="patient", cascade="all, delete-orphan")
+    medications = relationship("Medication", back_populates="patient", cascade="all, delete-orphan")
+    dose_logs = relationship("DoseLog", back_populates="patient", cascade="all, delete-orphan")
+    predictions = relationship("PredictionRecord", back_populates="patient", cascade="all, delete-orphan")
+    saved_scenarios = relationship("SavedScenario", back_populates="patient", cascade="all, delete-orphan")
+    threads = relationship("MessageThread", back_populates="patient", cascade="all, delete-orphan")
+    wearables = relationship("WearableDaily", back_populates="patient", cascade="all, delete-orphan")
 
 
 class CareTeamLink(Base):
@@ -114,6 +121,7 @@ class MealEntry(Base):
     activity_after_min = Column(Float, nullable=True)
 
     patient = relationship("Patient", back_populates="meals")
+    prediction = relationship("PredictionRecord", back_populates="meal", uselist=False, cascade="all, delete-orphan")
 
 
 class GlucoseReading(Base):
@@ -281,5 +289,169 @@ class CarePlanTask(Base):
     # Relationships
     care_plan = relationship("CarePlan", back_populates="tasks")
     patient = relationship("Patient")
+
+
+class FoodItem(Base):
+    __tablename__ = "food_items"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    name = Column(String(255), nullable=False, index=True)
+    serving_description = Column(String(255), nullable=False)
+    carbs = Column(Float, nullable=False)
+    protein = Column(Float, nullable=False)
+    fat = Column(Float, nullable=False)
+    calories = Column(Float, nullable=False)
+    fiber = Column(Float, nullable=False, default=0.0)
+    category = Column(String(100), nullable=True, index=True)
+    is_demo = Column(Boolean, nullable=False, default=True)
+    disclaimer = Column(String(255), nullable=False, default="Approximate demo data for clinical educational testing")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+
+class SavedMeal(Base):
+    __tablename__ = "saved_meals"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    items = Column(JSON, nullable=False, default=list)  # list of {food_id, name, servings, carbs, protein, fat, calories, fiber}
+    computed_carbs = Column(Float, nullable=False, default=0.0)
+    computed_protein = Column(Float, nullable=False, default=0.0)
+    computed_fat = Column(Float, nullable=False, default=0.0)
+    computed_calories = Column(Float, nullable=False, default=0.0)
+    computed_fiber = Column(Float, nullable=False, default=0.0)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="saved_meals")
+
+
+class Medication(Base):
+    __tablename__ = "medications"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    dosage = Column(String(100), nullable=False)
+    schedule = Column(String(100), nullable=False)  # "morning" | "evening" | "with_meals" | "bedtime"
+    frequency_per_day = Column(Integer, nullable=False, default=1)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="medications")
+    doses = relationship("DoseLog", back_populates="medication", cascade="all, delete-orphan")
+
+
+class DoseLog(Base):
+    __tablename__ = "dose_logs"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    medication_id = Column(Integer, ForeignKey("medications.id", ondelete="CASCADE"), nullable=False, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    dose = Column(String(100), nullable=False)
+    scheduled_time = Column(DateTime(timezone=True), nullable=False, index=True)
+    taken_at = Column(DateTime(timezone=True), nullable=True)
+    status = Column(String(20), nullable=False, default="taken", index=True)  # "taken" | "skipped" | "pending"
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+    patient = relationship("Patient", back_populates="dose_logs")
+    medication = relationship("Medication", back_populates="doses")
+
+
+class PredictionRecord(Base):
+    __tablename__ = "prediction_records"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    meal_id = Column(Integer, ForeignKey("meal_entries.id", ondelete="SET NULL"), nullable=True, index=True)
+    predicted_peak_rise = Column(Float, nullable=False)
+    p10 = Column(Float, nullable=False)
+    p90 = Column(Float, nullable=False)
+    model_version = Column(String(100), nullable=False, default="15-ensemble-bootstrap")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow, index=True)
+
+    # Reconciled outcomes
+    actual_peak_rise = Column(Float, nullable=True)
+    actual_iauc_2h = Column(Float, nullable=True)
+    error = Column(Float, nullable=True)  # actual_peak_rise - predicted_peak_rise
+    in_range = Column(Boolean, nullable=True)  # True if p10 <= actual_peak_rise <= p90
+    reconciled_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="predictions")
+    meal = relationship("MealEntry", back_populates="prediction")
+
+
+class SavedScenario(Base):
+    __tablename__ = "saved_scenarios"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    inputs = Column(JSON, nullable=False)  # { meal: {...}, interventions: {...} }
+    baseline_output = Column(JSON, nullable=False)  # { median: ..., p10: ..., p90: ... }
+    intervention_output = Column(JSON, nullable=True)  # { median: ..., p10: ..., p90: ... }
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow, index=True)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="saved_scenarios")
+
+
+class MessageThread(Base):
+    __tablename__ = "message_threads"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    topic_type = Column(String(50), nullable=True)  # "general" | "visit" | "alert" | "scenario"
+    topic_id = Column(String(100), nullable=True)
+    topic_title = Column(String(255), nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="threads")
+    creator = relationship("User", foreign_keys=[created_by])
+    messages = relationship(
+        "Message",
+        back_populates="thread",
+        cascade="all, delete-orphan",
+        order_by="Message.created_at.asc()",
+    )
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    thread_id = Column(Integer, ForeignKey("message_threads.id", ondelete="CASCADE"), nullable=False, index=True)
+    sender_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    content = Column(Text, nullable=False)
+    read_by = Column(JSON, nullable=False, default=list)  # list of user_ids who have read this message
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow, index=True)
+
+    # Relationships
+    thread = relationship("MessageThread", back_populates="messages")
+    sender = relationship("User", foreign_keys=[sender_id])
+
+
+class WearableDaily(Base):
+    __tablename__ = "wearable_daily"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    date = Column(String(20), nullable=False, index=True)  # "YYYY-MM-DD"
+    steps = Column(Integer, nullable=False, default=0)
+    sleep_hours = Column(Float, nullable=False, default=0.0)
+    source = Column(String(50), nullable=False, default="csv_upload")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="wearables")
+
 
 

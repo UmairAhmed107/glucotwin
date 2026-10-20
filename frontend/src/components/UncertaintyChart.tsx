@@ -43,7 +43,7 @@ export const UncertaintyChart: React.FC<UncertaintyChartProps> = ({
   className = '',
 }) => {
   // Format curve points for Recharts area rendering
-  const formattedData = data.map((d) => ({
+  const formattedData = (data || []).map((d) => ({
     ...d,
     // [min, max] range for baseline band
     baseline_range: [d.baseline_p10 ?? 0, d.baseline_p90 ?? 0],

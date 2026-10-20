@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user, log_audit_event, verify_patient_access
 from app.clinical.alerts_engine import evaluate_all_rules
 from app.db import get_db
-from app.models_db import Alert, CareTeamLink, GlucoseReading, MealEntry, Patient, User
+from app.models_db import Alert, CareTeamLink, GlucoseReading, MealEntry, Patient, PredictionRecord, User
 from app.schemas import AlertResponse
 
 router = APIRouter(prefix="/alerts", tags=["Clinical Alerts"])
@@ -74,12 +74,27 @@ def evaluate_and_sync_alerts(
             "entry_type": "meal",
         })
 
+    predictions = (
+        db.query(PredictionRecord)
+        .filter(
+            PredictionRecord.patient_id == patient_id,
+            PredictionRecord.reconciled_at.isnot(None),
+        )
+        .order_by(PredictionRecord.reconciled_at.asc())
+        .all()
+    )
+    preds_payload = [
+        {"error": p.error, "in_range": p.in_range, "actual_peak_rise": p.actual_peak_rise}
+        for p in predictions
+    ]
+
     now = datetime.now(timezone.utc)
     evaluations = evaluate_all_rules(
         patient_data=patient_data,
         entries=entries_payload,
         now=now,
         previous_hba1c=previous_hba1c,
+        predictions=preds_payload,
     )
 
     # De-duplicate open alerts
