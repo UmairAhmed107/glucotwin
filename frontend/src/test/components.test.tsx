@@ -6,29 +6,29 @@ import { ProvenanceBadge } from '../components/ProvenanceBadge';
 import { ConfidenceRing } from '../components/ConfidenceRing';
 
 describe('ProvenanceBadge Component', () => {
-  it('renders TWIN-PREDICTED badge with correct label and icon', () => {
+  it('renders PERSONALIZED badge with correct label and icon', () => {
     render(<ProvenanceBadge kind="TWIN_PREDICTED" />);
-    expect(screen.getByText('TWIN-PREDICTED')).toBeInTheDocument();
+    expect(screen.getByText('PERSONALIZED')).toBeInTheDocument();
   });
 
-  it('renders GUIDELINE-BASED (AI) badge', () => {
+  it('renders CLINICAL GUIDELINE badge', () => {
     render(<ProvenanceBadge kind="GUIDELINE_AI" />);
-    expect(screen.getByText('GUIDELINE-BASED (AI)')).toBeInTheDocument();
+    expect(screen.getByText('CLINICAL GUIDELINE')).toBeInTheDocument();
   });
 
-  it('renders PROJECTION badge', () => {
+  it('renders CARE DIRECTIVE badge', () => {
     render(<ProvenanceBadge kind="PROJECTION" />);
-    expect(screen.getByText('PROJECTION')).toBeInTheDocument();
+    expect(screen.getByText('CARE DIRECTIVE')).toBeInTheDocument();
   });
 
-  it('renders SAFETY-CHECKED badge', () => {
+  it('renders SAFETY-VERIFIED badge', () => {
     render(<ProvenanceBadge kind="SAFETY_CHECKED" />);
-    expect(screen.getByText('SAFETY-CHECKED')).toBeInTheDocument();
+    expect(screen.getByText('SAFETY-VERIFIED')).toBeInTheDocument();
   });
 
-  it('renders DEMO FIXTURE badge', () => {
+  it('renders SAMPLE RECORD badge', () => {
     render(<ProvenanceBadge kind="DEMO_FIXTURE" />);
-    expect(screen.getByText('DEMO FIXTURE')).toBeInTheDocument();
+    expect(screen.getByText('SAMPLE RECORD')).toBeInTheDocument();
   });
 
   it('displays tooltip on hover explaining badge meaning', () => {
@@ -38,7 +38,7 @@ describe('ProvenanceBadge Component', () => {
 
     const tooltip = screen.getByRole('tooltip');
     expect(tooltip).toBeInTheDocument();
-    expect(tooltip).toHaveTextContent(/15-model metabolic bootstrap ensemble/i);
+    expect(tooltip).toHaveTextContent(/Personalized response calculated/i);
   });
 });
 
@@ -97,10 +97,10 @@ describe('CalculationDrawer Component', () => {
     );
 
     expect(screen.getByText('How was this calculated?')).toBeInTheDocument();
-    expect(screen.getByText('15 bootstrap models')).toBeInTheDocument();
-    expect(screen.getByText('Passed')).toBeInTheDocument();
-    expect(screen.getByText('Personalised Memory')).toBeInTheDocument();
-    expect(screen.getByText('42.5 mg/dL')).toBeInTheDocument();
+    expect(screen.getByText('Multi-factor glycemic forecast')).toBeInTheDocument();
+    expect(screen.getByText('Verified')).toBeInTheDocument();
+    expect(screen.getByText('Patient History & Profile Conditioning')).toBeInTheDocument();
+    expect(screen.getByText('+42.5 mg/dL')).toBeInTheDocument();
   });
 
   it('renders population baseline state when baseline_used is true', () => {
@@ -113,7 +113,7 @@ describe('CalculationDrawer Component', () => {
       />
     );
 
-    expect(screen.getByText('Population Baseline')).toBeInTheDocument();
+    expect(screen.getByText('Initial Clinical Baseline')).toBeInTheDocument();
   });
 
   it('does not render content when isOpen is false', () => {

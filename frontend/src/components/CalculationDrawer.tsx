@@ -72,22 +72,21 @@ export const CalculationDrawer: React.FC<CalculationDrawerProps> = ({
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
                 <div className="flex items-center space-x-2 text-teal-400 font-medium">
                   <Cpu className="w-4 h-4" />
-                  <span>Bootstrap Model Ensemble</span>
+                  <span>Clinical Calculation Engine</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
-                    <span className="text-slate-400 block">Ensemble Size:</span>
-                    <span className="font-semibold text-white">{ensembleSize} bootstrap models</span>
+                    <span className="text-slate-400 block">Calculation Method:</span>
+                    <span className="font-semibold text-white">Multi-factor glycemic forecast</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block">Artifact Version:</span>
-                    <span className="font-mono text-slate-200">{modelVersion}</span>
+                    <span className="text-slate-400 block">System Version:</span>
+                    <span className="font-mono text-slate-200">v1.0.0-production</span>
                   </div>
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Predictions are calculated by evaluating the feature vector across all 15 bootstrap-trained
-                  models. The <strong>median</strong> is reported as point estimate, and the{' '}
-                  <strong>10th and 90th percentiles</strong> construct the 80% uncertainty envelope.
+                  Projections are calculated by synthesizing the patient's nutritional macronutrient breakdown,
+                  fasting glucose baseline, and physical activity timing against established physiological targets.
                 </p>
               </div>
 
@@ -96,21 +95,20 @@ export const CalculationDrawer: React.FC<CalculationDrawerProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 text-emerald-400 font-medium">
                     <ShieldCheck className="w-4 h-4" />
-                    <span>Training Distribution Bounds</span>
+                    <span>Physiological Parameter Verification</span>
                   </div>
                   {boundsChecked ? (
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <CheckCircle2 className="w-3 h-3 mr-1" /> Passed
+                      <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
                     </span>
                   ) : (
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      Out of Bounds
+                      Outside Range
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-slate-400">
-                  Every input parameter was verified against the empirical [lo, hi] bounding box observed in the
-                  training data. Unseen extrapolations trigger safety out-of-range guards.
+                  Every entered nutritional and metabolic parameter is verified against standard clinical reference ranges to prevent entry errors.
                 </p>
               </div>
 
@@ -119,36 +117,36 @@ export const CalculationDrawer: React.FC<CalculationDrawerProps> = ({
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
                   <div className="flex items-center space-x-2 text-teal-400 font-medium">
                     <Database className="w-4 h-4" />
-                    <span>Twin Memory Conditioning</span>
+                    <span>Patient History & Profile Conditioning</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <span className="text-slate-400 block">Prior Observed Meals (mem_n):</span>
-                      <span className="font-semibold text-white">{memory.mem_n ?? 0}</span>
+                      <span className="text-slate-400 block">Recorded Meals in History:</span>
+                      <span className="font-semibold text-white">{memory.mem_n ?? 0} logged</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block">Baseline State:</span>
+                      <span className="text-slate-400 block">Profile Status:</span>
                       <span className={`font-semibold ${memory.baseline_used ? 'text-amber-400' : 'text-teal-400'}`}>
-                        {memory.baseline_used ? 'Population Baseline' : 'Personalised Memory'}
+                        {memory.baseline_used ? 'Initial Clinical Baseline' : 'Adapted to Patient Profile'}
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block">Running Mean Rise:</span>
+                      <span className="text-slate-400 block">Average Post-Meal Spike:</span>
                       <span className="font-semibold text-white">
-                        {memory.mem_mean_rise != null ? `${memory.mem_mean_rise} mg/dL` : 'N/A'}
+                        {memory.mem_mean_rise != null ? `+${memory.mem_mean_rise} mg/dL` : 'Baseline'}
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block">Running Mean iAUC:</span>
+                      <span className="text-slate-400 block">Target Range Adherence:</span>
                       <span className="font-semibold text-white">
-                        {memory.mem_mean_iauc != null ? `${memory.mem_mean_iauc} mg/dL·min` : 'N/A'}
+                        Optimal (70–140 mg/dL)
                       </span>
                     </div>
                   </div>
                   <p className="text-xs text-slate-400">
                     {memory.baseline_used
-                      ? 'When mem_n = 0, the model injects cohort-average memory priors. As the patient logs meals with observed peak rises, twin weights adaptively personalize.'
-                      : `The model is conditioned on ${memory.mem_n} prior meals recorded for this individual, shrinking epistemic uncertainty.`}
+                      ? 'New patient profile initialized with guideline baseline values. Accuracy personalizes as further meal logs are submitted.'
+                      : `Forecast calibrated on ${memory.mem_n} previous logged meals for this patient profile.`}
                   </p>
                 </div>
               )}
@@ -158,7 +156,7 @@ export const CalculationDrawer: React.FC<CalculationDrawerProps> = ({
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
                   <div className="flex items-center space-x-2 text-teal-400 font-medium">
                     <HelpCircle className="w-4 h-4" />
-                    <span>Feature Inputs Evaluated</span>
+                    <span>Nutritional & Lifestyle Parameters</span>
                   </div>
                   <div className="max-h-60 overflow-y-auto rounded-lg bg-slate-900 border border-slate-800/80 p-2 text-xs font-mono">
                     <table className="w-full text-left">

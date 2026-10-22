@@ -55,7 +55,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Patient Home', patientLabel: 'Patient Home', icon: Home, roles: ['patient'] },
 
   // Core Metabolic Twin: All roles
-  { to: '/twin', label: 'Twin Overview', patientLabel: 'Metabolic Twin', icon: Activity, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  { to: '/twin', label: 'Metabolic Profile', patientLabel: 'My Health Summary', icon: Activity, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
 
   // Fast Meal & Glucose Logging: All roles
   { to: '/log', label: 'Log Meal & Glucose', patientLabel: 'Fast Log Meal', icon: Utensils, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
@@ -64,7 +64,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/timeline', label: 'Timeline & Replay', patientLabel: 'Glucose Diary & Replay', icon: History, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
 
   // Simulation Lab: All roles
-  { to: '/simulation', label: 'Simulation Lab', patientLabel: 'Meal & Walk Forecast', icon: Sliders, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  { to: '/simulation', label: 'Scenario Planner', patientLabel: 'Meal & Walk Forecast', icon: Sliders, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
 
   // Clinician Visit Workspace: Clinicians and Admins only (Excluded for Dietitians and Patients)
   { to: '/visits', label: 'Visit Workspace', icon: Stethoscope, roles: ['clinician', 'admin'], clinicianOnly: true },
@@ -76,7 +76,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/my-plan', label: 'My Care Plan', patientLabel: 'My 4-Week Plan', icon: ClipboardList, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
 
   // Treatment & Lifestyle Studio: All roles
-  { to: '/treatment', label: 'Treatment Studio', patientLabel: 'Doctor Advice & Plan', icon: Sparkles, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  { to: '/treatment', label: 'Doctor Advice & Plan', patientLabel: 'Doctor Advice & Plan', icon: Sparkles, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
 
   // Care Team: All roles
   { to: '/care-team', label: 'My Care Team', patientLabel: 'My Care Team', icon: Users, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
@@ -91,19 +91,19 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/reports', label: 'Weekly Reports', patientLabel: 'Weekly Reports', icon: FileText, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
 
   // About & Model Info: Clinicians, Dietitians, Admins
-  { to: '/governance', label: 'About & Model Info', icon: Database, roles: ['clinician', 'dietitian', 'admin'] },
+  { to: '/governance', label: 'System Architecture & Specs', icon: Database, roles: ['clinician', 'dietitian', 'admin'] },
 ];
 
 const ROUTE_TITLES: Record<string, string> = {
-  '/': 'Twin Overview',
+  '/': 'Metabolic Profile',
   '/panel': 'Clinical Patient Panel',
   '/visits': 'Clinician Visit Workspace',
   '/my-plan': 'My 4-Week Care Plan',
   '/alerts': 'Metabolic Alerts Center',
   '/timeline': 'Glucose Timeline & Sensor Replay',
-  '/simulation': 'Metabolic Simulation Lab',
-  '/treatment': 'Clinical Care & Treatment Studio',
-  '/governance': 'About & Model Info',
+  '/simulation': 'Scenario Planner & Forecasting',
+  '/treatment': 'Doctor Advice & Care Plan',
+  '/governance': 'System Architecture & Specifications',
   '/patients/setup': 'Patient Setup',
   '/log': 'Log Data',
   '/predict': 'Prediction Engine',
@@ -290,13 +290,13 @@ export const Layout: React.FC = () => {
           <div className="p-2 border-t border-slate-800">
             <button
               onClick={() => navigate('/patients/setup')}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 border border-teal-500/20 transition-all ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 border border-teal-500/20 transition-all cursor-pointer ${
                 isSidebarCollapsed ? 'justify-center' : ''
               }`}
-              title="Add or Setup Patient"
+              title="Add New Patient"
             >
               <PlusCircle className="w-4 h-4 shrink-0" />
-              {!isSidebarCollapsed && <span>Setup Patient</span>}
+              {!isSidebarCollapsed && <span>Add Patient</span>}
             </button>
           </div>
         </aside>
@@ -308,7 +308,7 @@ export const Layout: React.FC = () => {
             {/* Left: Patient Switcher */}
             <div className="flex items-center gap-3">
               <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-                Active Twin:
+                Active Patient:
               </span>
               {isPatientUser ? (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0B1220] border border-slate-700/80 text-xs font-medium text-slate-200">

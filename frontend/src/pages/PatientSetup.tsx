@@ -50,6 +50,18 @@ export const PatientSetup: React.FC = () => {
   // Tab 3: Shanghai selection
   const [selectedShanghaiId, setSelectedShanghaiId] = useState<number | null>(null);
 
+  const handleAutoFill = () => {
+    setDisplayName('Marcus Bell');
+    setAge(56);
+    setSex('M');
+    setBmi(28.2);
+    setHba1c(7.5);
+    setFastingGlucose(138);
+    setHypoHistory('false');
+    setKidneyFlag(false);
+    setSelectedMeds(['metformin', 'sglt2_inhibitor']);
+  };
+
   const toggleMed = (medId: string) => {
     setSelectedMeds((prev) =>
       prev.includes(medId) ? prev.filter((m) => m !== medId) : [...prev, medId]
@@ -116,59 +128,68 @@ export const PatientSetup: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-          <UserPlus className="w-5 h-5 text-teal-400" />
-          Patient Setup & Profile Initialization
-        </h2>
-        <p className="text-xs text-slate-400 mt-1">
-          Create an individual patient record to generate their metabolic digital twin and personalized care plan.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
+            <UserPlus className="w-5 h-5 text-teal-400" />
+            Patient Registration & Clinical Intake
+          </h2>
+          <p className="text-xs text-slate-400 mt-1">
+            Register a new patient record with demographic, biochemical, and pharmacological parameters.
+          </p>
+        </div>
+
+        {activeTab === 'new' && (
+          <button
+            type="button"
+            onClick={handleAutoFill}
+            className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto shadow-sm"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+            <span>Auto-fill Sample Data</span>
+          </button>
+        )}
       </div>
 
-      {/* Mode Tabs */}
-      <div className="flex border-b border-slate-800 space-x-1">
-        <button
-          onClick={() => setActiveTab('new')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
-            activeTab === 'new'
-              ? 'border-teal-500 text-teal-400 bg-teal-500/5'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>New Patient Form</span>
-        </button>
+      {/* Mode Selector */}
+      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setActiveTab('new')}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+              activeTab === 'new'
+                ? 'bg-teal-500 text-slate-950 font-bold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>New Patient Form</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('cgmacros')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
-            activeTab === 'cgmacros'
-              ? 'border-teal-500 text-teal-400 bg-teal-500/5'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Database className="w-4 h-4" />
-          <span>Load CGMacros Participant</span>
-          <span className="px-1.5 py-0.2 bg-teal-500/20 text-teal-300 rounded text-[10px]">
-            Seeded
-          </span>
-        </button>
+          <button
+            onClick={() => setActiveTab('cgmacros')}
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-medium rounded-lg transition-all ${
+              activeTab === 'cgmacros'
+                ? 'bg-slate-800 text-slate-100 border border-slate-700'
+                : 'text-slate-500 hover:text-slate-400'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5" />
+            <span>Load Sample Cohort Profile</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('shanghai')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
-            activeTab === 'shanghai'
-              ? 'border-teal-500 text-teal-400 bg-teal-500/5'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Shanghai Clinical Profile</span>
-          <span className="px-1.5 py-0.2 bg-purple-500/20 text-purple-300 rounded text-[10px]">
-            Synthetic Demo
-          </span>
-        </button>
+          <button
+            onClick={() => setActiveTab('shanghai')}
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-medium rounded-lg transition-all ${
+              activeTab === 'shanghai'
+                ? 'bg-slate-800 text-slate-100 border border-slate-700'
+                : 'text-slate-500 hover:text-slate-400'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Load Clinical Test Profile</span>
+          </button>
+        </div>
       </div>
 
       {/* TAB 1: New Patient Form */}

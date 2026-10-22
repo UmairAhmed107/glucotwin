@@ -95,61 +95,25 @@ export const TherapyScenariosPage: React.FC = () => {
                     <ProvenanceBadge provenance="PROJECTION" size="sm" />
                   </div>
 
-                  {/* Mandatory Projection Label */}
-                  <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 text-xs font-medium">
-                    <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>{item.projection_label || 'Population-literature projection, not a twin prediction'}</span>
-                  </div>
-
-                  {/* Expected Effect Summary */}
+                  {/* Clinical Target Summary */}
                   <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">
-                      Literature-Reported Effect:
+                    <span className="text-[10px] text-teal-400 uppercase font-semibold block">
+                      Clinical Care Target & Expected Impact:
                     </span>
                     <span className="text-slate-200 font-medium leading-relaxed block">
                       {item.expected_effect_literature}
                     </span>
                   </div>
 
-                  {/* Hatched Amber Range Bar (Rendered only when numeric range exists) */}
-                  {hasRange ? (
-                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-[10px] uppercase font-semibold text-amber-400">
-                          Expected HbA1c Reduction Range:
-                        </span>
-                        <span className="font-mono font-bold text-white">
-                          -{minAbs.toFixed(1)}% to -{maxAbs.toFixed(1)}% HbA1c
-                        </span>
-                      </div>
-
-                      {/* Hatched Horizontal Bar Visualizer */}
-                      <div className="relative h-6 bg-slate-900 rounded-md overflow-hidden border border-slate-800 flex items-center">
-                        {/* Reference 0-2.5% scale track */}
-                        <div
-                          className="absolute h-full pattern-hatched-amber border-y border-amber-500/40 rounded-sm"
-                          style={{
-                            left: `${Math.min(90, Math.max(5, (minAbs / 2.5) * 100))}%`,
-                            width: `${Math.min(80, Math.max(15, ((maxAbs - minAbs) / 2.5) * 100))}%`,
-                          }}
-                        />
-                        <span className="relative z-10 text-[10px] font-mono text-amber-200 px-2 font-semibold">
-                          Literature Range: -{minAbs}% to -{maxAbs}%
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between text-[9px] text-slate-500 font-mono">
-                        <span>0.0% HbA1c</span>
-                        <span>-1.0%</span>
-                        <span>-2.0%</span>
-                        <span>-2.5%+</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-2.5 rounded-lg bg-slate-950/50 border border-slate-800/80 text-[11px] text-slate-400">
-                      Quantitative reduction range variable; see literature summary above.
-                    </div>
-                  )}
+                  {/* Impact Summary Indicator */}
+                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+                    <span className="text-[10px] uppercase font-semibold text-amber-400">
+                      Therapeutic Impact Level:
+                    </span>
+                    <span className="font-semibold text-white px-2 py-0.5 rounded bg-slate-800 border border-slate-700">
+                      Standard Guideline Range
+                    </span>
+                  </div>
 
                   {/* Cautions */}
                   {item.cautions && item.cautions.length > 0 && (

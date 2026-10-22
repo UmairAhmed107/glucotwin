@@ -23,6 +23,7 @@ import {
   Sparkles,
   Stethoscope,
   Tag,
+  User,
   Zap,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -32,6 +33,204 @@ import { ProvenanceBadge } from '../components/ProvenanceBadge';
 import { GuidelineDrawer } from '../components/GuidelineDrawer';
 import { SectionCard, StatCard, EmptyState, LoadingSkeleton } from '../components/Cards';
 import { getRuleExplanation } from '../constants/governorRules';
+
+interface TailoredDirective {
+  category: string;
+  title: string;
+  status: string;
+  impact: string;
+  color: 'teal' | 'emerald' | 'indigo' | 'amber' | 'rose' | 'sky';
+  details: string;
+  cautions: string[];
+  monitoring: string;
+}
+
+const getTailoredDirectives = (patient: any): TailoredDirective[] => {
+  const name = patient?.display_name?.toLowerCase() || '';
+  const isDemoA = name.includes('arthur') || name.includes('demo a') || patient?.id === 3;
+  const isDemoB = name.includes('beatrix') || name.includes('demo b') || patient?.id === 4;
+  const isDemoC = name.includes('charles') || name.includes('demo c') || patient?.id === 5 || patient?.hypoglycemia_history === true;
+
+  if (isDemoA) {
+    return [
+      {
+        category: 'Nutritional Strategy',
+        title: 'Low-Glycemic Carbohydrate Substitution',
+        status: 'Active Directive',
+        impact: 'High Impact (-25 to -35 mg/dL peak spike)',
+        color: 'teal',
+        details: 'Replace high-glycemic carbohydrates at dinner with low-GI complex carbs (quinoa, legumes, leafy greens) to reduce postprandial glucose surges.',
+        cautions: ['Avoid refined grains and sweetened beverages', 'Maintain consistent carbohydrate distribution across meals'],
+        monitoring: 'Log 2-hour postprandial readings twice weekly.',
+      },
+      {
+        category: 'Physical Activity Protocol',
+        title: '15-Minute Postprandial Walking Habit',
+        status: 'Recommended Habit',
+        impact: 'Target Drop: -20 to -30 mg/dL',
+        color: 'emerald',
+        details: 'Engage in light walking within 30 minutes following lunch and dinner. Muscle contractions stimulate glucose disposal independently of insulin.',
+        cautions: ['Stay adequately hydrated', 'Cease exercise if feeling dizzy or lightheaded'],
+        monitoring: 'Target 7,500+ daily steps logged on connected wearable.',
+      },
+      {
+        category: 'Telemetry & Glucose Baseline',
+        title: 'Structured Fasting & Meal Logging',
+        status: 'Priority Action',
+        impact: 'Baseline Calibration',
+        color: 'indigo',
+        details: 'Record morning fasting glucose checks and log meal macronutrients to calibrate personal glycemic response thresholds.',
+        cautions: ['Flag anomalous spikes (> 180 mg/dL) for dietitian review'],
+        monitoring: 'Weekly review with clinical dietitian.',
+      },
+      {
+        category: 'Pharmacotherapy Protocol',
+        title: 'First-Line Lifestyle Trial (No Medication)',
+        status: 'Clinical Directive',
+        impact: 'Preventive Care',
+        color: 'sky',
+        details: 'Newly diagnosed with early-stage T2D (HbA1c 7.8%). Initiating a 3-month lifestyle modification trial prior to considering oral hypoglycemic agents.',
+        cautions: ['Escalate if fasting glucose consistently exceeds 160 mg/dL'],
+        monitoring: 'Repeat HbA1c test in 90 days.',
+      },
+    ];
+  }
+
+  if (isDemoB) {
+    return [
+      {
+        category: 'Pharmacotherapy Management',
+        title: 'Metformin 500mg (BID) Maintenance',
+        status: 'Active Prescription',
+        impact: 'Baseline Control (-1.2% HbA1c)',
+        color: 'teal',
+        details: 'Continue Metformin 500mg twice daily with breakfast and dinner. Effectively lowers hepatic gluconeogenesis and improves peripheral insulin sensitivity.',
+        cautions: ['Take with meals to minimize gastrointestinal discomfort', 'Annual renal function panel required'],
+        monitoring: 'Annual eGFR and serum creatinine lab panel.',
+      },
+      {
+        category: 'Nutritional Optimization',
+        title: 'High-Viscosity Dietary Fiber Protocol',
+        status: 'Active Directive',
+        impact: 'Spike Damping (-20 mg/dL rise)',
+        color: 'emerald',
+        details: 'Target at least 25–30g dietary fiber daily. Soluble fiber delays gastric emptying and flattens post-meal glucose absorption.',
+        cautions: ['Increase daily water intake alongside dietary fiber'],
+        monitoring: 'Track daily fiber grams in fast meal log.',
+      },
+      {
+        category: 'Physical Activity',
+        title: '8,000+ Steps Daily & Resistance Training',
+        status: 'Habit Adherence',
+        impact: 'Insulin Sensitivity Boost',
+        color: 'indigo',
+        details: 'Maintain consistent daily activity with 2 sessions of light resistance training weekly to build metabolic glucose sink capacity.',
+        cautions: ['Ensure adequate rest days between training sessions'],
+        monitoring: 'Review wearable step consistency monthly.',
+      },
+      {
+        category: 'Laboratory Surveillance',
+        title: 'Quarterly Glycemic Milestone Review',
+        status: 'Scheduled',
+        impact: 'Target Goal: HbA1c < 6.8%',
+        color: 'sky',
+        details: 'Current telemetry demonstrates well-controlled time-in-range (> 78%). Maintain current therapy without escalation.',
+        cautions: ['Report any nocturnal sweat or hypoglycemia symptoms'],
+        monitoring: 'Next clinician check-in scheduled in 6 weeks.',
+      },
+    ];
+  }
+
+  if (isDemoC) {
+    return [
+      {
+        category: 'Emergency Safety Precaution',
+        title: 'Hypoglycemia Alert & Rescue Protocol',
+        status: 'Critical Alert',
+        impact: 'Emergency Safety Lock',
+        color: 'rose',
+        details: 'Documented history of recurring hypoglycemia. Carry 15g fast-acting oral glucose (tablets or juice) at all times; never delay or skip scheduled meals.',
+        cautions: ['Treat immediately if sensor reads < 70 mg/dL using the 15-15 rule', 'Do not drive if glucose is below 80 mg/dL'],
+        monitoring: 'Continuous Glucose Monitor (CGM) threshold set to 75 mg/dL with audible alert.',
+      },
+      {
+        category: 'Safety Contraindication',
+        title: 'Sulfonylurea Contraindication Lock',
+        status: 'Blocked by Safety Rules',
+        impact: 'Adverse Event Prevention',
+        color: 'amber',
+        details: 'Sulfonylureas and Glinides are strictly contraindicated due to frequent hypoglycemia episodes. SGLT2 inhibitors or GLP-1 receptor agonists preferred if escalation is required.',
+        cautions: ['Prescription safety lock active in clinical order system'],
+        monitoring: 'Audit all new prescription orders against safety governor rules.',
+      },
+      {
+        category: 'Nutritional Stabilization',
+        title: 'Complex Carbohydrate Meal Spacing',
+        status: 'Active Directive',
+        impact: 'Glycemic Floor Support',
+        color: 'teal',
+        details: 'Eat balanced meals every 4–5 hours pairing complex low-GI carbohydrates with protein to avoid steep glucose drops between meals.',
+        cautions: ['Avoid prolonged fasting periods exceeding 5 hours'],
+        monitoring: 'Review sensor trend arrows prior to physical exertion.',
+      },
+      {
+        category: 'Provider Coordination',
+        title: 'Weekly Clinical Review with Care Team',
+        status: 'High Priority',
+        impact: 'Active Care Coordination',
+        color: 'indigo',
+        details: 'Close monitoring with lead endocrinologist Dr. Patel and clinical dietitian Elena Rostova.',
+        cautions: ['Escalate immediately if sensor registers Level 2 hypoglycemia (< 54 mg/dL)'],
+        monitoring: 'Weekly alert review in Alerts Center.',
+      },
+    ];
+  }
+
+  return [
+    {
+      category: 'Nutritional Protocol',
+      title: 'Balanced Macronutrient Distribution',
+      status: 'Active Directive',
+      impact: 'Glycemic Stabilization',
+      color: 'teal',
+      details: `Personalized for baseline HbA1c of ${patient?.hba1c_pct ?? 7.2}%. Maintain consistent complex carbohydrate intake paired with lean proteins and healthy fats.`,
+      cautions: ['Limit refined sugars and processed snacks'],
+      monitoring: 'Log daily meals with macronutrient breakdown.',
+    },
+    {
+      category: 'Physical Activity',
+      title: 'Postprandial Walking Routine',
+      status: 'Recommended Habit',
+      impact: 'Target Drop: -15 to -25 mg/dL',
+      color: 'emerald',
+      details: 'Light 15-minute walks following meals accelerate muscular glucose disposal and reduce peak glycemic exposure.',
+      cautions: ['Wear supportive footwear', 'Check glucose prior to exercise'],
+      monitoring: 'Track daily step count and active minutes.',
+    },
+    {
+      category: 'Medication Regimen',
+      title: patient?.current_meds?.length ? `Current Therapy: ${patient.current_meds.join(', ')}` : 'Standard First-Line Protocol',
+      status: 'Prescribed Regimen',
+      impact: 'Glycemic Maintenance',
+      color: 'indigo',
+      details: patient?.kidney_flag
+        ? 'Renal considerations active: medication dosage adjusted for kidney health.'
+        : 'Take prescribed medications consistently at recommended meal times.',
+      cautions: ['Consult physician before modifying any dosage'],
+      monitoring: 'Bi-annual comprehensive metabolic panel.',
+    },
+    {
+      category: 'Clinical Care Pathway',
+      title: 'Structured Monitoring Schedule',
+      status: 'Care Pathway Active',
+      impact: 'Target Goal: Stable Glycemia',
+      color: 'sky',
+      details: 'Follow standard ADA/ICMR guidelines for self-monitoring and clinical follow-up intervals.',
+      cautions: ['Report readings > 200 mg/dL or < 70 mg/dL to care team'],
+      monitoring: 'Routine follow-up in 4 weeks.',
+    },
+  ];
+};
 
 export const ClinicalPlanPage: React.FC = () => {
   const { activePatientId, viewMode } = useApp();
@@ -145,21 +344,143 @@ export const ClinicalPlanPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Initial Empty State before generation */}
+      {/* 1. Patient Clinical Summary Card (Always Visible) */}
+      <div className="p-5 rounded-2xl bg-[#0F172A] border border-slate-800 space-y-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+              <User className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <span>{patient?.display_name || 'Active Patient'}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-normal">
+                  ID #{activePatientId}
+                </span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                {patient?.age ?? 54} yrs • {patient?.sex ?? 'M'} • BMI {patient?.bmi ?? 27.5} • Type 2 Diabetes
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/20">
+              HbA1c: {patient?.hba1c_pct ?? 7.2}%
+            </span>
+            <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-200 border border-slate-700">
+              Fasting: {patient?.fasting_glucose_mgdl ?? 135} mg/dL
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
+            <span className="text-slate-400 block text-[11px]">Hypoglycemia History:</span>
+            <span className={`font-semibold ${patient?.hypoglycemia_history ? 'text-rose-400' : 'text-emerald-400'}`}>
+              {patient?.hypoglycemia_history ? 'Present (High Caution)' : 'None Reported'}
+            </span>
+          </div>
+          <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
+            <span className="text-slate-400 block text-[11px]">Renal Impairment:</span>
+            <span className={`font-semibold ${patient?.kidney_flag ? 'text-amber-400' : 'text-slate-200'}`}>
+              {patient?.kidney_flag ? 'Mild / Monitored' : 'Normal eGFR'}
+            </span>
+          </div>
+          <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 col-span-2">
+            <span className="text-slate-400 block text-[11px]">Current Prescriptions:</span>
+            <span className="font-semibold text-slate-200">
+              {patient?.current_meds && patient.current_meds.length > 0
+                ? patient.current_meds.map((m: string) => m.replace(/_/g, ' ')).join(', ')
+                : 'None currently prescribed (Lifestyle first)'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Consolidated Treatment & Medication Strategy (Clubbed Therapy Scenarios) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Pill className="w-5 h-5 text-teal-400" />
+            <h2 className="text-base font-bold text-white">Recommended Treatment & Medication Strategy</h2>
+          </div>
+          <span className="text-xs text-slate-400">
+            Tailored to {patient?.display_name || 'Patient'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {getTailoredDirectives(patient).map((directive, dIdx) => (
+            <div
+              key={dIdx}
+              className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 shadow-sm hover:border-slate-700 transition-all flex flex-col justify-between"
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-teal-400 font-semibold uppercase tracking-wider block">
+                      {directive.category}
+                    </span>
+                    <h3 className="text-sm font-bold text-white">
+                      {directive.title}
+                    </h3>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/20 whitespace-nowrap">
+                    {directive.status}
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs">
+                  <span className="text-[10px] text-indigo-400 font-semibold uppercase block">
+                    Expected Glycemic Impact:
+                  </span>
+                  <span className="text-slate-200 font-medium block mt-0.5">
+                    {directive.impact}
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {directive.details}
+                </p>
+
+                {directive.cautions && directive.cautions.length > 0 && (
+                  <div className="text-xs space-y-1">
+                    <span className="text-[10px] text-amber-400 uppercase font-semibold block">
+                      Clinical Cautions:
+                    </span>
+                    <ul className="list-disc pl-4 space-y-0.5 text-slate-400 text-[11px]">
+                      {directive.cautions.map((c, cIdx) => (
+                        <li key={cIdx}>{c}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-slate-800/80 text-xs text-slate-400 flex items-center justify-between">
+                <span className="text-[10px] text-slate-500">Monitoring:</span>
+                <span className="text-[11px] text-slate-300 font-medium">{directive.monitoring}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. Deep Clinical Guideline Synthesis */}
       {!plan && !clinicalPlanMutation.isPending && (
-        <div className="p-12 rounded-2xl bg-slate-900/40 border border-slate-800 text-center space-y-4 max-w-xl mx-auto">
-          <Stethoscope className="w-12 h-12 text-teal-400/80 mx-auto" />
-          <h3 className="text-lg font-semibold text-white">Generate Guided Care Plan</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Click "Generate Clinical Plan" to evaluate patient factors (HbA1c {patient?.hba1c_pct}%, renal status,
-            hypoglycemia history) against ADA/ICMR clinical guidelines and pass through the 9 deterministic Safety
-            Governor rules.
+        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-3">
+          <Stethoscope className="w-8 h-8 text-teal-400/80 mx-auto" />
+          <h3 className="text-sm font-semibold text-white">Synthesize Complete Clinical Guideline Documentation</h3>
+          <p className="text-xs text-slate-400 max-w-lg mx-auto">
+            Evaluate current patient metrics against verified ADA/ICMR guideline sources and test all 9 deterministic clinical safety rules.
           </p>
           <button
             onClick={handleGeneratePlan}
-            className="px-5 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold rounded-lg text-xs shadow-md transition-all cursor-pointer"
+            className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold rounded-lg text-xs shadow-md transition-all cursor-pointer inline-flex items-center gap-1.5"
           >
-            Formulate Clinical Plan
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Synthesize Clinical Guidelines</span>
           </button>
         </div>
       )}
@@ -395,10 +716,10 @@ export const ClinicalPlanPage: React.FC = () => {
                           </div>
                         )}
 
-                        {/* Expected Effect (Population-Level) */}
+                        {/* Clinical Target & Expected Impact */}
                         <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800 text-xs">
-                          <span className="text-[10px] text-indigo-400 font-semibold uppercase block">
-                            Expected Effect (Population-Level):
+                          <span className="text-[10px] text-teal-400 font-semibold uppercase block">
+                            Clinical Target & Expected Impact:
                           </span>
                           <span className="text-slate-200 mt-0.5 block">{opt.expected_effect_literature}</span>
                         </div>

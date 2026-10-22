@@ -17,6 +17,7 @@ import {
   TrendingDown,
   TrendingUp,
   User,
+  UserPlus,
   Users,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -126,6 +127,14 @@ export const PatientPanel: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => navigate('/patients/setup')}
+            className="px-3.5 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Add Patient</span>
+          </button>
           <button
             type="button"
             onClick={() => refetch()}

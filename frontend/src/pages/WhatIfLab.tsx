@@ -612,15 +612,15 @@ export const WhatIfLabPage: React.FC = () => {
             />
 
             <StatCard
-              label="Pessimistic Gain (P10)"
+              label="Projected Glucose Reduction"
               value={whatIfResult?.gains ? `${medianGain > 0 ? '-' : ''}${Math.abs(medianGain)}` : '...'}
               subValue="mg/dL"
               trend={isSupported ? 'up' : 'neutral'}
               trendText={
                 whatIfResult?.gains
                   ? isSupported
-                    ? 'Clinically supported intervention'
-                    : 'Modest / inconclusive gain'
+                    ? 'Clinically supported improvement'
+                    : 'Modest / inconclusive change'
                   : ''
               }
               icon={isSupported ? CheckCircle2 : Scale}

@@ -11,18 +11,16 @@ export const TreatmentWorkspace: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const initialTab =
-    requestedTab === 'scenarios'
-      ? 'scenarios'
-      : requestedTab === 'pathway'
+    requestedTab === 'pathway'
       ? 'pathway'
       : requestedTab === 'cds'
       ? 'cds'
       : 'plan';
 
-  const [activeTab, setActiveTab] = useState<'plan' | 'scenarios' | 'pathway' | 'cds'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'plan' | 'pathway' | 'cds'>(initialTab);
   const { viewMode } = useApp();
 
-  const handleTabChange = (tab: 'plan' | 'scenarios' | 'pathway' | 'cds') => {
+  const handleTabChange = (tab: 'plan' | 'pathway' | 'cds') => {
     setActiveTab(tab);
     setSearchParams(tab === 'plan' ? {} : { tab });
   };
@@ -43,21 +41,7 @@ export const TreatmentWorkspace: React.FC = () => {
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>{viewMode === 'patient' ? 'Doctor Advice & Plan' : 'AI Clinical Plan & Guardrails'}</span>
-          </button>
-
-          <button
-            onClick={() => handleTabChange('scenarios')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === 'scenarios'
-                ? viewMode === 'clinician'
-                  ? 'bg-indigo-500 text-white shadow-sm font-bold'
-                  : 'bg-teal-500 text-slate-950 shadow-sm font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-            }`}
-          >
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>Therapy Scenarios</span>
+            <span>{viewMode === 'patient' ? 'Doctor Advice & Plan' : 'Clinical Guidance & Action Plan'}</span>
           </button>
 
           <button
@@ -89,13 +73,12 @@ export const TreatmentWorkspace: React.FC = () => {
 
         <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>ADA/ICMR Guideline-Concordant with Deterministic R1–R9 Safety Oversight</span>
+          <span>ADA/ICMR Guideline-Concordant with Clinical Safety Verification</span>
         </div>
       </div>
 
       {/* Active Tab View */}
       {activeTab === 'plan' && <ClinicalPlanPage />}
-      {activeTab === 'scenarios' && <TherapyScenariosPage />}
       {activeTab === 'pathway' && <FourWeekPlanPage />}
       {activeTab === 'cds' && <ClinicianViewPage />}
     </div>

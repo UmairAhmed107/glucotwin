@@ -174,7 +174,7 @@ describe('Cleanup & Consistency Pass: About & Model Info and Role Navigation', (
       // Patient-relevant items exist
       expect(screen.getByText('Patient Home')).toBeInTheDocument();
       expect(screen.getByText('Fast Log Meal')).toBeInTheDocument();
-      expect(screen.getByText('Metabolic Twin')).toBeInTheDocument();
+      expect(screen.getByText('My Health Summary')).toBeInTheDocument();
       expect(screen.getByText('Glucose Diary & Replay')).toBeInTheDocument();
       expect(screen.getByText('Meal & Walk Forecast')).toBeInTheDocument();
       expect(screen.getByText('My 4-Week Plan')).toBeInTheDocument();
@@ -211,13 +211,13 @@ describe('Cleanup & Consistency Pass: About & Model Info and Role Navigation', (
 
       // Dietitian relevant workspaces
       expect(screen.getByText('Patient Panel')).toBeInTheDocument();
-      expect(screen.getByText('Twin Overview')).toBeInTheDocument();
-      expect(screen.getByText('Simulation Lab')).toBeInTheDocument();
+      expect(screen.getByText('Metabolic Profile')).toBeInTheDocument();
+      expect(screen.getByText('Scenario Planner')).toBeInTheDocument();
       expect(screen.getByText('My Care Plan')).toBeInTheDocument();
       expect(screen.getByText('Messages')).toBeInTheDocument();
       expect(screen.getByText('Import Data')).toBeInTheDocument();
       expect(screen.getByText('Weekly Reports')).toBeInTheDocument();
-      expect(screen.getByText('About & Model Info')).toBeInTheDocument();
+      expect(screen.getByText('System Architecture & Specs')).toBeInTheDocument();
 
       // Doctor Visit Workspace & Acute Medical Alerts Center must NOT be visible to dietitian
       expect(screen.queryByText('Visit Workspace')).not.toBeInTheDocument();
@@ -225,7 +225,7 @@ describe('Cleanup & Consistency Pass: About & Model Info and Role Navigation', (
       expect(screen.queryByText('Patient Home')).not.toBeInTheDocument();
     });
 
-    it('renders clinician navigation: includes Visit Workspace, Alerts Center, Patient Panel, and About & Model Info', () => {
+    it('renders clinician navigation: includes Visit Workspace, Alerts Center, Patient Panel, and System Architecture & Specs', () => {
       vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
         user: { id: 2, full_name: 'Dr. Michael Chen', email: 'dr.chen@glucotwin.org', role: 'clinician', created_at: '2026-01-01' },
         token: 'token',
@@ -249,9 +249,9 @@ describe('Cleanup & Consistency Pass: About & Model Info and Role Navigation', (
       expect(screen.getByText('Patient Panel')).toBeInTheDocument();
       expect(screen.getByText('Visit Workspace')).toBeInTheDocument();
       expect(screen.getByText('Alerts Center')).toBeInTheDocument();
-      expect(screen.getByText('Simulation Lab')).toBeInTheDocument();
-      expect(screen.getByText('Treatment Studio')).toBeInTheDocument();
-      expect(screen.getByText('About & Model Info')).toBeInTheDocument();
+      expect(screen.getByText('Scenario Planner')).toBeInTheDocument();
+      expect(screen.getByText('Doctor Advice & Plan')).toBeInTheDocument();
+      expect(screen.getByText('System Architecture & Specs')).toBeInTheDocument();
       expect(screen.getByText('Weekly Reports')).toBeInTheDocument();
     });
   });

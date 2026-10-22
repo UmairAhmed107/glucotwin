@@ -314,7 +314,7 @@ export const TwinLearningPage: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
-                      <span className="text-slate-400 block">Observed Meals (mem_n):</span>
+                      <span className="text-slate-400 block">Logged Meals in History:</span>
                       <motion.span
                         key={memN}
                         initial={{ scale: 1.3, color: '#14B8A6' }}
@@ -323,11 +323,11 @@ export const TwinLearningPage: React.FC = () => {
                       >
                         {memN}
                       </motion.span>
-                      <span className="text-[10px] text-slate-500">Prior meal history</span>
+                      <span className="text-[10px] text-slate-500">Recorded patient meals</span>
                     </div>
 
                     <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
-                      <span className="text-slate-400 block">Current Band Width:</span>
+                      <span className="text-slate-400 block">Forecast Precision:</span>
                       <motion.span
                         key={estimatedBandWidth}
                         initial={{ scale: 1.3, color: '#14B8A6' }}
@@ -337,7 +337,7 @@ export const TwinLearningPage: React.FC = () => {
                         ±{(estimatedBandWidth / 2).toFixed(1)}{' '}
                         <span className="text-xs font-normal text-slate-400">mg/dL</span>
                       </motion.span>
-                      <span className="text-[10px] text-slate-500">80% uncertainty spread</span>
+                      <span className="text-[10px] text-slate-500">Target confidence interval</span>
                     </div>
                   </div>
 
@@ -346,7 +346,7 @@ export const TwinLearningPage: React.FC = () => {
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-slate-400 flex items-center space-x-1.5">
                         <TrendingDown className="w-3.5 h-3.5 text-teal-400" />
-                        <span>Ensemble Uncertainty Envelope:</span>
+                        <span>Expected Variation Range:</span>
                       </span>
                       <span className="font-mono text-teal-300 font-medium">{estimatedBandWidth} mg/dL</span>
                     </div>
@@ -366,7 +366,7 @@ export const TwinLearningPage: React.FC = () => {
                       />
 
                       <span className="relative z-20 text-[10px] font-mono text-slate-300 font-medium">
-                        {memN === 0 ? 'Wide Baseline Dispersion (mem_n=0)' : `Narrowed Envelope (${memN} meals logged)`}
+                        {memN === 0 ? 'Baseline Reference (0 meals logged)' : `Calibrated Profile (${memN} meals logged)`}
                       </span>
                     </div>
                   </div>
