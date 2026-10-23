@@ -1,13 +1,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 
-interface AppContextType {
+export interface AppContextType {
   activePatientId: number | null;
   setActivePatientId: (id: number | null) => void;
   viewMode: 'patient' | 'clinician';
   setViewMode: (mode: 'patient' | 'clinician') => void;
   isSidebarCollapsed: boolean;
   toggleSidebar: () => void;
+  theme?: 'dark' | 'light';
+  toggleTheme?: () => void;
+  setTheme?: (theme: 'dark' | 'light') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -20,6 +23,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   } catch {
     // If rendered outside AuthProvider (e.g. in some isolated unit tests)
   }
+
+  const [theme, setThemeState] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('glucotwin_theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.add('light');
+      root.classList.remove('dark');
+      root.style.colorScheme = 'light';
+    } else {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.style.colorScheme = 'dark';
+    }
+    localStorage.setItem('glucotwin_theme', theme);
+  }, [theme]);
+
+  const setTheme = (t: 'dark' | 'light') => {
+    setThemeState(t);
+  };
+
+  const toggleTheme = () => {
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   const [activePatientId, setActivePatientIdState] = useState<number | null>(() => {
     const saved = localStorage.getItem('glucotwin_active_patient_id');
@@ -79,6 +110,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setViewMode,
         isSidebarCollapsed,
         toggleSidebar,
+        theme,
+        toggleTheme,
+        setTheme,
       }}
     >
       {children}
@@ -86,10 +120,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 };
 
-export function useApp() {
+export function useApp(): AppContextType {
   const context = useContext(AppContext);
   if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
+    return {
+      activePatientId: null,
+      setActivePatientId: () => {},
+      viewMode: 'patient',
+      setViewMode: () => {},
+      isSidebarCollapsed: false,
+      toggleSidebar: () => {},
+      theme: 'dark',
+      toggleTheme: () => {},
+      setTheme: () => {},
+    };
   }
-  return context;
+  return {
+    ...context,
+    theme: context.theme ?? 'dark',
+    toggleTheme: context.toggleTheme ?? (() => {}),
+    setTheme: context.setTheme ?? (() => {}),
+  };
 }

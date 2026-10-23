@@ -65,7 +65,7 @@ export const ConfidenceRing: React.FC<ConfidenceRingProps> = ({
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="#1E293B"
+            stroke="#18181b"
             strokeWidth={strokeWidth}
             fill="transparent"
           />
@@ -86,19 +86,19 @@ export const ConfidenceRing: React.FC<ConfidenceRingProps> = ({
 
         {/* Inner Score Text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-xl font-bold tracking-tight text-slate-100">
+          <span className="text-xl font-bold tracking-tight text-white font-mono">
             {percentage}%
           </span>
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">
+          <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
             Confidence
           </span>
         </div>
       </div>
 
       {label && (
-        <div className="mt-1 flex items-center gap-1 text-xs text-slate-400 font-medium cursor-help">
+        <div className="mt-1 flex items-center gap-1 text-xs text-zinc-400 font-medium cursor-help">
           <span>{label}</span>
-          <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+          <HelpCircle className="w-3.5 h-3.5 text-zinc-500" />
         </div>
       )}
 
@@ -106,11 +106,11 @@ export const ConfidenceRing: React.FC<ConfidenceRingProps> = ({
       {showTooltip && (
         <div
           role="tooltip"
-          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 text-xs text-slate-200 bg-[#162540] border border-slate-700 rounded-lg shadow-2xl backdrop-blur-md pointer-events-none transition-opacity animate-in fade-in"
+          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 text-xs text-zinc-200 bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl backdrop-blur-md pointer-events-none transition-opacity animate-in fade-in"
         >
-          <div className="font-semibold text-teal-400 mb-1 flex items-center justify-between">
+          <div className="font-bold text-white mb-1 flex items-center justify-between">
             <span>Twin Personalisation Formula</span>
-            <span className="text-[11px] text-slate-300 font-mono">
+            <span className="text-[11px] text-zinc-400 font-mono">
               Score: {clampedScore.toFixed(2)}
             </span>
           </div>

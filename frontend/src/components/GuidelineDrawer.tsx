@@ -33,17 +33,17 @@ export const GuidelineDrawer: React.FC<GuidelineDrawerProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col overflow-hidden"
+            className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[#09090b] border-l border-zinc-800 shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/95">
-              <div className="flex items-center space-x-2 text-indigo-400">
-                <BookOpen className="w-5 h-5" />
+            <div className="flex items-center justify-between p-5 border-b border-zinc-800 bg-[#09090b]">
+              <div className="flex items-center space-x-2 text-white">
+                <BookOpen className="w-5 h-5 text-white" />
                 <h3 className="text-base font-bold text-white">Guideline Evidence Snippet</h3>
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
                 aria-label="Close guideline drawer"
               >
                 <X className="w-5 h-5" />
@@ -51,7 +51,7 @@ export const GuidelineDrawer: React.FC<GuidelineDrawerProps> = ({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-5 text-sm text-slate-300">
+            <div className="flex-1 overflow-y-auto p-5 space-y-5 text-sm text-zinc-300">
               <div className="p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 flex items-center justify-between">
                 <span className="font-mono font-bold">{snippet.id}</span>
                 <span className="text-[11px] bg-indigo-500/20 px-2 py-0.5 rounded text-indigo-200 uppercase tracking-wider font-semibold">

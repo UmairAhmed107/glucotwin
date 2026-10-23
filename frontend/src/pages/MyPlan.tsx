@@ -58,16 +58,16 @@ export const MyPlanPage: React.FC = () => {
   const getCategoryColor = (cat: string) => {
     switch (cat.toLowerCase()) {
       case 'medication':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
+        return 'bg-purple-950/50 text-purple-300 border-purple-800/60';
       case 'lifestyle':
       case 'diet':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        return 'bg-emerald-950/50 text-emerald-300 border-emerald-800/60';
       case 'monitoring':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-blue-950/50 text-blue-300 border-blue-800/60';
       case 'visit':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
+        return 'bg-amber-950/50 text-amber-300 border-amber-800/60';
       default:
-        return 'bg-slate-50 text-slate-700 border-slate-200';
+        return 'bg-zinc-900 text-zinc-300 border-zinc-800';
     }
   };
 
@@ -78,16 +78,16 @@ export const MyPlanPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+      {/* Header Banner - Matching Reference UI Header Style */}
+      <div className="bg-[#09090b] border border-zinc-800 rounded-2xl p-6 sm:p-8 relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-semibold text-zinc-300 mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
               Clinician-Approved 4-Week Pathway
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold">My Personalized Care Plan</h1>
-            <p className="text-teal-100 text-sm mt-1 max-w-xl">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">My Personalized Care Plan</h1>
+            <p className="text-zinc-400 text-sm mt-1 max-w-xl">
               Follow your physician-reviewed pathway to stabilize post-meal excursions, maintain glucose in-range, and reach metabolic target HbA1c.
             </p>
           </div>
@@ -95,7 +95,7 @@ export const MyPlanPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleDownloadDossier}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-emerald-800 rounded-xl font-medium text-sm shadow hover:bg-emerald-50 transition active:scale-95"
+              className="btn-white text-sm"
             >
               <Download className="w-4 h-4" />
               Download Clinical Dossier (PDF)
@@ -107,75 +107,75 @@ export const MyPlanPage: React.FC = () => {
       {/* Grid: Upcoming Visit & Pathway Progress */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Progress Card */}
-        <div className="md:col-span-1 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="md:col-span-1 bg-[#09090b] rounded-2xl p-6 border border-zinc-800 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Plan Progress</h2>
-              <span className="text-2xl font-bold text-emerald-600">{progressPercent}%</span>
+              <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Plan Progress</h2>
+              <span className="text-3xl font-extrabold text-white font-mono">{progressPercent}%</span>
             </div>
 
             {/* Progress bar */}
-            <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden mb-4">
+            <div className="w-full bg-zinc-800/80 rounded-full h-2.5 overflow-hidden mb-4">
               <div
-                className="bg-emerald-500 h-3 rounded-full transition-all duration-500"
+                className="bg-white h-2.5 rounded-full transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
 
-            <p className="text-xs text-slate-500 mb-6">
+            <p className="text-xs text-zinc-400 mb-6">
               {completedTasks} of {totalTasks} action milestones completed in your active care pathway.
             </p>
           </div>
 
-          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 text-xs space-y-2 text-slate-600">
+          <div className="p-3.5 bg-black/60 rounded-xl border border-zinc-800 text-xs space-y-2 text-zinc-300">
             <div className="flex items-center justify-between">
-              <span>Pathway Status:</span>
-              <span className="font-semibold text-slate-800 capitalize">
+              <span className="text-zinc-400">Pathway Status:</span>
+              <span className="font-semibold text-white capitalize">
                 {carePlan?.status ? carePlan.status.replace('_', ' ') : 'Active'}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Target Glucose:</span>
-              <span className="font-semibold text-emerald-700">70 - 180 mg/dL</span>
+              <span className="text-zinc-400">Target Glucose:</span>
+              <span className="font-mono font-semibold text-emerald-400">70 - 180 mg/dL</span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Goal HbA1c:</span>
-              <span className="font-semibold text-emerald-700">&lt; 7.0%</span>
+              <span className="text-zinc-400">Goal HbA1c:</span>
+              <span className="font-mono font-semibold text-emerald-400">&lt; 7.0%</span>
             </div>
           </div>
         </div>
 
         {/* Visit Status Card */}
-        <div className="md:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="md:col-span-2 bg-[#09090b] rounded-2xl p-6 border border-zinc-800 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                <Stethoscope className="w-4 h-4 text-emerald-600" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Stethoscope className="w-4 h-4 text-zinc-300" />
                 Consultation & Visit Status
               </div>
               {upcomingVisit ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-medium">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-950/60 text-blue-300 border border-blue-800/70 rounded-full text-xs font-medium">
                   <Clock className="w-3.5 h-3.5" />
                   Upcoming Consultation
                 </span>
               ) : latestCompletedVisit ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-medium">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-950/60 text-emerald-300 border border-emerald-800/70 rounded-full text-xs font-medium">
                   <UserCheck className="w-3.5 h-3.5" />
                   Clinician-Reviewed
                 </span>
               ) : (
-                <span className="inline-flex items-center px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full text-xs">
+                <span className="inline-flex items-center px-3 py-1 bg-zinc-900 text-zinc-400 border border-zinc-800 rounded-full text-xs">
                   No visits logged
                 </span>
               )}
             </div>
 
             {upcomingVisit ? (
-              <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100 mb-4">
-                <div className="text-xs text-blue-600 font-semibold uppercase tracking-wider mb-1">
+              <div className="p-4 bg-zinc-900/60 rounded-xl border border-zinc-800 mb-4">
+                <div className="text-xs text-zinc-400 font-semibold uppercase tracking-wider mb-1">
                   Scheduled Consultation
                 </div>
-                <div className="text-base font-bold text-slate-800">
+                <div className="text-base font-bold text-white font-mono">
                   {new Date(upcomingVisit.scheduled_at).toLocaleDateString(undefined, {
                     weekday: 'long',
                     year: 'numeric',
@@ -185,31 +185,31 @@ export const MyPlanPage: React.FC = () => {
                     minute: '2-digit',
                   })}
                 </div>
-                <p className="text-xs text-slate-600 mt-2">
+                <p className="text-xs text-zinc-400 mt-2">
                   Your care team has prepared a pre-visit summary from your twin telemetry. Join on schedule to review recommendations.
                 </p>
               </div>
             ) : latestCompletedVisit ? (
-              <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 mb-4">
+              <div className="p-4 bg-zinc-900/60 rounded-xl border border-zinc-800 mb-4">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-emerald-700 font-semibold uppercase tracking-wider">
+                  <span className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">
                     Latest Visit Notes ({new Date(latestCompletedVisit.scheduled_at).toLocaleDateString()})
                   </span>
                 </div>
-                <p className="text-sm text-slate-700 italic">
+                <p className="text-sm text-zinc-300 italic">
                   "{latestCompletedVisit.notes || 'Plan reviewed and approved by attending clinician.'}"
                 </p>
               </div>
             ) : (
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-zinc-400 mb-4">
                 Your care team will schedule your next metabolic review session.
               </p>
             )}
           </div>
 
-          <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-between text-xs text-zinc-500 pt-3 border-t border-zinc-800/80">
             <span>Clinical decision support grounded in ADA 2024 Standards.</span>
-            <span className="text-emerald-700 font-medium flex items-center gap-1">
+            <span className="text-emerald-400 font-medium flex items-center gap-1">
               Safety Governor Active <CheckCircle2 className="w-3.5 h-3.5" />
             </span>
           </div>
@@ -217,30 +217,30 @@ export const MyPlanPage: React.FC = () => {
       </div>
 
       {/* Task Checklist Section */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-200">
+      <div className="bg-[#09090b] rounded-2xl border border-zinc-800 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-zinc-800/80">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Target className="w-5 h-5 text-emerald-600" />
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Target className="w-4 h-4 text-zinc-400" />
                 Action Milestones & Weekly Checklist
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 Check off items as you complete them during each week of your care plan.
               </p>
             </div>
 
             {/* Filter controls */}
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50 text-xs">
+              <div className="inline-flex rounded-xl border border-zinc-800 p-1 bg-black text-xs">
                 {(['all', 'pending', 'completed'] as const).map((filter) => (
                   <button
                     key={filter}
                     onClick={() => setStatusFilter(filter)}
-                    className={`px-3 py-1.5 rounded-md font-medium capitalize transition ${
+                    className={`px-3 py-1.5 rounded-lg font-medium capitalize transition ${
                       statusFilter === filter
-                        ? 'bg-white text-emerald-700 shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-white text-black font-semibold shadow-sm'
+                        : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     {filter}
@@ -251,7 +251,7 @@ export const MyPlanPage: React.FC = () => {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="text-xs border border-zinc-800 rounded-xl px-3 py-1.5 bg-zinc-900 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-white"
               >
                 <option value="all">All Categories</option>
                 <option value="lifestyle">Lifestyle & Diet</option>
@@ -264,12 +264,12 @@ export const MyPlanPage: React.FC = () => {
         </div>
 
         {/* Task List */}
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-zinc-800/60">
           {planLoading ? (
-            <div className="p-12 text-center text-slate-400 text-sm">Loading care plan milestones...</div>
+            <div className="p-12 text-center text-zinc-500 text-sm">Loading care plan milestones...</div>
           ) : filteredTasks.length === 0 ? (
-            <div className="p-12 text-center text-slate-500 text-sm">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-60" />
+            <div className="p-12 text-center text-zinc-400 text-sm">
+              <CheckCircle2 className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
               No tasks found for the selected filters.
             </div>
           ) : (
@@ -279,19 +279,19 @@ export const MyPlanPage: React.FC = () => {
                 <div
                   key={task.id}
                   onClick={() => handleToggleTask(task)}
-                  className={`p-4 md:px-6 flex items-start gap-4 cursor-pointer transition hover:bg-slate-50/80 ${
-                    isDone ? 'bg-slate-50/40 opacity-75' : ''
+                  className={`p-4 md:px-6 flex items-start gap-4 cursor-pointer transition hover:bg-zinc-900/50 ${
+                    isDone ? 'bg-zinc-900/20 opacity-70' : ''
                   }`}
                 >
                   <button
                     type="button"
-                    className="mt-0.5 text-slate-400 hover:text-emerald-600 transition flex-shrink-0"
+                    className="mt-0.5 text-zinc-400 hover:text-white transition flex-shrink-0"
                     aria-label={isDone ? 'Mark task as pending' : 'Mark task as completed'}
                   >
                     {isDone ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 fill-emerald-100" />
+                      <CheckCircle2 className="w-5 h-5 text-white" />
                     ) : (
-                      <Circle className="w-5 h-5 text-slate-300 hover:text-slate-400" />
+                      <Circle className="w-5 h-5 text-zinc-600 hover:text-zinc-400" />
                     )}
                   </button>
 
@@ -299,44 +299,46 @@ export const MyPlanPage: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span
                         className={`text-sm font-semibold ${
-                          isDone ? 'line-through text-slate-400' : 'text-slate-800'
+                          isDone ? 'line-through text-zinc-500' : 'text-zinc-200'
                         }`}
                       >
                         {task.title}
                       </span>
                       <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-wider ${getCategoryColor(
+                        className={`text-[10px] px-2.5 py-0.5 rounded-full border font-medium uppercase tracking-wider ${getCategoryColor(
                           task.category
                         )}`}
                       >
                         {task.category}
                       </span>
                       {task.assigned_to && (
-                        <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-full">
                           Assigned: {task.assigned_to}
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs text-slate-500">
+                    <div className="flex items-center gap-4 text-xs text-zinc-400">
                       {task.due_date && (
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          <Calendar className="w-3.5 h-3.5 text-zinc-500" />
                           Due: {new Date(task.due_date).toLocaleDateString()}
                         </span>
                       )}
                       {task.completed_at && (
-                        <span className="text-emerald-600">
+                        <span className="text-emerald-400">
                           Completed on {new Date(task.completed_at).toLocaleDateString()}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex-shrink-0 text-slate-400">
+                  <div className="flex-shrink-0">
                     <span
-                      className={`text-xs px-2.5 py-1 rounded-md font-medium ${
-                        isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                      className={`text-xs px-2.5 py-1 rounded-md font-medium border ${
+                        isDone
+                          ? 'bg-zinc-800 border-zinc-700 text-zinc-300'
+                          : 'bg-zinc-900 border-zinc-800 text-zinc-400'
                       }`}
                     >
                       {isDone ? 'Done' : 'To Do'}

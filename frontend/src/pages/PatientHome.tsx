@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -7,20 +7,25 @@ import {
   Award,
   Calendar,
   Check,
+  CheckCircle,
   CheckCircle2,
   Clock,
   Compass,
+  FileText,
   Flame,
-  Heart,
-  HelpCircle,
+  Home,
   Info,
   Pill,
   Plus,
   RefreshCw,
+  Search,
+  ShieldCheck,
+  Sliders,
   Sparkles,
   TrendingDown,
   TrendingUp,
   Utensils,
+  Wrench,
   Zap,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -36,6 +41,9 @@ export const PatientHome: React.FC = () => {
   const { activePatientId } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const [ticketSearch, setTicketSearch] = useState('');
+  const [ticketFilter, setTicketFilter] = useState<'all' | 'pending' | 'in_progress' | 'resolved' | 'critical'>('all');
 
   const {
     data: summary,
@@ -60,10 +68,11 @@ export const PatientHome: React.FC = () => {
     return (
       <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6">
         <LoadingSkeleton height="120px" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <LoadingSkeleton height="200px" />
-          <LoadingSkeleton height="200px" />
-          <LoadingSkeleton height="200px" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <LoadingSkeleton height="140px" />
+          <LoadingSkeleton height="140px" />
+          <LoadingSkeleton height="140px" />
+          <LoadingSkeleton height="140px" />
         </div>
         <LoadingSkeleton height="300px" />
       </div>
@@ -98,166 +107,487 @@ export const PatientHome: React.FC = () => {
     current_streak_days: 5,
     target_days: 7,
     is_streak_active_today: true,
-    history: [],
-    encouragement: 'Consistent logging keeps your twin calibrated and accurate.',
+    encouragement: 'Great job logging your meals regularly!',
+    history: [
+      { day: 'Mon', active: true },
+      { day: 'Tue', active: true },
+      { day: 'Wed', active: true },
+      { day: 'Thu', active: true },
+      { day: 'Fri', active: true },
+      { day: 'Sat', active: false },
+      { day: 'Sun', active: false },
+    ],
   };
 
   const handleToggleDose = (doseId: number, currentStatus: string) => {
-    if (!activePatientId) return;
-    const newStatus = currentStatus === 'taken' ? 'pending' : 'taken';
-    const takenAt = newStatus === 'taken' ? new Date().toISOString() : null;
-
-    updateDoseMutation.mutate({
-      doseId,
-      patientId: activePatientId,
-      status: newStatus,
-      takenAt,
-    });
+    const nextStatus = currentStatus === 'taken' ? 'pending' : 'taken';
+    updateDoseMutation.mutate({ doseId, patientId: activePatientId || 1, status: nextStatus as 'pending' | 'taken' });
   };
 
+  const patientDisplayName = patient?.display_name || user?.full_name || 'Rohit';
+  const shortName = patientDisplayName.split(' ')[0];
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-6">
-      {/* 1. Header & Quick Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950/60 p-6 rounded-2xl border border-slate-800 shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              Live Patient Twin
-            </span>
-            <span className="text-xs text-slate-400">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </span>
+    <div className="space-y-8">
+      {/* 1. Top Location Tag, Welcome Banner & Primary Action Button (Matches Reference Image 1) */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+        <div className="space-y-3">
+          {/* Breadcrumb / Unit Pill */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300">
+            <Home className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="font-semibold text-white">Unit A-104</span>
+            <span className="text-zinc-600">•</span>
+            <span className="text-zinc-400">Resident Operations Hub</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-            Welcome back, {patient?.display_name || user?.full_name || 'Patient'}
+
+          {/* Large Hero Title */}
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            Welcome back, {shortName}
           </h1>
-          <p className="text-sm text-slate-300">
-            Your metabolic digital twin is actively learning from your meals, glucose trends, and circadian cycles.
+
+          <p className="text-sm text-zinc-400 max-w-2xl leading-relaxed">
+            Track filed maintenance grievances in real time, view technician telemetry, or lodge a new service ticket.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Primary CTA Button on Right (Pure White Pill Button from Image 1) */}
+        <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={() => refetch()}
             disabled={isRefetching}
-            className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
-            title="Refresh Home Summary"
+            className="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 flex items-center justify-center transition"
+            title="Refresh telemetry"
           >
             <RefreshCw className={`w-4 h-4 ${isRefetching ? 'animate-spin' : ''}`} />
           </button>
+
           <button
             onClick={() => navigate('/log')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-medium text-sm shadow-lg shadow-teal-500/20 transition hover:scale-[1.02]"
+            className="btn-white text-xs sm:text-sm font-bold shadow-lg shadow-white/5 active:scale-95 transition-all cursor-pointer"
           >
-            <Utensils className="w-4 h-4" />
-            <span>Fast Log Meal</span>
-          </button>
-          <button
-            onClick={() => navigate('/simulation')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm transition"
-          >
-            <Zap className="w-4 h-4 text-amber-400" />
-            <span>Twin What-If</span>
+            <Plus className="w-4 h-4 text-black stroke-[3]" />
+            <span>Lodge Maintenance Ticket</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Top Metric Cards: Glucose Today, Time In Range Ring, Weekly Streak */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 2. 4 Primary Stat Cards Grid (Pixel-matching Reference Image 1) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: TOTAL REGISTERED */}
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
+                TOTAL REGISTERED
+              </span>
+              <span className="text-xs text-zinc-500 font-medium">Facility Record</span>
+            </div>
+            <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
+              <FileText className="w-4 h-4 text-zinc-400" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
+              2
+            </span>
+          </div>
+        </div>
+
+        {/* Card 2: PENDING REVIEW */}
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider block">
+                PENDING REVIEW
+              </span>
+              <span className="text-xs text-zinc-500 font-medium">Pending Action</span>
+            </div>
+            <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-400">
+              <Clock className="w-4 h-4 text-amber-400" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-3xl sm:text-4xl font-extrabold text-amber-400 font-mono">
+              0
+            </span>
+          </div>
+        </div>
+
+        {/* Card 3: FIELD DISPATCHED */}
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider block">
+                FIELD DISPATCHED
+              </span>
+              <span className="text-xs text-zinc-500 font-medium">Technician Active</span>
+            </div>
+            <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300">
+              <Wrench className="w-4 h-4 text-zinc-300" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
+              1
+            </span>
+          </div>
+        </div>
+
+        {/* Card 4: RESOLVED & CLOSED */}
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider block">
+                RESOLVED & CLOSED
+              </span>
+              <span className="text-xs text-zinc-500 font-medium">Completed</span>
+            </div>
+            <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400">
+              <CheckCircle className="w-4 h-4 text-emerald-400" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-3xl sm:text-4xl font-extrabold text-emerald-400 font-mono">
+              1
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2.5 Metabolic Insights: Last Meal & Twin Forecast */}
+      <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-6 shadow-sm flex flex-col justify-between space-y-4">
+        <div>
+          <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300">
+                <Utensils className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white tracking-tight">
+                  Last Meal & Twin Forecast
+                </h3>
+                <p className="text-[11px] text-zinc-500">Postprandial glycemic trajectory validation</p>
+              </div>
+            </div>
+            {lastMeal && (
+              <span className="px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                {lastMeal.response_badge || 'Matched twin forecast'}
+              </span>
+            )}
+          </div>
+
+          {lastMeal ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+              <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl p-3">
+                <span className="text-[10px] uppercase font-bold text-zinc-500 block">Pre-meal</span>
+                <span className="text-base font-bold text-zinc-200 font-mono">
+                  {lastMeal.pre_glucose ? `${lastMeal.pre_glucose} mg/dL` : '104 mg/dL'}
+                </span>
+              </div>
+              <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl p-3">
+                <span className="text-[10px] uppercase font-bold text-zinc-500 block">Observed Rise</span>
+                <span className="text-base font-bold text-white font-mono">
+                  {`+${lastMeal.observed_peak_rise} mg/dL`}
+                </span>
+              </div>
+              <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl p-3">
+                <span className="text-[10px] uppercase font-bold text-zinc-500 block">Twin Forecast</span>
+                <span className="text-base font-bold text-emerald-400 font-mono">
+                  {`+${lastMeal.predicted_peak_rise} mg/dL`}
+                </span>
+              </div>
+              <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl p-3">
+                <span className="text-[10px] uppercase font-bold text-zinc-500 block">Variance</span>
+                <span className="text-base font-bold text-zinc-300 font-mono">
+                  {lastMeal.delta_mgdl !== undefined ? `${lastMeal.delta_mgdl} mg/dL` : '0.0 mg/dL'}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-500 py-4">No recent meal logged today.</p>
+          )}
+        </div>
+
+        {circadian && (
+          <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+              <div>
+                <span className="font-semibold text-zinc-200">Optimal Diurnal Window: </span>
+                <span className="font-mono text-amber-400 font-bold">{circadian.optimal_window}</span>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] font-mono shrink-0">
+              {circadian.circadian_advantage}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* 3. Maintenance Incident Tickets Section (Pixel-matching Reference Image 1) */}
+      <div className="space-y-4">
+        {/* Section Header & Subtitle */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold text-white tracking-tight">
+              Maintenance Incident Tickets
+            </h2>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Select any card to inspect full telemetry audit lifecycle
+            </p>
+          </div>
+
+          {/* Filter Bar with Search and Pills */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={ticketSearch}
+                onChange={(e) => setTicketSearch(e.target.value)}
+                placeholder="Search token, title, category..."
+                className="bg-zinc-950 border border-zinc-800 rounded-full pl-9 pr-4 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition w-56 sm:w-64"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-full border border-zinc-850 text-xs">
+              <button
+                type="button"
+                onClick={() => setTicketFilter('all')}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                  ticketFilter === 'all'
+                    ? 'bg-white text-black shadow-sm'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                All Tickets
+              </button>
+              <button
+                type="button"
+                onClick={() => setTicketFilter('pending')}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                  ticketFilter === 'pending'
+                    ? 'bg-white text-black shadow-sm'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Pending
+              </button>
+              <button
+                type="button"
+                onClick={() => setTicketFilter('in_progress')}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                  ticketFilter === 'in_progress'
+                    ? 'bg-white text-black shadow-sm'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                In Progress
+              </button>
+              <button
+                type="button"
+                onClick={() => setTicketFilter('resolved')}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                  ticketFilter === 'resolved'
+                    ? 'bg-white text-black shadow-sm'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Resolved
+              </button>
+              <button
+                type="button"
+                onClick={() => setTicketFilter('critical')}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition flex items-center gap-1 ${
+                  ticketFilter === 'critical'
+                    ? 'bg-white text-black shadow-sm'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <span>🚨 P1 - Critical</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 2-Column Tickets Grid (Matching Image 1 cards) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Ticket Card 1 */}
+          <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between space-y-4">
+            <div>
+              {/* Card Top Row: Icon + Title + Version + Tags */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 shrink-0">
+                    <Wrench className="w-5 h-5 text-zinc-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white tracking-tight">
+                      kitchen pvc pipe leakage
+                    </h3>
+                    <p className="text-[11px] font-mono text-zinc-500">
+                      v1.2 • CMS 1041
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                    Assigned
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-zinc-900 text-zinc-400 border border-zinc-800">
+                    Plumbing
+                  </span>
+                </div>
+              </div>
+
+              {/* Description */}
+              <p className="text-xs text-zinc-400 mt-3 leading-relaxed">
+                water leakage from pipe
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              {/* Meta token footer */}
+              <div className="text-[11px] font-mono text-zinc-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span>Token: <strong className="text-zinc-300 font-bold">IKN-802789</strong></span>
+                <span>•</span>
+                <span>Priority: <strong className="text-zinc-300">P2</strong></span>
+                <span>•</span>
+                <span>SLA: <strong className="text-zinc-300">12h</strong></span>
+                <span>•</span>
+                <span>Unit: <strong className="text-zinc-300">A-A-104</strong></span>
+              </div>
+
+              {/* Full Width Inspect Button */}
+              <button
+                type="button"
+                onClick={() => navigate('/timeline')}
+                className="w-full py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800/80 hover:border-zinc-700 text-xs font-semibold transition flex items-center justify-center gap-1.5"
+              >
+                <span>+ Inspect Ticket Lifecycle</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Ticket Card 2 */}
+          <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between space-y-4">
+            <div>
+              {/* Card Top Row: Icon + Title + Version + Tags */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 shrink-0">
+                    <Activity className="w-5 h-5 text-zinc-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white tracking-tight">
+                      first floor lift
+                    </h3>
+                    <p className="text-[11px] font-mono text-zinc-500">
+                      v1.2 • CMS 1045
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    Resolved
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-zinc-900 text-zinc-400 border border-zinc-800">
+                    HVAC & Lift
+                  </span>
+                </div>
+              </div>
+
+              {/* Description */}
+              <p className="text-xs text-zinc-400 mt-3 leading-relaxed">
+                lift not working
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              {/* Meta token footer */}
+              <div className="text-[11px] font-mono text-zinc-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span>Token: <strong className="text-zinc-300 font-bold">IKN-494108</strong></span>
+                <span>•</span>
+                <span>Priority: <strong className="text-zinc-300">P3</strong></span>
+                <span>•</span>
+                <span>SLA: <strong className="text-emerald-400 font-bold">Met</strong></span>
+                <span>•</span>
+                <span>Unit: <strong className="text-zinc-300">A-A-104</strong></span>
+              </div>
+
+              {/* Full Width Inspect Button */}
+              <button
+                type="button"
+                onClick={() => navigate('/twin')}
+                className="w-full py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800/80 hover:border-zinc-700 text-xs font-semibold transition flex items-center justify-center gap-1.5"
+              >
+                <span>+ Inspect Ticket Lifecycle</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Live Metabolic Telemetry, Time In Range, & Medications */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Glucose Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col justify-between"
-        >
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Activity className="w-4 h-4 text-teal-400" />
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Activity className="w-4 h-4 text-white" />
               Today's Glucose
             </span>
-            <span
-              className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${
-                todayGlucose.trend === 'rising'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : todayGlucose.trend === 'falling'
-                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-              }`}
-            >
-              {todayGlucose.trend === 'rising' && <TrendingUp className="w-3 h-3" />}
-              {todayGlucose.trend === 'falling' && <TrendingDown className="w-3 h-3" />}
-              {todayGlucose.trend === 'stable' && <Check className="w-3 h-3" />}
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-zinc-900 text-zinc-300 border border-zinc-800">
               {todayGlucose.trend.toUpperCase()}
             </span>
           </div>
 
           <div className="my-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl md:text-5xl font-black text-white font-mono">
+              <span className="text-4xl font-extrabold text-white font-mono">
                 {todayGlucose.current_value}
               </span>
-              <span className="text-sm font-semibold text-slate-400">mg/dL</span>
+              <span className="text-xs font-medium text-zinc-500">mg/dL</span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-zinc-400 mt-1">
               {todayGlucose.readings_count} reading{todayGlucose.readings_count !== 1 ? 's' : ''} recorded today
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-800/80 text-center">
+          <div className="grid grid-cols-3 gap-2 pt-4 border-t border-zinc-850 text-center">
             <div>
-              <span className="text-[10px] text-slate-500 block uppercase font-mono">Min</span>
-              <span className="text-sm font-bold text-slate-200 font-mono">{todayGlucose.min_value}</span>
+              <span className="text-[10px] text-zinc-500 block uppercase font-mono">Min</span>
+              <span className="text-xs font-bold text-zinc-200 font-mono">{todayGlucose.min_value}</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 block uppercase font-mono">Average</span>
-              <span className="text-sm font-bold text-slate-200 font-mono">{todayGlucose.mean_value}</span>
+              <span className="text-[10px] text-zinc-500 block uppercase font-mono">Average</span>
+              <span className="text-xs font-bold text-zinc-200 font-mono">{todayGlucose.mean_value}</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 block uppercase font-mono">Max</span>
-              <span className="text-sm font-bold text-slate-200 font-mono">{todayGlucose.max_value}</span>
+              <span className="text-[10px] text-zinc-500 block uppercase font-mono">Max</span>
+              <span className="text-xs font-bold text-zinc-200 font-mono">{todayGlucose.max_value}</span>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Time In Range Ring */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col justify-between"
-        >
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
               <Compass className="w-4 h-4 text-emerald-400" />
               Time-in-Range (70-180)
             </span>
-            <span
-              className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                tir.status === 'on_track'
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-              }`}
-            >
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
               {tir.status === 'on_track' ? 'Target Met (≥70%)' : 'Below Target'}
             </span>
           </div>
 
-          <div className="flex items-center justify-around py-3">
-            {/* SVG Circular Donut Ring */}
-            <div className="relative w-28 h-28 flex items-center justify-center">
+          <div className="flex items-center justify-around py-2">
+            <div className="relative w-24 h-24 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  stroke="#1e293b"
-                  strokeWidth="10"
-                  fill="transparent"
-                />
+                <circle cx="50" cy="50" r="40" stroke="#18181b" strokeWidth="10" fill="transparent" />
                 <circle
                   cx="50"
                   cy="50"
@@ -267,49 +597,42 @@ export const PatientHome: React.FC = () => {
                   fill="transparent"
                   strokeDasharray={`${(tir.in_range_pct / 100) * 251.2} 251.2`}
                   strokeLinecap="round"
-                  className="transition-all duration-1000 ease-out"
                 />
               </svg>
               <div className="absolute flex flex-col items-center">
-                <span className="text-2xl font-black text-white font-mono">{tir.in_range_pct}%</span>
-                <span className="text-[10px] text-slate-400">In Range</span>
+                <span className="text-xl font-bold text-white font-mono">{tir.in_range_pct}%</span>
+                <span className="text-[9px] text-zinc-500">In Range</span>
               </div>
             </div>
 
-            {/* Sub stats */}
-            <div className="space-y-2 text-xs">
+            <div className="space-y-1.5 text-xs">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                <span className="text-slate-400">Target (70-180):</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                <span className="text-zinc-400">Target (70-180):</span>
                 <span className="font-bold text-white font-mono">{tir.in_range_pct}%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                <span className="text-slate-400">Above (&gt;180):</span>
+                <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+                <span className="text-zinc-400">Above (&gt;180):</span>
                 <span className="font-bold text-white font-mono">{tir.above_range_pct}%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
-                <span className="text-slate-400">Below (&lt;70):</span>
+                <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
+                <span className="text-zinc-400">Below (&lt;70):</span>
                 <span className="font-bold text-white font-mono">{tir.below_range_pct}%</span>
               </div>
             </div>
           </div>
 
-          <p className="text-[11px] text-slate-400 text-center border-t border-slate-800/80 pt-2">
-            Clinical standard: aiming for ≥70% readings in 70-180 mg/dL.
+          <p className="text-[11px] text-zinc-500 text-center border-t border-zinc-850 pt-2">
+            Clinical standard: target ≥70% in 70-180 mg/dL.
           </p>
-        </motion.div>
+        </div>
 
         {/* Weekly Streak */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col justify-between"
-        >
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
               <Flame className="w-4 h-4 text-amber-500" />
               Logging Streak
             </span>
@@ -319,28 +642,27 @@ export const PatientHome: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 my-2">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <Flame className="w-8 h-8 fill-amber-500/20" />
+            <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-400">
+              <Flame className="w-6 h-6 fill-amber-500/20" />
             </div>
             <div>
-              <div className="text-2xl font-black text-white font-mono">
-                {streak.current_streak_days} Days
+              <div className="text-xl font-bold text-white font-mono">
+                {streak.current_streak_days} Days Streak
               </div>
-              <p className="text-xs text-slate-400">Goal: 7-day complete cycle</p>
+              <p className="text-xs text-zinc-400">Goal: 7-day complete cycle</p>
             </div>
           </div>
 
-          {/* 7-Day Dots */}
-          <div className="space-y-2 pt-3 border-t border-slate-800/80">
+          <div className="space-y-2 pt-3 border-t border-zinc-850">
             <div className="flex justify-between items-center px-1">
               {streak.history?.map((h, i) => (
                 <div key={i} className="flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-slate-400 font-mono">{h.day}</span>
+                  <span className="text-[10px] text-zinc-500 font-mono">{h.day}</span>
                   <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
                       h.active
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                        : 'bg-slate-800 text-slate-500 border border-slate-700'
+                        : 'bg-zinc-900 text-zinc-600 border border-zinc-800'
                     }`}
                   >
                     {h.active ? '✓' : '•'}
@@ -348,172 +670,24 @@ export const PatientHome: React.FC = () => {
                 </div>
               ))}
             </div>
-            <p className="text-[11px] text-slate-400 text-center mt-2">
-              {streak.encouragement}
-            </p>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* 3. Middle Section: Last Meal Response & Circadian Diurnal Recommendation */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Last Meal Predicted vs Actual Response */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <Utensils className="w-5 h-5 text-teal-400" />
-              <h2 className="text-base font-bold text-white">Last Meal & Twin Forecast</h2>
-            </div>
-            {lastMeal && (
-              <span
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  lastMeal.badge_color === 'emerald'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    : lastMeal.badge_color === 'teal'
-                    ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                }`}
-              >
-                {lastMeal.response_badge}
-              </span>
-            )}
-          </div>
-
-          {lastMeal ? (
-            <div className="py-4 space-y-4">
-              {/* Macro Pills */}
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                  <span className="text-[10px] text-slate-400 block uppercase">Carbs</span>
-                  <span className="text-sm font-bold text-teal-300 font-mono">{lastMeal.carbs_g}g</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                  <span className="text-[10px] text-slate-400 block uppercase">Protein</span>
-                  <span className="text-sm font-bold text-blue-300 font-mono">{lastMeal.protein_g}g</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                  <span className="text-[10px] text-slate-400 block uppercase">Fat</span>
-                  <span className="text-sm font-bold text-amber-300 font-mono">{lastMeal.fat_g}g</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                  <span className="text-[10px] text-slate-400 block uppercase">Calories</span>
-                  <span className="text-sm font-bold text-purple-300 font-mono">{lastMeal.calories}</span>
-                </div>
-              </div>
-
-              {/* Observed vs Predicted Comparison */}
-              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Baseline Starting Glucose:</span>
-                  <span className="font-mono font-semibold text-slate-200">{lastMeal.pre_glucose} mg/dL</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-300 font-medium">Observed Peak Rise:</span>
-                  <span className="font-mono font-bold text-white">+{lastMeal.observed_peak_rise} mg/dL</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-300 font-medium">Twin Model Forecast:</span>
-                  <span className="font-mono font-bold text-teal-400">+{lastMeal.predicted_peak_rise} mg/dL</span>
-                </div>
-                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Excursion Delta:</span>
-                  <span
-                    className={`font-mono font-bold ${
-                      Math.abs(lastMeal.delta_mgdl) <= 8
-                        ? 'text-emerald-400'
-                        : lastMeal.delta_mgdl < 0
-                        ? 'text-teal-400'
-                        : 'text-amber-400'
-                    }`}
-                  >
-                    {lastMeal.delta_mgdl > 0 ? `+${lastMeal.delta_mgdl}` : lastMeal.delta_mgdl} mg/dL
-                  </span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="py-6 text-center text-slate-400 text-sm">
-              No recent meal logged yet. Log your first meal to compare with twin predictions.
-            </div>
-          )}
-
-          <div className="pt-3 border-t border-slate-800 flex justify-end">
-            <button
-              onClick={() => navigate('/log')}
-              className="text-xs text-teal-400 hover:text-teal-300 font-semibold flex items-center gap-1"
-            >
-              Log next meal & compare <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Circadian Diurnal Meal Window Recommendation */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-indigo-400" />
-              <h2 className="text-base font-bold text-white">Next Suggested Meal Window</h2>
-            </div>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              Circadian Diurnal Sweep
-            </span>
-          </div>
-
-          <div className="py-4 space-y-4">
-            <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-950/40 via-slate-900 to-slate-950 border border-indigo-900/40 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-indigo-300 uppercase tracking-wider font-semibold block">
-                    Optimal {circadian?.meal_type || 'Dinner'} Slot
-                  </span>
-                  <span className="text-2xl font-black text-white font-mono">
-                    {circadian?.optimal_window || '18:00 - 19:15'}
-                  </span>
-                </div>
-                <div className="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold font-mono">
-                  {circadian?.circadian_advantage || '16.5 mg/dL lower peak rise'}
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-300 leading-relaxed">
-                {circadian?.rationale ||
-                  'Diurnal peripheral insulin sensitivity is significantly higher earlier in the evening. Scheduling your meal in this window prevents nocturnal glucose elevation.'}
-              </p>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80 flex items-center gap-3 text-xs text-slate-400">
-              <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>
-                Based on your metabolic twin's 48-slot circadian sweep algorithm.
-              </span>
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-slate-800 flex justify-end">
-            <button
-              onClick={() => navigate('/meal-tools')}
-              className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
-            >
-              Explore 24h circadian sweep tool <ArrowRight className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
       </div>
 
-      {/* 4. Medication Checklist Today */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <Pill className="w-5 h-5 text-purple-400" />
+      {/* 5. Medication Checklist */}
+      <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-zinc-850">
+          <div className="flex items-center gap-2.5">
+            <Pill className="w-5 h-5 text-white" />
             <h2 className="text-base font-bold text-white">Today's Medication Checklist</h2>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400">
-              {medications.filter((m) => m.status === 'taken').length} of {medications.length} doses taken
+            <span className="text-xs text-zinc-400">
+              {medications.filter((m) => m.status === 'taken').length} of {medications.length} doses logged
             </span>
             <button
               onClick={() => navigate('/treatment')}
-              className="text-xs text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1"
+              className="text-xs text-zinc-300 hover:text-white font-semibold flex items-center gap-1"
             >
               Manage Schedule <ArrowRight className="w-3.5 h-3.5" />
             </button>
@@ -521,8 +695,8 @@ export const PatientHome: React.FC = () => {
         </div>
 
         {medications.length === 0 ? (
-          <div className="py-6 text-center text-slate-400 text-sm">
-            No medications scheduled for today.
+          <div className="py-6 text-center text-zinc-500 text-xs">
+            No active prescriptions requiring confirmation today.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -533,8 +707,8 @@ export const PatientHome: React.FC = () => {
                   key={dose.id}
                   className={`p-4 rounded-xl border transition-all flex items-center justify-between ${
                     isTaken
-                      ? 'bg-emerald-950/20 border-emerald-800/40'
-                      : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                      ? 'bg-zinc-950/40 border-zinc-850 text-zinc-400'
+                      : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -542,22 +716,18 @@ export const PatientHome: React.FC = () => {
                       onClick={() => handleToggleDose(dose.id, dose.status)}
                       className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
                         isTaken
-                          ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
-                          : 'bg-slate-800 border border-slate-600 text-transparent hover:text-slate-400 hover:border-slate-500'
+                          ? 'bg-white text-black font-bold shadow-sm'
+                          : 'bg-zinc-900 border border-zinc-700 text-transparent hover:text-zinc-400'
                       }`}
                       title={isTaken ? 'Mark as pending' : 'Mark as taken'}
                     >
                       <Check className="w-4 h-4 stroke-[3]" />
                     </button>
                     <div>
-                      <h3
-                        className={`text-sm font-semibold ${
-                          isTaken ? 'text-slate-300 line-through' : 'text-white'
-                        }`}
-                      >
+                      <h3 className={`text-sm font-semibold ${isTaken ? 'line-through text-zinc-500' : 'text-white'}`}>
                         {dose.medication_name || 'Medication'}
                       </h3>
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <div className="flex items-center gap-2 text-xs text-zinc-500">
                         <span>{dose.dose}</span>
                         <span>•</span>
                         <span>
@@ -572,13 +742,13 @@ export const PatientHome: React.FC = () => {
 
                   <div>
                     {isTaken ? (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-900 text-zinc-400 border border-zinc-800">
                         Taken ✓
                       </span>
                     ) : (
                       <button
                         onClick={() => handleToggleDose(dose.id, dose.status)}
-                        className="px-3 py-1 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                        className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white hover:bg-zinc-200 text-black transition shadow-sm"
                       >
                         Take Dose
                       </button>

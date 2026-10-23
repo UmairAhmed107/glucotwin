@@ -49,17 +49,17 @@ export const CalculationDrawer: React.FC<CalculationDrawerProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col overflow-hidden"
+            className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-[#09090b] border-l border-zinc-800 shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/90">
+            <div className="flex items-center justify-between p-5 border-b border-zinc-800 bg-[#09090b]">
               <div className="flex items-center space-x-2">
-                <Cpu className="w-5 h-5 text-teal-400" />
+                <Cpu className="w-5 h-5 text-white" />
                 <h3 className="text-lg font-semibold text-white">{title}</h3>
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
                 aria-label="Close calculation drawer"
               >
                 <X className="w-5 h-5" />
@@ -67,9 +67,9 @@ export const CalculationDrawer: React.FC<CalculationDrawerProps> = ({
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-6 text-sm text-slate-300">
+            <div className="flex-1 overflow-y-auto p-5 space-y-6 text-sm text-zinc-300">
               {/* Architecture & Model Section */}
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+              <div className="p-4 rounded-xl bg-black border border-zinc-800 space-y-3">
                 <div className="flex items-center space-x-2 text-teal-400 font-medium">
                   <Cpu className="w-4 h-4" />
                   <span>Clinical Calculation Engine</span>

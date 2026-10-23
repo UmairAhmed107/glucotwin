@@ -8,34 +8,34 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0B1220',
-        foreground: '#F8FAFC',
+        background: '#030303',
+        foreground: '#F4F4F5',
         card: {
-          DEFAULT: '#111C30',
-          hover: '#162540',
-          foreground: '#F8FAFC',
+          DEFAULT: '#09090b',
+          hover: '#121215',
+          foreground: '#F4F4F5',
         },
         popover: {
-          DEFAULT: '#111C30',
-          foreground: '#F8FAFC',
+          DEFAULT: '#09090b',
+          foreground: '#F4F4F5',
         },
         primary: {
-          DEFAULT: '#14B8A6', // Teal 500
-          foreground: '#0B1220',
-          hover: '#0D9488',   // Teal 600
-          glow: '#2DD4BF',    // Teal 400
+          DEFAULT: '#FFFFFF', // High-contrast White from reference UI
+          foreground: '#000000',
+          hover: '#E4E4E7',
+          glow: '#A1A1AA',
         },
         secondary: {
-          DEFAULT: '#1E293B', // Slate 800
-          foreground: '#E2E8F0',
+          DEFAULT: '#18181b', // Zinc 900
+          foreground: '#F4F4F5',
         },
         muted: {
-          DEFAULT: '#1E293B',
-          foreground: '#94A3B8',
+          DEFAULT: '#18181b',
+          foreground: '#A1A1AA',
         },
         accent: {
-          DEFAULT: '#14B8A6',
-          foreground: '#0B1220',
+          DEFAULT: '#FFFFFF',
+          foreground: '#000000',
         },
         destructive: {
           DEFAULT: '#EF4444', // Red 500
@@ -43,25 +43,25 @@ export default {
         },
         warning: {
           DEFAULT: '#F59E0B', // Amber 500
-          foreground: '#0B1220',
+          foreground: '#000000',
         },
-        border: '#1E293B',
-        input: '#1E293B',
-        ring: '#14B8A6',
+        border: '#27272a',
+        input: '#09090b',
+        ring: '#FFFFFF',
         chart: {
-          baseline: '#64748B',      // Slate 500
-          intervention: '#14B8A6',  // Teal 500
-          band: 'rgba(20, 184, 166, 0.15)', // Teal with 15% opacity
+          baseline: '#71717A',      // Zinc 500
+          intervention: '#10B981',  // Emerald 500
+          band: 'rgba(255, 255, 255, 0.1)',
           projection: '#F59E0B',    // Amber 500
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       borderRadius: {
-        lg: '0.625rem',
-        md: '0.5rem',
-        sm: '0.375rem',
+        xl: '0.875rem',
+        '2xl': '1rem',
+        '3xl': '1.5rem',
       },
     },
   },

@@ -19,15 +19,15 @@ export const TimelineWorkspace: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Workspace Sub-Navigation Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-        <div className="flex items-center space-x-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 self-start">
+      {/* Workspace Sub-Navigation Tabs (Matches Reference UI) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-850 pb-4">
+        <div className="flex items-center gap-1 bg-zinc-950 p-1.5 rounded-2xl border border-zinc-850 self-start">
           <button
             onClick={() => handleTabChange('timeline')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'timeline'
-                ? 'bg-teal-500 text-slate-950 shadow-sm font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <History className="w-3.5 h-3.5" />
@@ -36,10 +36,10 @@ export const TimelineWorkspace: React.FC = () => {
 
           <button
             onClick={() => handleTabChange('replay')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'replay'
-                ? 'bg-teal-500 text-slate-950 shadow-sm font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <LineChart className="w-3.5 h-3.5" />
@@ -48,10 +48,10 @@ export const TimelineWorkspace: React.FC = () => {
 
           <button
             onClick={() => handleTabChange('log')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'log'
-                ? 'bg-teal-500 text-slate-950 shadow-sm font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <PlusCircle className="w-3.5 h-3.5" />
@@ -59,8 +59,8 @@ export const TimelineWorkspace: React.FC = () => {
           </button>
         </div>
 
-        <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-          <Activity className="w-3.5 h-3.5 text-teal-400" />
+        <div className="text-[11px] text-zinc-400 flex items-center gap-1.5 font-medium">
+          <Activity className="w-3.5 h-3.5 text-white" />
           <span>Continuous metabolic history & simulated sensor telemetry</span>
         </div>
       </div>

@@ -1,12 +1,24 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, ArrowRight, Lock, Mail, ShieldCheck, Stethoscope, User, Utensils } from 'lucide-react';
+import {
+  Activity,
+  ArrowRight,
+  Building,
+  Lock,
+  Mail,
+  Sun,
+  Moon,
+  User,
+  Users,
+} from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { TokenResponse, UserRole } from '../api/types';
 import { useAuth } from '../context/AuthContext';
+import { useApp } from '../context/AppContext';
 
 export const Register: React.FC = () => {
   const { login } = useAuth();
+  const { theme, toggleTheme } = useApp();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -42,23 +54,76 @@ export const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#070D19] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-950/20 via-[#0B1220] to-[#070D19] flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-slate-100 font-sans">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-400 to-teal-700 text-[#0B1220] shadow-xl shadow-teal-500/20 mb-4">
-          <Activity className="w-8 h-8 font-black" />
+    <div className="min-h-screen bg-[#030303] bg-dot-grid flex flex-col justify-between py-10 px-4 sm:px-6 lg:px-12 text-zinc-100 font-sans">
+      {/* Top Simple Bar */}
+      <div className="max-w-7xl w-full mx-auto flex items-center justify-between pb-6 border-b border-zinc-850/80">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white">
+            <Activity className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <span className="font-extrabold text-sm tracking-tight text-white">
+              GlucoTwin CMS
+            </span>
+            <span className="ml-2 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-300 border border-zinc-700/80">
+              REGISTRATION
+            </span>
+            <p className="text-[10px] text-zinc-400 font-medium">Facility & Incident Operations Console</p>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-100">
-          Create GlucoTwin Account
-        </h1>
-        <p className="mt-1 text-xs text-slate-400">
-          Register for personalized digital twin simulations and clinical decision support
-        </p>
+
+        <button
+          id="theme-toggle-btn"
+          type="button"
+          onClick={toggleTheme}
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+            theme === 'dark'
+              ? 'bg-zinc-900/80 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+              : 'bg-slate-100 border border-slate-300 text-indigo-600 hover:text-indigo-800 hover:border-slate-400 shadow-sm'
+          }`}
+          title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+          aria-label="Toggle Theme"
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-4 h-4 text-amber-400" />
+          ) : (
+            <Moon className="w-4 h-4 text-indigo-600 fill-indigo-100" />
+          )}
+        </button>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-[#0F172A]/90 border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
+      {/* Main Content */}
+      <div className="max-w-md w-full mx-auto my-auto py-10">
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-3xl p-7 sm:p-8 shadow-2xl backdrop-blur-xl">
+          {/* Card Header */}
+          <div className="flex items-center gap-3.5 mb-6">
+            <div className="w-11 h-11 rounded-2xl bg-white text-black flex items-center justify-center font-bold shadow-md shrink-0">
+              <Building className="w-5 h-5 text-black" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white tracking-tight">Portal Access</h2>
+              <p className="text-xs text-zinc-400">Register new authorized account</p>
+            </div>
+          </div>
+
+          {/* Tab Switcher */}
+          <div className="bg-zinc-950 p-1 rounded-xl border border-zinc-850 flex items-center mb-6">
+            <Link
+              to="/login"
+              className="flex-1 py-2 text-xs font-medium rounded-lg text-zinc-400 hover:text-white text-center transition"
+            >
+              Sign In
+            </Link>
+            <button
+              type="button"
+              className="flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-black shadow-sm text-center transition"
+            >
+              Register Resident
+            </button>
+          </div>
+
           {errorMsg && (
-            <div className="mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-rose-400 shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -66,151 +131,111 @@ export const Register: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5">
                 Full Name
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <User className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Dr. Jane Doe or Alex Smith"
-                  className="w-full bg-[#0B1220] border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
+                  className="w-full bg-[#050508] border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all font-normal"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5">
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@domain.org"
-                  className="w-full bg-[#0B1220] border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
+                  className="w-full bg-[#050508] border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all font-normal"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
-                  minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 6 characters"
-                  className="w-full bg-[#0B1220] border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
+                  className="w-full bg-[#050508] border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all font-normal"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-2">
-                Select Your Role
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5">
+                System Role
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRole('patient')}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    role === 'patient'
-                      ? 'border-teal-500/80 bg-teal-500/15 text-teal-300 shadow-sm'
-                      : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 font-semibold text-xs text-slate-200">
-                    <User className="w-3.5 h-3.5 text-teal-400" />
-                    Patient
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Personal metabolic twin & logging</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRole('clinician')}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    role === 'clinician'
-                      ? 'border-indigo-500/80 bg-indigo-500/15 text-indigo-300 shadow-sm'
-                      : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 font-semibold text-xs text-slate-200">
-                    <Stethoscope className="w-3.5 h-3.5 text-indigo-400" />
-                    Clinician
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Decision support & care teams</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRole('dietitian')}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    role === 'dietitian'
-                      ? 'border-emerald-500/80 bg-emerald-500/15 text-emerald-300 shadow-sm'
-                      : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 font-semibold text-xs text-slate-200">
-                    <Utensils className="w-3.5 h-3.5 text-emerald-400" />
-                    Dietitian
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Nutritional planning & guidance</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRole('admin')}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    role === 'admin'
-                      ? 'border-amber-500/80 bg-amber-500/15 text-amber-300 shadow-sm'
-                      : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 font-semibold text-xs text-slate-200">
-                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                    Admin
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Global audit & system governance</p>
-                </button>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { id: 'patient', label: 'Patient' },
+                  { id: 'clinician', label: 'Clinician' },
+                  { id: 'dietitian', label: 'Dietitian' },
+                  { id: 'admin', label: 'Admin' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setRole(item.id as UserRole)}
+                    className={`py-2 px-2.5 text-xs font-semibold rounded-xl border transition-all text-center cursor-pointer ${
+                      role === item.id
+                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                        : 'bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-4 py-2.5 px-4 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-[#070D19] font-semibold text-xs rounded-xl shadow-lg shadow-teal-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full mt-2 py-3 px-5 rounded-xl btn-white font-bold text-xs tracking-wide transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {loading ? (
-                <span>Registering...</span>
+                <span>Registering Account...</span>
               ) : (
                 <>
-                  <span>Create Account</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Create Account & Enter Console</span>
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-400">
-            Already have an account?{' '}
-            <Link to="/login" className="text-teal-400 hover:text-teal-300 font-semibold underline underline-offset-2">
-              Sign in
-            </Link>
+          <div className="mt-6 text-center">
+            <p className="text-[11px] text-zinc-500 flex items-center justify-center gap-1.5 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>Protected by Enterprise Role-Based Access Control</span>
+            </p>
           </div>
         </div>
+      </div>
+
+      {/* Footer */}
+      <div className="max-w-7xl w-full mx-auto text-center pt-6 border-t border-zinc-850/80 text-[11px] text-zinc-500">
+        Residential Society Complaint Management System • Facility Operations OS
       </div>
     </div>
   );

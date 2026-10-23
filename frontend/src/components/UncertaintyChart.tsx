@@ -74,23 +74,23 @@ export const UncertaintyChart: React.FC<UncertaintyChartProps> = ({
 
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#1E293B"
+              stroke="#27272a"
               vertical={false}
             />
 
             <XAxis
               dataKey="time_label"
-              stroke="#64748B"
+              stroke="#71717a"
               fontSize={11}
               tickLine={false}
-              axisLine={{ stroke: '#1E293B' }}
+              axisLine={{ stroke: '#27272a' }}
             />
 
             <YAxis
-              stroke="#64748B"
+              stroke="#71717a"
               fontSize={11}
               tickLine={false}
-              axisLine={{ stroke: '#1E293B' }}
+              axisLine={{ stroke: '#27272a' }}
               domain={['auto', 'auto']}
               label={
                 yAxisLabel
@@ -98,7 +98,7 @@ export const UncertaintyChart: React.FC<UncertaintyChartProps> = ({
                       value: yAxisLabel,
                       angle: -90,
                       position: 'insideLeft',
-                      fill: '#64748B',
+                      fill: '#71717a',
                       fontSize: 10,
                       offset: 15,
                     }
@@ -110,8 +110,8 @@ export const UncertaintyChart: React.FC<UncertaintyChartProps> = ({
               content={({ active, payload, label }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <div className="bg-[#111C30] border border-slate-700/80 p-3 rounded-lg shadow-xl text-xs space-y-1.5 backdrop-blur-md">
-                      <div className="font-semibold text-slate-300 pb-1 border-b border-slate-800">
+                    <div className="bg-[#09090b] border border-zinc-800 p-3 rounded-xl shadow-2xl text-xs space-y-1.5 backdrop-blur-md">
+                      <div className="font-semibold text-zinc-300 pb-1 border-b border-zinc-800 font-mono">
                         {label} post-meal
                       </div>
                       {payload.map((entry: any, index: number) => {
@@ -127,7 +127,7 @@ export const UncertaintyChart: React.FC<UncertaintyChartProps> = ({
                             >
                               {entry.name}:
                             </span>
-                            <span className="font-mono font-bold text-slate-100">
+                            <span className="font-mono font-bold text-white">
                               {Number(entry.value).toFixed(1)} mg/dL
                             </span>
                           </div>

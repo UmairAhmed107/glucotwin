@@ -24,4 +24,5 @@ ENV/
 # Node / Frontend
 node_modules/
 dist/
+.vitest/
 .DS_Store

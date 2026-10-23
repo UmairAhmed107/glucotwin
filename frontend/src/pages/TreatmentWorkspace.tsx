@@ -27,17 +27,15 @@ export const TreatmentWorkspace: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Workspace Sub-Navigation Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 self-start">
+      {/* Workspace Sub-Navigation Tabs (Matches Reference UI) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-850 pb-4">
+        <div className="flex flex-wrap items-center gap-1 bg-zinc-950 p-1.5 rounded-2xl border border-zinc-850 self-start">
           <button
             onClick={() => handleTabChange('plan')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'plan'
-                ? viewMode === 'clinician'
-                  ? 'bg-indigo-500 text-white shadow-sm font-bold'
-                  : 'bg-teal-500 text-slate-950 shadow-sm font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -46,12 +44,10 @@ export const TreatmentWorkspace: React.FC = () => {
 
           <button
             onClick={() => handleTabChange('pathway')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'pathway'
-                ? viewMode === 'clinician'
-                  ? 'bg-indigo-500 text-white shadow-sm font-bold'
-                  : 'bg-teal-500 text-slate-950 shadow-sm font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -60,19 +56,19 @@ export const TreatmentWorkspace: React.FC = () => {
 
           <button
             onClick={() => handleTabChange('cds')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'cds'
-                ? 'bg-indigo-500 text-white shadow-sm font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <Stethoscope className="w-3.5 h-3.5 text-indigo-400" />
+            <Stethoscope className="w-3.5 h-3.5" />
             <span>Clinician CDS View</span>
           </button>
         </div>
 
-        <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="text-[11px] text-zinc-400 flex items-center gap-1.5 font-medium">
+          <ShieldCheck className="w-3.5 h-3.5 text-white" />
           <span>ADA/ICMR Guideline-Concordant with Clinical Safety Verification</span>
         </div>
       </div>

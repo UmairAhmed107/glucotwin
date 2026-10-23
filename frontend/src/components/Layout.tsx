@@ -20,11 +20,15 @@ import {
   LineChart,
   LogOut,
   MessageSquare,
+  Plus,
   PlusCircle,
+  Search,
   ShieldAlert,
   Sliders,
   Sparkles,
   Stethoscope,
+  Sun,
+  Moon,
   TrendingUp,
   UploadCloud,
   User,
@@ -51,7 +55,7 @@ const NAV_ITEMS: NavItem[] = [
   // Patient Panel: Clinicians, Dietitians, Admins
   { to: '/panel', label: 'Patient Panel', icon: Users, roles: ['clinician', 'dietitian', 'admin'] },
 
-  // Patient Home: Patients only (Clinicians/Dietitians use /panel and /twin)
+  // Patient Home: Patients only
   { to: '/', label: 'Patient Home', patientLabel: 'Patient Home', icon: Home, roles: ['patient'] },
 
   // Core Metabolic Twin: All roles
@@ -66,10 +70,10 @@ const NAV_ITEMS: NavItem[] = [
   // Simulation Lab: All roles
   { to: '/simulation', label: 'Scenario Planner', patientLabel: 'Meal & Walk Forecast', icon: Sliders, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
 
-  // Clinician Visit Workspace: Clinicians and Admins only (Excluded for Dietitians and Patients)
+  // Clinician Visit Workspace: Clinicians and Admins only
   { to: '/visits', label: 'Visit Workspace', icon: Stethoscope, roles: ['clinician', 'admin'], clinicianOnly: true },
 
-  // Acute Metabolic Alerts: Clinicians and Admins only (Excluded for Dietitians and Patients)
+  // Acute Metabolic Alerts: Clinicians and Admins only
   { to: '/alerts', label: 'Alerts Center', icon: ShieldAlert, roles: ['clinician', 'admin'], clinicianOnly: true },
 
   // 4-Week Care Plan: All roles
@@ -123,10 +127,13 @@ const ROUTE_TITLES: Record<string, string> = {
 };
 
 export const Layout: React.FC = () => {
-  const { activePatientId, setActivePatientId, viewMode, isSidebarCollapsed, toggleSidebar } = useApp();
+  const { activePatientId, setActivePatientId, viewMode, isSidebarCollapsed, toggleSidebar, theme, toggleTheme } = useApp();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Search input state in top bar
+  const [navSearch, setNavSearch] = useState('');
 
   // Dynamic Page Title
   useEffect(() => {
@@ -178,58 +185,263 @@ export const Layout: React.FC = () => {
   });
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0B1220] text-slate-100 font-sans">
+    <div className="flex flex-col min-h-screen bg-[#030303] text-zinc-100 font-sans bg-dot-grid">
+      {/* 1. Top Header Bar (Pixel-matching Reference Image 1) */}
+      <header className="h-16 bg-[#000000]/95 border-b border-zinc-800/80 px-4 md:px-6 flex items-center justify-between gap-4 backdrop-blur-xl sticky top-0 z-40">
+        {/* Brand & Subtitle */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-sm shrink-0">
+            <Activity className="w-5 h-5 text-white" />
+          </div>
+          <div className="hidden sm:block">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-sm tracking-tight text-white">
+                GlucoTwin OS
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-300 border border-zinc-750 font-semibold tracking-wider">
+                {effectiveRole === 'patient' ? 'METABOLIC TWIN' : effectiveRole === 'dietitian' ? 'NUTRITION SUITE' : 'CLINICAL CDS'}
+              </span>
+            </div>
+            <p className="text-[10px] text-zinc-400 font-medium leading-none mt-0.5">
+              Personalised Metabolic Digital Twin & Clinical Operations Console
+            </p>
+          </div>
+        </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* 2. Left Collapsible Sidebar */}
-        <aside
-          className={`bg-[#0F172A] border-r border-slate-800/90 transition-all duration-300 flex flex-col shrink-0 select-none ${
-            isSidebarCollapsed ? 'w-16' : 'w-64'
-          }`}
-        >
-          {/* Brand header */}
-          <div className="h-14 px-4 flex items-center justify-between border-b border-slate-800">
-            {!isSidebarCollapsed && (
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-400 to-teal-700 flex items-center justify-center text-[#0B1220] shadow-md shadow-teal-500/20">
-                  <Activity className="w-5 h-5 font-bold" />
-                </div>
-                <div>
-                  <h1 className="text-sm font-bold text-slate-100 tracking-tight flex items-center gap-1.5">
-                    GlucoTwin
-                    <span className="text-[10px] font-mono px-1 py-0.2 bg-teal-500/20 text-teal-300 rounded border border-teal-500/30">
-                      v0.2
-                    </span>
-                  </h1>
-                  <p className="text-[10px] text-slate-400">Metabolic Digital Twin</p>
+        {/* Center Search Bar with shortcut '/' */}
+        <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
+          <div className="relative w-full">
+            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={navSearch}
+              onChange={(e) => setNavSearch(e.target.value)}
+              placeholder="Search patients, glucose telemetry, meals..."
+              className="w-full bg-zinc-950/80 border border-zinc-800/90 rounded-full pl-9 pr-9 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all font-normal"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-zinc-500 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
+              /
+            </span>
+          </div>
+        </div>
+
+        {/* Right Section: Patient Switcher, Alerts, Theme Sun, User Pill */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Active Patient Switcher */}
+          <div className="flex items-center">
+            {isPatientUser ? (
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="font-semibold text-white truncate max-w-[120px]">
+                  {activePatient?.display_name || user?.full_name || 'My Record'}
+                </span>
+                {activePatient && (
+                  <span className="text-[10px] font-mono text-zinc-400">
+                    HbA1c {activePatient.hba1c_pct}%
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="relative">
+                <select
+                  value={activePatientId ?? ''}
+                  onChange={(e) => setActivePatientId(Number(e.target.value))}
+                  className="bg-zinc-950 border border-zinc-800 text-zinc-200 text-xs rounded-full pl-3.5 pr-8 py-1.5 focus:outline-none focus:border-zinc-600 transition-colors cursor-pointer appearance-none font-medium min-w-[150px] sm:min-w-[190px]"
+                >
+                  {patientsLoading && <option>Loading...</option>}
+                  {patients?.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.display_name} (#{p.id} • {p.hba1c_pct}%)
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-[10px]">
+                  ▼
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Alert Notification Bell for Clinicians and Admins */}
+          {!isPatientUser && !isDietitianUser && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsAlertsOpen(!isAlertsOpen)}
+                className="w-9 h-9 rounded-full bg-zinc-900/80 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors relative"
+                title="Clinical Alerts"
+                aria-label="Clinical Alerts"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadAlertsCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-black">
+                    {unreadAlertsCount > 99 ? '99+' : unreadAlertsCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Backdrop */}
+              {isAlertsOpen && (
+                <div className="fixed inset-0 z-40" onClick={() => setIsAlertsOpen(false)} />
+              )}
+
+              {/* Dropdown panel */}
+              {isAlertsOpen && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-[#09090b] border border-zinc-800 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-4 py-3 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-rose-400" />
+                      <span className="text-xs font-bold text-white">Active Metabolic Alerts</span>
+                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                      {unreadAlertsCount} Open
+                    </span>
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto divide-y divide-zinc-850">
+                    {openAlerts.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-zinc-400">
+                        <Check className="w-8 h-8 mx-auto mb-2 text-emerald-400" />
+                        All linked patients are within target metabolic boundaries.
+                      </div>
+                    ) : (
+                      openAlerts.slice(0, 5).map((a) => (
+                        <div key={a.id} className="p-3 hover:bg-zinc-900/60 transition flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span
+                                className={`w-2 h-2 rounded-full shrink-0 ${
+                                  a.severity === 'critical'
+                                    ? 'bg-rose-500 animate-pulse'
+                                    : a.severity === 'warning'
+                                    ? 'bg-amber-500'
+                                    : 'bg-blue-500'
+                                }`}
+                              />
+                              <span className="text-[11px] font-bold text-zinc-200 truncate">
+                                {a.patient_name || `Patient #${a.patient_id}`}
+                              </span>
+                              <span className="text-[9px] uppercase px-1.5 py-0.2 rounded font-mono font-bold bg-zinc-900 text-zinc-400 border border-zinc-800">
+                                {a.severity}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                              {a.message}
+                            </p>
+                            <span className="text-[9px] text-zinc-500 mt-1 block">
+                              {new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => ackMutation.mutate(a.id)}
+                            disabled={ackMutation.isPending}
+                            className="px-2 py-1 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 rounded text-[10px] font-medium transition shrink-0"
+                          >
+                            Ack
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="p-2.5 bg-zinc-950 border-t border-zinc-800 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAlertsOpen(false);
+                        navigate('/alerts');
+                      }}
+                      className="w-full py-1.5 px-3 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/80 text-xs font-semibold transition"
+                    >
+                      View All in Alerts Center →
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Theme Sun/Moon Toggle Button (Matches reference UI) */}
+          <button
+            id="theme-toggle-btn"
+            type="button"
+            onClick={toggleTheme}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+              theme === 'dark'
+                ? 'bg-zinc-900/80 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                : 'bg-slate-100 border border-slate-300 text-indigo-600 hover:text-indigo-800 hover:border-slate-400 shadow-sm'
+            }`}
+            title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+            aria-label="Toggle Theme"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-indigo-600 fill-indigo-100" />
+            )}
+          </button>
+
+          {/* User Profile Pill (Matches reference UI `[R] Rohit Unit A-104 [->`) */}
+          <div className="flex items-center gap-2 pl-2 border-l border-zinc-800">
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-950 border border-zinc-850 text-xs">
+              <div className="w-6 h-6 rounded-full bg-white text-black font-bold flex items-center justify-center text-xs shrink-0">
+                {user?.full_name ? user.full_name[0].toUpperCase() : 'U'}
+              </div>
+              <span className="font-semibold text-white truncate max-w-[110px] hidden sm:inline">
+                {user?.full_name?.split(' ')[0] || 'User'}
+              </span>
+              <span className="text-[10px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded-full border border-zinc-800 hidden md:inline">
+                {effectiveRole === 'patient'
+                  ? `Pt #${activePatientId || 1}`
+                  : effectiveRole === 'clinician'
+                  ? 'Clinician'
+                  : 'Dietitian'}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  navigate('/login');
+                }}
+                className="text-zinc-500 hover:text-rose-400 p-0.5 transition-colors ml-0.5"
+                title="Sign Out"
+                aria-label="Sign Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container: Sidebar + Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Collapsible Dark Sidebar */}
+        <aside
+          className={`bg-[#000000] border-r border-zinc-800/80 transition-all duration-300 flex flex-col shrink-0 select-none ${
+            isSidebarCollapsed ? 'w-16' : 'w-64'
+          }`}
+        >
+          {/* Sidebar Collapse Toggle */}
+          <div className="h-12 px-4 flex items-center justify-between border-b border-zinc-850">
+            {!isSidebarCollapsed && (
+              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                Operations Menu
+              </span>
+            )}
             <button
               onClick={toggleSidebar}
-              className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-md transition-colors mx-auto"
+              className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors mx-auto"
               title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              {isSidebarCollapsed ? (
-                <ChevronRight className="w-4 h-4" />
-              ) : (
-                <ChevronLeft className="w-4 h-4" />
-              )}
+              {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
           </div>
 
           {/* Navigation Items */}
           <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
-            {!isSidebarCollapsed && (
-              <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                {effectiveRole === 'patient'
-                  ? 'Patient Portal'
-                  : effectiveRole === 'dietitian'
-                  ? 'Dietitian Nutrition Suite'
-                  : 'Clinical Decision Support'}
-              </div>
-            )}
             {visibleNavItems.map((item, idx) => {
               const Icon = item.icon;
               const displayLabel =
@@ -237,7 +449,6 @@ export const Layout: React.FC = () => {
                   ? item.patientLabel
                   : item.label;
 
-              // If entering clinician-only tools in the nav, add a small separator
               const isFirstClinicianTool =
                 item.clinicianOnly &&
                 (idx === 0 || !visibleNavItems[idx - 1].clinicianOnly);
@@ -245,11 +456,11 @@ export const Layout: React.FC = () => {
               return (
                 <React.Fragment key={item.to}>
                   {isFirstClinicianTool && !isSidebarCollapsed && (
-                    <div className="pt-3 pb-1 px-3 flex items-center justify-between border-t border-slate-800/80 my-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+                    <div className="pt-3 pb-1 px-3 flex items-center justify-between border-t border-zinc-800/80 my-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                         Clinician Tools
                       </span>
-                      <span className="text-[9px] px-1.5 py-0.2 bg-indigo-500/10 text-indigo-300 rounded border border-indigo-500/20">
+                      <span className="text-[9px] px-1.5 py-0.2 bg-zinc-900 text-zinc-400 rounded border border-zinc-800">
                         CDS
                       </span>
                     </div>
@@ -257,26 +468,18 @@ export const Layout: React.FC = () => {
                   <NavLink
                     to={item.to}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                      `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                         isActive
-                          ? viewMode === 'clinician' && item.clinicianOnly
-                            ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shadow-sm'
-                            : 'bg-teal-500/15 text-teal-300 border border-teal-500/30 shadow-sm'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                          ? 'bg-zinc-900 text-white border border-zinc-700 shadow-sm'
+                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
                       }`
                     }
                     title={isSidebarCollapsed ? displayLabel : undefined}
                   >
-                    <Icon
-                      className={`w-4 h-4 shrink-0 ${
-                        item.clinicianOnly ? 'text-indigo-400/90' : 'text-teal-400/80'
-                      }`}
-                    />
-                    {!isSidebarCollapsed && (
-                      <span className="truncate flex-1">{displayLabel}</span>
-                    )}
+                    <Icon className="w-4 h-4 shrink-0 text-zinc-300" />
+                    {!isSidebarCollapsed && <span className="truncate flex-1">{displayLabel}</span>}
                     {!isSidebarCollapsed && item.clinicianOnly && (
-                      <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-900 text-zinc-400 font-mono border border-zinc-800">
                         MD
                       </span>
                     )}
@@ -286,255 +489,52 @@ export const Layout: React.FC = () => {
             })}
           </nav>
 
-          {/* Sidebar Footer: Patient Setup link */}
-          <div className="p-2 border-t border-slate-800">
+          {/* Sidebar Footer: Add Patient */}
+          <div className="p-3 border-t border-zinc-850">
             <button
               onClick={() => navigate('/patients/setup')}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 border border-teal-500/20 transition-all cursor-pointer ${
-                isSidebarCollapsed ? 'justify-center' : ''
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 hover:border-zinc-700 transition-all cursor-pointer ${
+                isSidebarCollapsed ? 'justify-center px-0' : ''
               }`}
-              title="Add New Patient"
+              title="Add New Patient Profile"
             >
-              <PlusCircle className="w-4 h-4 shrink-0" />
+              <Plus className="w-4 h-4 shrink-0" />
               {!isSidebarCollapsed && <span>Add Patient</span>}
             </button>
           </div>
         </aside>
 
-        {/* 3. Main Workspace Area */}
+        {/* Main Workspace Body */}
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-          {/* Top Bar */}
-          <header className="h-14 bg-[#111C30]/80 border-b border-slate-800 px-5 flex items-center justify-between gap-4 backdrop-blur-md sticky top-0 z-40">
-            {/* Left: Patient Switcher */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-                Active Patient:
-              </span>
-              {isPatientUser ? (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0B1220] border border-slate-700/80 text-xs font-medium text-slate-200">
-                  <User className="w-3.5 h-3.5 text-teal-400" />
-                  <span>{activePatient?.display_name || user?.full_name || 'My Record'}</span>
-                  {activePatient && (
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      (#{activePatient.id} • HbA1c {activePatient.hba1c_pct}%)
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <div className="relative">
-                  <select
-                    value={activePatientId ?? ''}
-                    onChange={(e) => setActivePatientId(Number(e.target.value))}
-                    className="bg-[#0B1220] border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 pr-8 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors cursor-pointer appearance-none font-medium min-w-[200px]"
-                  >
-                    {patientsLoading && <option>Loading patients...</option>}
-                    {!patientsLoading && patients?.length === 0 && (
-                      <option value="">No patients available</option>
-                    )}
-                    {patients?.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.display_name} (#{p.id} • {p.age}y {p.sex} • HbA1c {p.hba1c_pct}%)
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
-                    ▼
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right: Authenticated User Badge & Logout (Persona toggle removed per prompt) */}
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border border-slate-800 bg-slate-900/60">
-                {effectiveRole === 'patient' ? (
-                  <>
-                    <User className="w-3.5 h-3.5 text-teal-400" />
-                    <span className="text-teal-300 font-semibold">Patient Portal:</span>
-                    <span className="text-slate-400">Personal Simulations</span>
-                  </>
-                ) : effectiveRole === 'dietitian' ? (
-                  <>
-                    <Utensils className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-amber-300 font-semibold">Dietitian View:</span>
-                    <span className="text-slate-400">Nutrition & Lifestyle Guidance</span>
-                  </>
-                ) : (
-                  <>
-                    <Stethoscope className="w-3.5 h-3.5 text-indigo-400" />
-                    <span className="text-indigo-300 font-semibold capitalize">{user?.role || 'Clinician'}:</span>
-                    <span className="text-slate-400">CDS & Safety Governor Active</span>
-                  </>
-                )}
-              </div>
-
-              {/* Alert Notification Bell & Dropdown for Clinicians and Admins */}
-              {!isPatientUser && !isDietitianUser && (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setIsAlertsOpen(!isAlertsOpen)}
-                    className="relative p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-700"
-                    title="Clinical Alerts"
-                    aria-label="Clinical Alerts"
-                  >
-                    <Bell className="w-4 h-4" />
-                    {unreadAlertsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-[#111C30]">
-                        {unreadAlertsCount > 99 ? '99+' : unreadAlertsCount}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Backdrop to close */}
-                  {isAlertsOpen && (
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setIsAlertsOpen(false)}
-                    />
-                  )}
-
-                  {/* Dropdown panel */}
-                  {isAlertsOpen && (
-                    <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-[#0F172A] border border-slate-700 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                      <div className="px-4 py-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <ShieldAlert className="w-4 h-4 text-rose-400" />
-                          <span className="text-xs font-bold text-slate-200">Active Metabolic Alerts</span>
-                        </div>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                          {unreadAlertsCount} Open
-                        </span>
-                      </div>
-
-                      <div className="max-h-80 overflow-y-auto divide-y divide-slate-800/80">
-                        {openAlerts.length === 0 ? (
-                          <div className="p-6 text-center text-xs text-slate-400">
-                            <Check className="w-8 h-8 mx-auto mb-2 text-emerald-400/80" />
-                            All linked patients are within target metabolic boundaries.
-                          </div>
-                        ) : (
-                          openAlerts.slice(0, 5).map((a) => (
-                            <div key={a.id} className="p-3 hover:bg-slate-800/50 transition flex items-start justify-between gap-3">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  <span
-                                    className={`w-2 h-2 rounded-full shrink-0 ${
-                                      a.severity === 'critical'
-                                        ? 'bg-rose-500 animate-pulse'
-                                        : a.severity === 'warning'
-                                        ? 'bg-amber-500'
-                                        : 'bg-blue-500'
-                                    }`}
-                                  />
-                                  <span className="text-[11px] font-bold text-slate-200 truncate">
-                                    {a.patient_name || `Patient #${a.patient_id}`}
-                                  </span>
-                                  <span className="text-[9px] uppercase px-1.5 py-0.2 rounded font-mono font-bold bg-slate-800 text-slate-400">
-                                    {a.severity}
-                                  </span>
-                                </div>
-                                <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
-                                  {a.message}
-                                </p>
-                                <span className="text-[9px] text-slate-500 mt-1 block">
-                                  {new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => ackMutation.mutate(a.id)}
-                                disabled={ackMutation.isPending}
-                                className="px-2 py-1 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 rounded text-[10px] font-medium transition shrink-0"
-                                title="Acknowledge alert"
-                              >
-                                Ack
-                              </button>
-                            </div>
-                          ))
-                        )}
-                      </div>
-
-                      <div className="p-2 bg-slate-900/90 border-t border-slate-800 text-center">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsAlertsOpen(false);
-                            navigate('/alerts');
-                          }}
-                          className="w-full py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 hover:text-teal-200 text-xs font-semibold transition"
-                        >
-                          View All in Alerts Center →
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* User Profile Info */}
-              <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500/20 to-indigo-500/20 border border-teal-500/30 text-teal-300 flex items-center justify-center text-xs font-bold shrink-0">
-                  {user?.full_name ? user.full_name[0].toUpperCase() : 'U'}
-                </div>
-                <div className="hidden md:block text-left">
-                  <p className="text-xs font-semibold text-slate-200 leading-tight truncate max-w-[140px]">
-                    {user?.full_name || 'Guest User'}
-                  </p>
-                  <p className="text-[10px] text-teal-400/90 font-mono capitalize leading-none">
-                    {user?.role || 'user'}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    navigate('/login');
-                  }}
-                  className="p-1.5 ml-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors border border-transparent hover:border-rose-500/20"
-                  title="Sign Out"
-                  aria-label="Sign Out"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </header>
-
-
-          {/* Page View Body */}
-          <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
             <Outlet />
           </main>
         </div>
       </div>
 
-      {/* 4. Global Toast Notifications Floating Area */}
+      {/* Floating Global Toasts */}
       <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto p-3.5 rounded-lg border shadow-xl backdrop-blur-md text-xs transition-all animate-in slide-in-from-bottom-3 duration-200 ${
+            className={`pointer-events-auto p-4 rounded-2xl border shadow-2xl backdrop-blur-xl text-xs transition-all animate-in slide-in-from-bottom-3 duration-200 ${
               t.type === 'error'
-                ? 'bg-[#1a0f18]/90 border-red-500/40 text-red-200'
+                ? 'bg-[#09090b] border-rose-500/50 text-rose-200'
                 : t.type === 'success'
-                ? 'bg-[#0f1f1d]/90 border-teal-500/40 text-teal-200'
-                : 'bg-[#111C30]/90 border-slate-700 text-slate-200'
+                ? 'bg-[#09090b] border-emerald-500/50 text-emerald-200'
+                : 'bg-[#09090b] border-zinc-800 text-zinc-200'
             }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h5 className="font-semibold">{t.title}</h5>
-                <p className="mt-0.5 text-[11px] opacity-90 leading-relaxed">
+                <h5 className="font-bold text-white">{t.title}</h5>
+                <p className="mt-1 text-[11px] text-zinc-400 leading-relaxed">
                   {t.message}
                 </p>
               </div>
               <button
-                onClick={() =>
-                  setToasts((prev) => prev.filter((item) => item.id !== t.id))
-                }
-                className="opacity-70 hover:opacity-100 p-0.5"
+                onClick={() => setToasts((prev) => prev.filter((item) => item.id !== t.id))}
+                className="text-zinc-500 hover:text-white p-0.5"
               >
                 <X className="w-3.5 h-3.5" />
               </button>

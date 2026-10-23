@@ -396,33 +396,31 @@ export const LogData: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-6">
-      {/* 1. Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950/40 p-6 rounded-2xl border border-slate-800 shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30">
-              Fast Logging Engine
-            </span>
-            <span className="text-xs text-slate-400">
-              {patient?.display_name || 'Patient'}
-            </span>
+      {/* 1. Header (Matches Reference UI) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#09090b] p-6 rounded-2xl border border-zinc-800/90 shadow-sm">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="font-semibold text-white">Fast Logging Engine</span>
+            <span className="text-zinc-600">•</span>
+            <span className="text-zinc-400">{patient?.display_name || 'Patient'}</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             Log Meal & Forecast Glycemic Response
           </h1>
-          <p className="text-sm text-slate-300">
+          <p className="text-xs sm:text-sm text-zinc-400 max-w-xl leading-relaxed">
             Search 380+ common foods, 1-tap log your favorite saved meals, or upload a photo with AI portion drafting.
           </p>
         </div>
 
         {/* Tab Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-950/90 rounded-xl border border-slate-800">
+        <div className="flex flex-wrap items-center gap-1 p-1.5 bg-zinc-950 rounded-2xl border border-zinc-850 shrink-0">
           <button
             onClick={() => setActiveTab('search')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
               activeTab === 'search'
-                ? 'bg-teal-500 text-white shadow-md shadow-teal-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-white text-black shadow-sm'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Search className="w-3.5 h-3.5" />
@@ -430,10 +428,10 @@ export const LogData: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('saved')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
               activeTab === 'saved'
-                ? 'bg-teal-500 text-white shadow-md shadow-teal-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-white text-black shadow-sm'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Bookmark className="w-3.5 h-3.5" />
@@ -441,10 +439,10 @@ export const LogData: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('photo')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
               activeTab === 'photo'
-                ? 'bg-teal-500 text-white shadow-md shadow-teal-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-white text-black shadow-sm'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Camera className="w-3.5 h-3.5" />
@@ -452,10 +450,10 @@ export const LogData: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('reading')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
               activeTab === 'reading'
-                ? 'bg-teal-500 text-white shadow-md shadow-teal-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-white text-black shadow-sm'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
             <Activity className="w-3.5 h-3.5" />
