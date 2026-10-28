@@ -137,7 +137,7 @@ export const TwinOverview: React.FC = () => {
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
-              onClick={() => navigate('/simulation?tab=whatif')}
+              onClick={() => navigate('/log?tab=whatif')}
               className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-semibold rounded-lg border border-teal-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <Sliders className="w-3.5 h-3.5" />

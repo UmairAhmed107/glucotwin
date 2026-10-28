@@ -25,7 +25,6 @@ import { ClinicianViewPage } from './pages/ClinicianView';
 import { ValidationPage } from './pages/Validation';
 import { ReplayPage } from './pages/Replay';
 import { TimelineWorkspace } from './pages/TimelineWorkspace';
-import { SimulationWorkspace } from './pages/SimulationWorkspace';
 import { TreatmentWorkspace } from './pages/TreatmentWorkspace';
 import { GovernanceWorkspace } from './pages/GovernanceWorkspace';
 import { VisitWorkspace } from './pages/VisitWorkspace';
@@ -81,7 +80,7 @@ export const App: React.FC = () => {
 
                 {/* 5 Unified Primary Workspaces */}
                 <Route path="timeline" element={<TimelineWorkspace />} />
-                <Route path="simulation" element={<SimulationWorkspace />} />
+                <Route path="simulation" element={<Navigate to="/log?tab=whatif" replace />} />
                 <Route path="treatment" element={<TreatmentWorkspace />} />
                 <Route path="governance" element={<GovernanceWorkspace />} />
 

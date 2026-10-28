@@ -19,6 +19,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { usePatient, useTimeline, useWhatIf, useCreateSavedScenario } from '../api/queries';
 import { PredictMealInput, WhatIfResponse } from '../api/types';
@@ -27,7 +28,12 @@ import { UncertaintyChart, CurvePoint } from '../components/UncertaintyChart';
 import { CalculationDrawer } from '../components/CalculationDrawer';
 import { SectionCard, StatCard, EmptyState, LoadingSkeleton } from '../components/Cards';
 
-export const WhatIfLabPage: React.FC = () => {
+export interface WhatIfLabPageProps {
+  initialMealInput?: Partial<PredictMealInput>;
+}
+
+export const WhatIfLabPage: React.FC<WhatIfLabPageProps> = ({ initialMealInput }) => {
+  const [searchParams] = useSearchParams();
   const { activePatientId } = useApp();
   const { data: patient } = usePatient(activePatientId);
   const { data: timeline } = useTimeline(activePatientId);
@@ -67,8 +73,32 @@ export const WhatIfLabPage: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [outOfBoundsError, setOutOfBoundsError] = useState<string | null>(null);
 
-  // Prefill from last recorded meal in timeline if available
+  // Prefill from props, URL query params, or last recorded meal in timeline
   useEffect(() => {
+    if (initialMealInput && Object.keys(initialMealInput).length > 0) {
+      setMealInput((prev) => ({
+        ...prev,
+        ...initialMealInput,
+      }));
+      setHasPrefilled(true);
+      return;
+    }
+
+    const qCarbs = searchParams.get('carbs');
+    if (qCarbs && !hasPrefilled) {
+      setMealInput((prev) => ({
+        ...prev,
+        carbs_g: Number(qCarbs) || prev.carbs_g,
+        protein_g: Number(searchParams.get('protein')) || prev.protein_g,
+        fat_g: Number(searchParams.get('fat')) || prev.fat_g,
+        fibre_g: Number(searchParams.get('fiber')) || prev.fibre_g,
+        pre_glucose: Number(searchParams.get('pre_glucose')) || prev.pre_glucose,
+        meal_type: (searchParams.get('meal_type') as any) || prev.meal_type,
+      }));
+      setHasPrefilled(true);
+      return;
+    }
+
     if (timeline && timeline.events.length > 0 && !hasPrefilled) {
       const mealEvents = timeline.events.filter((e) => e.type === 'meal');
       if (mealEvents.length > 0) {
@@ -87,7 +117,7 @@ export const WhatIfLabPage: React.FC = () => {
         setHasPrefilled(true);
       }
     }
-  }, [timeline, hasPrefilled]);
+  }, [initialMealInput, searchParams, timeline, hasPrefilled]);
 
   // Debounced execution of /whatif (400ms)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

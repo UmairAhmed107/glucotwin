@@ -16,6 +16,7 @@ import {
 import { ClinicalPlanPage } from './ClinicalPlan';
 import { FourWeekPlanPage } from './FourWeekPlan';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { usePatient } from '../api/queries';
 import { MedicalMetricsGlossary } from '../components/MedicalMetricsGlossary';
 import { PreConsultationBriefModal, PatientBriefData } from '../components/PreConsultationBriefModal';
@@ -36,7 +37,11 @@ export const TreatmentWorkspace: React.FC = () => {
   const [isSoapOpen, setIsSoapOpen] = useState(false);
 
   const { viewMode, activePatientId } = useApp();
+  const { user } = useAuth();
   const { data: patient } = usePatient(activePatientId);
+
+  const effectiveRole = user?.role || (viewMode === 'patient' ? 'patient' : 'clinician');
+  const isDoctor = (effectiveRole === 'clinician' || effectiveRole === 'admin') && viewMode !== 'patient';
 
   const handleTabChange = (tab: ClinicalHubTab) => {
     setActiveTab(tab);
@@ -92,7 +97,7 @@ export const TreatmentWorkspace: React.FC = () => {
             </div>
 
             {/* Clinician Rapid Actions: 30s Brief & SOAP Note */}
-            {viewMode !== 'patient' && (
+            {isDoctor && (
               <>
                 <button
                   onClick={() => setIsBriefOpen(true)}

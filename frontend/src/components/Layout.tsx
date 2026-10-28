@@ -60,11 +60,8 @@ const NAV_ITEMS: NavItem[] = [
   // Patient Home: Patients only
   { to: '/', label: 'Patient Home', patientLabel: 'Today’s Overview', icon: Home, roles: ['patient'], group: 'core' },
 
-  // Fast Meal & Glucose Logging: All roles
-  { to: '/log', label: 'Log Meal & Glucose', patientLabel: 'Log Meal & Glucose', icon: Utensils, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'core' },
-
-  // Simulation Lab: All roles
-  { to: '/simulation', label: 'Scenario Planner', patientLabel: 'Meal & Walk Simulator', icon: Sliders, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'core' },
+  // Fast Meal & Glucose Logging + Scenario Planner: All roles
+  { to: '/log', label: 'Log Meal & Scenario Planner', patientLabel: 'Log Meal & Simulator', icon: Utensils, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'core' },
 
   // Clinician Visit Workspace: Clinicians and Admins only
   { to: '/visits', label: 'Clinical Visit Workspace', icon: Stethoscope, roles: ['clinician', 'admin'], clinicianOnly: true, group: 'core' },

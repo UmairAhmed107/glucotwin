@@ -30,6 +30,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { usePatient, useClinicalPlan } from '../api/queries';
 import { ClinicalPlanResponse, GuidelineSnippet, TherapyOption } from '../api/types';
 import { ProvenanceBadge } from '../components/ProvenanceBadge';
@@ -238,8 +239,13 @@ const getTailoredDirectives = (patient: any): TailoredDirective[] => {
 
 export const ClinicalPlanPage: React.FC = () => {
   const { activePatientId, viewMode } = useApp();
+  const { user } = useAuth();
   const { data: patient } = usePatient(activePatientId);
   const clinicalPlanMutation = useClinicalPlan(activePatientId || 0);
+
+  // RBAC Enforcement: Only clinicians / doctors / admins can prescribe medications or modify clinical orders
+  const effectiveRole = user?.role || (viewMode === 'patient' ? 'patient' : 'clinician');
+  const isDoctor = (effectiveRole === 'clinician' || effectiveRole === 'admin') && viewMode !== 'patient';
 
   const [planResult, setPlanResult] = useState<ClinicalPlanResponse | null>(null);
   const [selectedSnippet, setSelectedSnippet] = useState<GuidelineSnippet | null>(null);
@@ -256,7 +262,32 @@ export const ClinicalPlanPage: React.FC = () => {
   const [signedAt, setSignedAt] = useState<string | null>(null);
   const [signingDoctor, setSigningDoctor] = useState<string>('Dr. Rajesh Patel [DOC-101]');
 
+  const handleSelectRegimen = (regimenId: string) => {
+    if (!isDoctor) {
+      showToast({
+        type: 'error',
+        title: 'Prescription Change Restricted (RBAC)',
+        message: 'Patients have read-only access. Only licensed clinicians and attending physicians can modify prescribed medications.',
+      });
+      return;
+    }
+    setSelectedRegimen(regimenId);
+    showToast({
+      type: 'success',
+      title: 'Prescription Selected in Cockpit',
+      message: `Set ${regimenId.replace(/_/g, ' ')} as the primary prescribed therapy.`,
+    });
+  };
+
   const handleSignClinicalOrder = () => {
+    if (!isDoctor) {
+      showToast({
+        type: 'error',
+        title: 'Unauthorized Action (RBAC Policy)',
+        message: 'Only authorized attending clinicians can sign or authorize clinical orders.',
+      });
+      return;
+    }
     if (!redFlagsAcknowledged) {
       showToast({
         type: 'error',
@@ -542,43 +573,63 @@ export const ClinicalPlanPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Doctor's Active Clinical Decisions & Order Cockpit */}
+      {/* 2. Doctor's Active Clinical Decisions & Order Cockpit (RBAC Enforced) */}
       <div className={`p-6 rounded-2xl border transition-all shadow-md ${
-        isOrderSigned
+        !isDoctor
+          ? 'bg-slate-900/60 border-slate-800'
+          : isOrderSigned
           ? 'bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-900 border-emerald-500/40'
           : 'bg-slate-900/70 border-teal-500/30'
       }`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
           <div className="flex items-center space-x-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              isOrderSigned ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
+              !isDoctor
+                ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
+                : isOrderSigned
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
             }`}>
-              {isOrderSigned ? <FileCheck2 className="w-5 h-5" /> : <Stethoscope className="w-5 h-5" />}
+              {!isDoctor ? (
+                <Lock className="w-5 h-5 text-teal-400" />
+              ) : isOrderSigned ? (
+                <FileCheck2 className="w-5 h-5" />
+              ) : (
+                <Stethoscope className="w-5 h-5" />
+              )}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base font-bold text-white tracking-tight">
-                  Doctor's Clinical Decision & Prescription Cockpit
+                  {!isDoctor
+                    ? 'Active Clinical Prescription & Targets'
+                    : "Doctor's Clinical Decision & Prescription Cockpit"}
                 </h3>
-                {isOrderSigned ? (
+                {!isDoctor ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-500/10 text-teal-300 border border-teal-500/20">
+                    <Lock className="w-3 h-3 text-teal-400" /> PATIENT VIEW &bull; READ-ONLY
+                  </span>
+                ) : isOrderSigned ? (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     <Check className="w-3 h-3" /> ORDER SIGNED & AUTHORIZED
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                    PENDING CLINICIAN DECISION
+                    <Stethoscope className="w-3 h-3 text-amber-400" /> DOCTOR AUTHORIZATION REQUIRED
                   </span>
                 )}
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                {isOrderSigned
-                  ? `Clinical directive authorized by ${signingDoctor} on ${signedAt}. Stamped for EHR transmission.`
+                {!isDoctor
+                  ? 'Authorized clinical directives and glycemic targets formulated by your attending physician. Patients have read-only access.'
+                  : isOrderSigned
+                  ? `Clinical directive authorized by ${signingDoctor} on ${signedAt || 'today'}. Stamped for EHR transmission.`
                   : 'Review synthesized options, decide on pharmacotherapy & personalized glycemic targets, and electronically sign the order.'}
               </p>
             </div>
           </div>
 
-          {isOrderSigned && viewMode === 'clinician' && (
+          {isDoctor && isOrderSigned && (
             <button
               onClick={() => setIsOrderSigned(false)}
               className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer self-start sm:self-auto"
@@ -588,34 +639,49 @@ export const ClinicalPlanPage: React.FC = () => {
           )}
         </div>
 
-        {/* Signed Order Verified Summary Badge */}
-        {isOrderSigned ? (
-          <div className="pt-4 grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
-            <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
-              <span className="text-slate-400 block text-[10px] uppercase font-semibold">Prescribed Regimen</span>
-              <span className="font-bold text-white text-sm capitalize">
-                {selectedRegimen.replace(/_/g, ' ')}
-              </span>
-              <span className="text-[11px] text-emerald-400 block mt-0.5 font-mono">Status: Active Rx Order</span>
+        {/* Read-Only Prescription Card for Patients OR Verified Signed Order for Doctors */}
+        {!isDoctor || isOrderSigned ? (
+          <div className="pt-4 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+              <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
+                <span className="text-slate-400 block text-[10px] uppercase font-semibold">Prescribed Regimen</span>
+                <span className="font-bold text-white text-sm capitalize">
+                  {selectedRegimen.replace(/_/g, ' ')}
+                </span>
+                <span className="text-[11px] text-emerald-400 block mt-0.5 font-mono">
+                  {!isDoctor ? 'Status: Active Prescribed Therapy' : 'Status: Active Rx Order'}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
+                <span className="text-slate-400 block text-[10px] uppercase font-semibold">Individualized A1c Target</span>
+                <span className="font-bold text-teal-300 text-sm">{targetA1c}</span>
+                <span className="text-[11px] text-slate-400 block mt-0.5">Per ADA risk stratification</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
+                <span className="text-slate-400 block text-[10px] uppercase font-semibold">Time-in-Range (TIR) Target</span>
+                <span className="font-bold text-teal-300 text-sm">{targetTIR}</span>
+                <span className="text-[11px] text-slate-400 block mt-0.5">70–180 mg/dL target zone</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
+                <span className="text-slate-400 block text-[10px] uppercase font-semibold">Attending Physician</span>
+                <span className="font-bold text-white text-xs truncate block">{signingDoctor}</span>
+                <span className="text-[11px] text-slate-400 block mt-0.5 font-mono text-[10px]">
+                  {signedAt || 'Authorized in Care Chart'}
+                </span>
+              </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
-              <span className="text-slate-400 block text-[10px] uppercase font-semibold">Individualized A1c Target</span>
-              <span className="font-bold text-teal-300 text-sm">{targetA1c}</span>
-              <span className="text-[11px] text-slate-400 block mt-0.5">Per ADA risk stratification</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
-              <span className="text-slate-400 block text-[10px] uppercase font-semibold">Time-in-Range (TIR) Target</span>
-              <span className="font-bold text-teal-300 text-sm">{targetTIR}</span>
-              <span className="text-[11px] text-slate-400 block mt-0.5">70–180 mg/dL target zone</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
-              <span className="text-slate-400 block text-[10px] uppercase font-semibold">Attestation & Signature</span>
-              <span className="font-bold text-white text-xs truncate block">{signingDoctor}</span>
-              <span className="text-[11px] text-slate-400 block mt-0.5 font-mono text-[10px]">{signedAt}</span>
-            </div>
+            {!isDoctor && (
+              <div className="p-3.5 rounded-xl bg-teal-950/30 border border-teal-500/20 flex items-start gap-3">
+                <Lock className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-teal-200/90 leading-relaxed">
+                  <strong className="text-white">Role-Based Access Control (RBAC):</strong> Under clinical safety and medical governance policies, drug prescriptions, target thresholds, and pharmacotherapy adjustments can only be authorized by an attending physician ({signingDoctor}). As a patient, your view is strictly read-only.
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* Active Decision Controls for Doctor */
@@ -1012,33 +1078,42 @@ export const ClinicalPlanPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Decision Action Button */}
+                  {/* Decision Action Button (Doctor Interactive vs Patient Read-Only) */}
                   <div className="pt-2 border-t border-slate-800/60">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedRegimen(opt.drug_class);
-                        showToast({
-                          type: 'success',
-                          title: 'Prescription Selected in Cockpit',
-                          message: `Set ${opt.drug_class.replace(/_/g, ' ')} as the primary prescribed therapy.`,
-                        });
-                      }}
-                      className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-teal-500 text-slate-950 font-bold'
-                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700'
-                      }`}
-                    >
-                      {isSelected ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Prescribed Regimen Active</span>
-                        </>
-                      ) : (
-                        <span>Select for Prescription &rarr;</span>
-                      )}
-                    </button>
+                    {isDoctor ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectRegimen(opt.drug_class)}
+                        className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-teal-500 text-slate-950 font-bold'
+                            : 'bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700'
+                        }`}
+                      >
+                        {isSelected ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Prescribed Regimen Active</span>
+                          </>
+                        ) : (
+                          <span>Select for Prescription &rarr;</span>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="w-full py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all">
+                        {isSelected ? (
+                          <div className="w-full py-1 px-2.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center justify-center gap-1.5 text-xs">
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Prescribed by Your Doctor</span>
+                          </div>
+                        ) : (
+                          <div className="w-full py-1 px-2.5 rounded-lg bg-slate-950/60 text-slate-500 border border-slate-800/60 flex items-center justify-center gap-1.5 text-xs font-normal">
+                            <Lock className="w-3 h-3 text-slate-500" />
+                            <span>Alternative Option (Read-Only)</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

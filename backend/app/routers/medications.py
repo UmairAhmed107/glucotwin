@@ -46,6 +46,11 @@ def create_medication(
     Add a new medication prescription for a patient.
     """
     verify_patient_access(patient_id, current_user, db)
+    if current_user.role not in ("clinician", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Only attending clinicians and authorized doctors can prescribe medications.",
+        )
 
     med = Medication(
         patient_id=patient_id,

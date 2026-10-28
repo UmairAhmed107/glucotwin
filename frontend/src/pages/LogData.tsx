@@ -57,7 +57,13 @@ import { FoodItem, PredictResponse } from '../api/types';
 import { SectionCard, StatCard, EmptyState } from '../components/Cards';
 import { UncertaintyChart, CurvePoint } from '../components/UncertaintyChart';
 import { ProvenanceBadge } from '../components/ProvenanceBadge';
-import { MEAL_SWAP_PRESETS, MealSwapPair } from '../components/SmartMealSwaps';
+import { useSearchParams } from 'react-router-dom';
+import { WhatIfLabPage } from './WhatIfLab';
+import { SavedScenariosTab } from './SavedScenariosTab';
+import { GoalPlannerTab } from './GoalPlannerTab';
+import { SmartMealSwaps, MEAL_SWAP_PRESETS, MealSwapPair } from '../components/SmartMealSwaps';
+
+export type MealWorkspaceTab = 'log' | 'whatif' | 'swaps' | 'planner' | 'saved_scenarios';
 
 interface SelectedFoodItem {
   food: FoodItem;
@@ -125,7 +131,27 @@ export const LogData: React.FC = () => {
   const { activePatientId } = useApp();
   const { data: patient, refetch: refetchPatient } = usePatient(activePatientId);
 
-  // Active Main Tab
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedWorkspaceTab = searchParams.get('tab');
+  const initialWorkspaceTab: MealWorkspaceTab =
+    requestedWorkspaceTab === 'whatif' || requestedWorkspaceTab === 'forecast' || requestedWorkspaceTab === 'simulation'
+      ? 'whatif'
+      : requestedWorkspaceTab === 'swaps'
+      ? 'swaps'
+      : requestedWorkspaceTab === 'planner' || requestedWorkspaceTab === 'goal_planner'
+      ? 'planner'
+      : requestedWorkspaceTab === 'scenarios' || requestedWorkspaceTab === 'saved_scenarios'
+      ? 'saved_scenarios'
+      : 'log';
+
+  const [workspaceTab, setWorkspaceTab] = useState<MealWorkspaceTab>(initialWorkspaceTab);
+
+  const handleWorkspaceTabChange = (tab: MealWorkspaceTab) => {
+    setWorkspaceTab(tab);
+    setSearchParams(tab === 'log' ? {} : { tab });
+  };
+
+  // Active Logging Tab (when workspaceTab === 'log')
   const [activeTab, setActiveTab] = useState<'search' | 'saved' | 'reading'>('search');
   const [isSnapOpen, setIsSnapOpen] = useState(false);
 
@@ -563,9 +589,81 @@ export const LogData: React.FC = () => {
         </div>
       </div>
 
-      {/* ==================================================================== */}
-      {/* UNIFIED POST-MEAL INTELLIGENCE SUMMARY (Renders when meal is logged) */}
-      {/* ==================================================================== */}
+      {/* Workspace Consolidated Sub-Navigation Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-850 pb-4">
+        <div className="flex flex-wrap items-center gap-1.5 bg-zinc-950 p-1.5 rounded-2xl border border-zinc-850 self-start">
+          <button
+            onClick={() => handleWorkspaceTabChange('log')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+              workspaceTab === 'log'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Utensils className="w-3.5 h-3.5" />
+            <span>Log Meal & Fast Plate</span>
+          </button>
+
+          <button
+            onClick={() => handleWorkspaceTabChange('whatif')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+              workspaceTab === 'whatif'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Scenario Simulator & What-If</span>
+          </button>
+
+          <button
+            onClick={() => handleWorkspaceTabChange('swaps')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+              workspaceTab === 'swaps'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-amber-400 hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Smart Meal Swaps</span>
+          </button>
+
+          <button
+            onClick={() => handleWorkspaceTabChange('planner')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+              workspaceTab === 'planner'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>Goal-Based Planner</span>
+          </button>
+
+          <button
+            onClick={() => handleWorkspaceTabChange('scenarios')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+              workspaceTab === 'scenarios'
+                ? 'bg-white text-black shadow-sm font-bold'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Bookmark className="w-3.5 h-3.5" />
+            <span>Saved Scenarios</span>
+          </button>
+        </div>
+
+        <div className="text-[11px] text-zinc-400 flex items-center gap-1.5 font-medium">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+          <span>15-model bootstrap ensemble with personalized meal memory</span>
+        </div>
+      </div>
+
+      {workspaceTab === 'log' && (
+        <div className="space-y-8">
+          {/* ==================================================================== */}
+          {/* UNIFIED POST-MEAL INTELLIGENCE SUMMARY (Renders when meal is logged) */}
+          {/* ==================================================================== */}
       <AnimatePresence>
         {postMealSummary && (
           <motion.div
@@ -611,6 +709,15 @@ export const LogData: React.FC = () => {
                 </div>
 
                 <button
+                  onClick={() => handleWorkspaceTabChange('whatif')}
+                  className="px-3 py-1.5 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Simulate counterfactual walks, carb cuts, and food sequencing in Scenario Simulator"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-teal-400" />
+                  <span>Simulate in What-If Lab &rarr;</span>
+                </button>
+
+                <button
                   onClick={() => setPostMealSummary(null)}
                   className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800 transition-colors"
                   title="Close summary and log another meal"
@@ -630,13 +737,12 @@ export const LogData: React.FC = () => {
                     <h3 className="font-bold text-sm text-white">1. Projected Glucose Response</h3>
                   </div>
                   <span
-                    className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                      postMealSummary.glucose.status === 'optimal'
-                        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                        : postMealSummary.glucose.status === 'target'
+                    className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${postMealSummary.glucose.status === 'optimal'
+                      ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                      : postMealSummary.glucose.status === 'target'
                         ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
                         : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
-                    }`}
+                      }`}
                   >
                     {postMealSummary.glucose.statusText}
                   </span>
@@ -835,11 +941,10 @@ export const LogData: React.FC = () => {
 
                   <button
                     onClick={() => setSimulatedWalkActive(!simulatedWalkActive)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      simulatedWalkActive
-                        ? 'bg-emerald-500 text-black shadow-md'
-                        : 'bg-zinc-800 text-zinc-300 hover:text-white'
-                    }`}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${simulatedWalkActive
+                      ? 'bg-emerald-500 text-black shadow-md'
+                      : 'bg-zinc-800 text-zinc-300 hover:text-white'
+                      }`}
                   >
                     {simulatedWalkActive ? 'Walk Active ✓' : 'Simulate Walk'}
                   </button>
@@ -904,11 +1009,10 @@ export const LogData: React.FC = () => {
       <div className="flex items-center gap-2 border-b border-zinc-800 pb-3">
         <button
           onClick={() => setActiveTab('search')}
-          className={`px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 ${
-            activeTab === 'search'
-              ? 'bg-zinc-100 text-zinc-900 shadow-sm'
-              : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
-          }`}
+          className={`px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 ${activeTab === 'search'
+            ? 'bg-zinc-100 text-zinc-900 shadow-sm'
+            : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
+            }`}
         >
           <Search className="w-3.5 h-3.5" />
           <span>Food Search & Plate Builder</span>
@@ -916,11 +1020,10 @@ export const LogData: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('saved')}
-          className={`px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 ${
-            activeTab === 'saved'
-              ? 'bg-zinc-100 text-zinc-900 shadow-sm'
-              : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
-          }`}
+          className={`px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 ${activeTab === 'saved'
+            ? 'bg-zinc-100 text-zinc-900 shadow-sm'
+            : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
+            }`}
         >
           <Bookmark className="w-3.5 h-3.5" />
           <span>Saved Meals ({savedMeals.length})</span>
@@ -928,11 +1031,10 @@ export const LogData: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('reading')}
-          className={`px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 ${
-            activeTab === 'reading'
-              ? 'bg-zinc-100 text-zinc-900 shadow-sm'
-              : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
-          }`}
+          className={`px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 ${activeTab === 'reading'
+            ? 'bg-zinc-100 text-zinc-900 shadow-sm'
+            : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
+            }`}
         >
           <Activity className="w-3.5 h-3.5" />
           <span>Manual Glucose Reading</span>
@@ -974,11 +1076,10 @@ export const LogData: React.FC = () => {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-all cursor-pointer ${
-                    selectedCategory === cat.id
-                      ? 'bg-emerald-500 text-black font-bold shadow-sm'
-                      : 'bg-zinc-900/80 text-zinc-400 hover:text-white border border-zinc-800'
-                  }`}
+                  className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-all cursor-pointer ${selectedCategory === cat.id
+                    ? 'bg-emerald-500 text-black font-bold shadow-sm'
+                    : 'bg-zinc-900/80 text-zinc-400 hover:text-white border border-zinc-800'
+                    }`}
                 >
                   {cat.label}
                 </button>
@@ -1015,11 +1116,10 @@ export const LogData: React.FC = () => {
                   return (
                     <div
                       key={food.id}
-                      className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
-                        isAdded
-                          ? 'bg-emerald-500/5 border-emerald-500/40 shadow-sm'
-                          : 'bg-zinc-900/80 border-zinc-800/90 hover:border-zinc-700'
-                      }`}
+                      className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${isAdded
+                        ? 'bg-emerald-500/5 border-emerald-500/40 shadow-sm'
+                        : 'bg-zinc-900/80 border-zinc-800/90 hover:border-zinc-700'
+                        }`}
                     >
                       <div className="space-y-1">
                         <div className="flex items-start justify-between gap-2">
@@ -1219,6 +1319,17 @@ export const LogData: React.FC = () => {
                   )}
                   <span>Log Meal & Generate Unified Intelligence Summary</span>
                 </button>
+
+                {selectedPlate.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleWorkspaceTabChange('whatif')}
+                    className="w-full py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-850 text-teal-300 border border-teal-500/30 hover:border-teal-500/50 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <Sliders className="w-4 h-4 text-teal-400" />
+                    <span>Simulate Plate in What-If Lab (Walks, Carb Cuts & Sequencing) &rarr;</span>
+                  </button>
+                )}
 
                 {/* Save Plate to Favorites Toggle */}
                 {isSavingMeal ? (
@@ -1420,16 +1531,56 @@ export const LogData: React.FC = () => {
           </form>
         </div>
       )}
-
-      {/* Multimodal AI Meal Scanner Modal */}
-      <SnapToLogModal
-        isOpen={isSnapOpen}
-        onClose={() => {
-          setIsSnapOpen(false);
-          refetchPatient();
-        }}
-        patientId={activePatientId || 1}
-      />
     </div>
+  )}
+
+      {/* WORKSPACE VIEW: WHAT-IF SCENARIO LAB */}
+      {workspaceTab === 'whatif' && (
+        <WhatIfLabPage
+          initialMealInput={
+            postMealSummary
+              ? {
+                  carbs_g: postMealSummary.macros.carbs_g,
+                  protein_g: postMealSummary.macros.protein_g,
+                  fat_g: postMealSummary.macros.fat_g,
+                  fibre_g: postMealSummary.macros.fibre_g,
+                  calories: postMealSummary.macros.calories,
+                  pre_glucose: postMealSummary.baseline.pre_glucose,
+                  pre_trend30: postMealSummary.baseline.pre_trend,
+                }
+              : selectedPlate.length > 0
+              ? {
+                  carbs_g: totalCarbs,
+                  protein_g: totalProtein,
+                  fat_g: totalFat,
+                  fibre_g: totalFiber,
+                  calories: totalCalories,
+                  pre_glucose: preGlucose,
+                  pre_trend30: preTrend,
+                }
+              : undefined
+          }
+        />
+      )}
+
+{/* WORKSPACE VIEW: GOAL-BASED PLANNER */ }
+{ workspaceTab === 'planner' && <GoalPlannerTab /> }
+
+{/* WORKSPACE VIEW: SAVED SCENARIOS & COMPARE */ }
+{ workspaceTab === 'scenarios' && <SavedScenariosTab /> }
+
+{/* WORKSPACE VIEW: SMART MEAL SWAPS */ }
+{ workspaceTab === 'swaps' && <SmartMealSwaps /> }
+
+{/* Multimodal AI Meal Scanner Modal */ }
+<SnapToLogModal
+  isOpen={isSnapOpen}
+  onClose={() => {
+    setIsSnapOpen(false);
+    refetchPatient();
+  }}
+  patientId={activePatientId || 1}
+/>
+    </div >
   );
 };
