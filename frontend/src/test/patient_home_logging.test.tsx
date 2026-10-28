@@ -13,7 +13,6 @@ import {
   PatientHomeSummary,
   FoodSearchResponse,
   SavedMeal,
-  PhotoMealEstimate,
   PredictResponse,
 } from '../api/types';
 

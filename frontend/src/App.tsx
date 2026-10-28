@@ -102,12 +102,12 @@ export const App: React.FC = () => {
                 <Route path="predict" element={<PredictionPage />} />
                 <Route path="learning" element={<TwinLearningPage />} />
                 <Route path="whatif" element={<WhatIfLabPage />} />
-                <Route path="meal-tools" element={<MealToolsPage />} />
+                <Route path="meal-tools" element={<Navigate to="/log" replace />} />
                 <Route path="cohort" element={<CohortPage />} />
-                <Route path="clinical-plan" element={<ClinicalPlanPage />} />
-                <Route path="therapy-scenarios" element={<TherapyScenariosPage />} />
-                <Route path="plan" element={<FourWeekPlanPage />} />
-                <Route path="clinician-view" element={<ClinicianViewPage />} />
+                <Route path="clinical-plan" element={<Navigate to="/treatment?tab=plan" replace />} />
+                <Route path="therapy-scenarios" element={<Navigate to="/treatment?tab=plan" replace />} />
+                <Route path="plan" element={<Navigate to="/treatment?tab=pathway" replace />} />
+                <Route path="clinician-view" element={<Navigate to="/treatment?tab=plan" replace />} />
                 <Route path="validation" element={<ValidationPage />} />
                 <Route path="replay" element={<ReplayPage />} />
               </Route>

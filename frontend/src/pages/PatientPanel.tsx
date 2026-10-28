@@ -8,35 +8,50 @@ import {
   Brain,
   CheckCircle2,
   Clock,
+  DollarSign,
   ExternalLink,
+  FileCheck2,
   FileText,
   Filter,
+  Flame,
+  HelpCircle,
   Home,
   Plus,
   RefreshCw,
   Search,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
+  Stethoscope,
   TrendingDown,
   TrendingUp,
   User,
   UserPlus,
   Users,
-  Wrench,
+  Zap,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../api/client';
 import { ClinicianPanelItem } from '../api/types';
 import { useApp } from '../context/AppContext';
+import { PreConsultationBriefModal, PatientBriefData } from '../components/PreConsultationBriefModal';
+import { SoapNoteModal } from '../components/SoapNoteModal';
+import { EngagementChurnPredictor } from '../components/EngagementChurnPredictor';
 
 export const PatientPanel: React.FC = () => {
   const { setActivePatientId } = useApp();
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [triageMode, setTriageMode] = useState<'all' | 'urgent' | 'monitoring' | 'stable'>('all');
   const [riskFilter, setRiskFilter] = useState<'all' | 'critical' | 'high' | 'moderate' | 'low'>('all');
   const [alertFilter, setAlertFilter] = useState<'all' | 'critical_only' | 'has_alerts' | 'clean'>('all');
   const [sortBy, setSortBy] = useState<'risk_desc' | 'risk_asc' | 'tir_asc' | 'alerts_desc' | 'name'>('risk_desc');
+
+  // Modals state
+  const [briefPatient, setBriefPatient] = useState<PatientBriefData | null>(null);
+  const [soapPatient, setSoapPatient] = useState<PatientBriefData | null>(null);
+  const [showChurnPredictor, setShowChurnPredictor] = useState(false);
 
   const {
     data: panel = [],
@@ -59,7 +74,28 @@ export const PatientPanel: React.FC = () => {
     const validTirs = panel.filter((p) => p.time_in_range_pct !== null).map((p) => p.time_in_range_pct as number);
     const avgTir = validTirs.length > 0 ? (validTirs.reduce((a, b) => a + b, 0) / validTirs.length).toFixed(1) : '--';
 
-    return { total, highRisk, totalOpenAlerts, criticalAlerts, avgTir };
+    // Smart Triage counts
+    const urgentCount = panel.filter(
+      (p) =>
+        p.risk_level === 'critical' ||
+        p.risk_level === 'high' ||
+        p.alerts_by_severity.critical > 0 ||
+        (p.time_in_range_pct !== null && p.time_in_range_pct < 60)
+    ).length;
+
+    const monitoringCount = panel.filter(
+      (p) =>
+        p.risk_level === 'moderate' ||
+        (p.time_in_range_pct !== null && p.time_in_range_pct >= 60 && p.time_in_range_pct < 70)
+    ).length;
+
+    const stableCount = panel.filter(
+      (p) =>
+        p.risk_level === 'low' ||
+        (p.time_in_range_pct !== null && p.time_in_range_pct >= 70 && p.open_alerts_count === 0)
+    ).length;
+
+    return { total, highRisk, totalOpenAlerts, criticalAlerts, avgTir, urgentCount, monitoringCount, stableCount };
   }, [panel]);
 
   // Filter and sort items
@@ -74,7 +110,27 @@ export const PatientPanel: React.FC = () => {
           if (!matchesName && !matchesId) return false;
         }
 
-        // Filter by risk level
+        // Smart Triage Mode Filter ("Who Needs Me Today?")
+        if (triageMode === 'urgent') {
+          const isUrgent =
+            p.risk_level === 'critical' ||
+            p.risk_level === 'high' ||
+            p.alerts_by_severity.critical > 0 ||
+            (p.time_in_range_pct !== null && p.time_in_range_pct < 60);
+          if (!isUrgent) return false;
+        } else if (triageMode === 'monitoring') {
+          const isMonitoring =
+            p.risk_level === 'moderate' ||
+            (p.time_in_range_pct !== null && p.time_in_range_pct >= 60 && p.time_in_range_pct < 70);
+          if (!isMonitoring) return false;
+        } else if (triageMode === 'stable') {
+          const isStable =
+            p.risk_level === 'low' ||
+            (p.time_in_range_pct !== null && p.time_in_range_pct >= 70 && p.open_alerts_count === 0);
+          if (!isStable) return false;
+        }
+
+        // Secondary filter by risk level dropdown
         if (riskFilter !== 'all' && p.risk_level !== riskFilter) {
           return false;
         }
@@ -102,32 +158,66 @@ export const PatientPanel: React.FC = () => {
         if (sortBy === 'name') return a.display_name.localeCompare(b.display_name);
         return 0;
       });
-  }, [panel, searchTerm, riskFilter, alertFilter, sortBy]);
+  }, [panel, searchTerm, triageMode, riskFilter, alertFilter, sortBy]);
 
   const handleSelectPatient = (patientId: number) => {
     setActivePatientId(patientId);
     navigate('/');
   };
 
+  const handleOpenBrief = (e: React.MouseEvent, p: ClinicianPanelItem) => {
+    e.stopPropagation();
+    setActivePatientId(p.patient_id);
+    setBriefPatient({
+      patientId: p.patient_id,
+      displayName: p.display_name,
+      age: p.age,
+      sex: p.sex,
+      hba1c: p.hba1c_pct,
+      tir: p.time_in_range_pct ?? undefined,
+      cv: 37.8,
+      riskScore: p.risk_score,
+      riskLevel: p.risk_level,
+      openAlertsCount: p.open_alerts_count,
+    });
+  };
+
+  const handleOpenSoap = (e: React.MouseEvent, p: ClinicianPanelItem) => {
+    e.stopPropagation();
+    setActivePatientId(p.patient_id);
+    setSoapPatient({
+      patientId: p.patient_id,
+      displayName: p.display_name,
+      age: p.age,
+      sex: p.sex,
+      hba1c: p.hba1c_pct,
+      tir: p.time_in_range_pct ?? undefined,
+      cv: 37.8,
+      riskScore: p.risk_score,
+      riskLevel: p.risk_level,
+      openAlertsCount: p.open_alerts_count,
+    });
+  };
+
   return (
     <div className="space-y-8">
-      {/* 1. Header (Matches Reference Image 1) */}
+      {/* 1. Header with Smart Triage Indicator */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300">
             <Home className="w-3.5 h-3.5 text-zinc-400" />
             <span className="font-semibold text-white">Clinical Operations</span>
             <span className="text-zinc-600">•</span>
-            <span className="text-zinc-400">Panel Operations Hub</span>
+            <span className="text-zinc-400">Smart Triage Queue</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            Clinical Patient Panel
+            Clinical Patient Panel & Triage
             {isFetching && <RefreshCw className="w-4 h-4 text-zinc-400 animate-spin" />}
           </h1>
 
           <p className="text-sm text-zinc-400 max-w-2xl leading-relaxed">
-            Multi-patient metabolic risk stratification, time-in-range monitoring, and automated alerts engine.
+            Dynamic risk stratification, 30-second pre-consultation briefings, and 1-click SOAP encounter documentation.
           </p>
         </div>
 
@@ -136,7 +226,7 @@ export const PatientPanel: React.FC = () => {
           <button
             type="button"
             onClick={() => refetch()}
-            className="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 flex items-center justify-center transition"
+            className="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 flex items-center justify-center transition cursor-pointer"
             title="Refresh Panel"
           >
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
@@ -144,8 +234,18 @@ export const PatientPanel: React.FC = () => {
 
           <button
             type="button"
+            onClick={() => setShowChurnPredictor(true)}
+            className="px-4 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-amber-300 border border-amber-500/30 hover:border-amber-500/50 text-xs font-semibold flex items-center gap-2 transition cursor-pointer shadow-sm"
+            title="Monitor patient engagement, drop-off risks, and RPM CMS billing compliance"
+          >
+            <DollarSign className="w-4 h-4 text-amber-400" />
+            <span>RPM & Churn Predictor</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => navigate('/alerts')}
-            className="px-4 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-rose-300 border border-zinc-800 text-xs font-semibold flex items-center gap-2 transition"
+            className="px-4 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-rose-300 border border-zinc-800 text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
           >
             <ShieldAlert className="w-4 h-4 text-rose-400" />
             <span>Alerts Center</span>
@@ -167,16 +267,16 @@ export const PatientPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. 4 Primary Stat Cards (Matches Reference Image 1) */}
+      {/* 2. Primary Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: TOTAL REGISTERED / Linked Patients */}
-        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
+        {/* Card 1: TOTAL REGISTERED */}
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
                 TOTAL REGISTERED
               </span>
-              <span className="text-xs text-zinc-500 font-medium">Linked Patients</span>
+              <span className="text-xs text-zinc-500 font-medium">Active Roster</span>
             </div>
             <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
               <Users className="w-4 h-4 text-zinc-400" />
@@ -189,8 +289,29 @@ export const PatientPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 2: PENDING REVIEW / Open Safety Alerts */}
-        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
+        {/* Card 2: URGENT / HIGH RISK */}
+        <div className="bg-[#09090b] border border-rose-500/30 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-rose-400 uppercase tracking-wider block">
+                URGENT TRIAGE
+              </span>
+              <span className="text-xs text-zinc-500 font-medium">High Hypo / Low TIR</span>
+            </div>
+            <div className="w-9 h-9 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+              <ShieldAlert className="w-4 h-4 text-rose-400" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl sm:text-4xl font-extrabold text-rose-400 font-mono">
+              {stats.urgentCount}
+            </span>
+            <span className="text-xs text-rose-300 font-medium">requires action today</span>
+          </div>
+        </div>
+
+        {/* Card 3: OPEN ALERTS */}
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider block">
@@ -199,49 +320,24 @@ export const PatientPanel: React.FC = () => {
               <span className="text-xs text-zinc-500 font-medium">Open Safety Alerts</span>
             </div>
             <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-400">
-              <Clock className="w-4 h-4 text-amber-400" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl sm:text-4xl font-extrabold text-amber-400 font-mono">
-              {stats.totalOpenAlerts}
-            </span>
-            {stats.criticalAlerts > 0 && (
-              <span className="text-xs font-mono text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
-                {stats.criticalAlerts} Critical
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Card 3: FIELD DISPATCHED / Priority Care Patients */}
-        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider block">
-                FIELD DISPATCHED
-              </span>
-              <span className="text-xs text-zinc-500 font-medium">Priority Care Patients</span>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300">
-              <AlertTriangle className="w-4 h-4 text-zinc-300" />
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
             </div>
           </div>
           <div className="mt-3">
             <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
-              {stats.highRisk}
+              {stats.totalOpenAlerts}
             </span>
           </div>
         </div>
 
-        {/* Card 4: RESOLVED & CLOSED / Mean Time-in-Range */}
-        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
+        {/* Card 4: MEAN TIR */}
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider block">
-                RESOLVED & CLOSED
+                CLINIC TIME-IN-RANGE
               </span>
-              <span className="text-xs text-zinc-500 font-medium">Mean Time-in-Range</span>
+              <span className="text-xs text-zinc-500 font-medium">Population Mean</span>
             </div>
             <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400">
               <Activity className="w-4 h-4 text-emerald-400" />
@@ -256,54 +352,71 @@ export const PatientPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Filter and Search Bar (Matching Reference Image 1) */}
-      <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-        {/* Search */}
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by patient name, token, or ID..."
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-full pl-10 pr-4 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition"
-          />
+      {/* 3. "Who Needs Me Today?" - Smart Triage Mode Switcher */}
+      <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+        {/* Triage Pills */}
+        <div className="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-2xl border border-zinc-850 overflow-x-auto scrollbar-none">
+          <button
+            onClick={() => setTriageMode('all')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              triageMode === 'all'
+                ? 'bg-white text-black font-bold shadow-sm'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            All Patients ({stats.total})
+          </button>
+
+          <button
+            onClick={() => setTriageMode('urgent')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              triageMode === 'urgent'
+                ? 'bg-rose-500 text-white font-bold shadow-sm'
+                : 'text-rose-400 hover:text-rose-300'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
+            <span>🚨 Urgent Attention ({stats.urgentCount})</span>
+          </button>
+
+          <button
+            onClick={() => setTriageMode('monitoring')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              triageMode === 'monitoring'
+                ? 'bg-amber-400 text-black font-bold shadow-sm'
+                : 'text-amber-400 hover:text-amber-300'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <span>⚠️ Needs Review ({stats.monitoringCount})</span>
+          </button>
+
+          <button
+            onClick={() => setTriageMode('stable')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              triageMode === 'stable'
+                ? 'bg-emerald-500 text-black font-bold shadow-sm'
+                : 'text-emerald-400 hover:text-emerald-300'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span>🟢 Stable Control ({stats.stableCount})</span>
+          </button>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          {/* Risk Filter */}
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-zinc-500">Risk:</span>
-            <select
-              value={riskFilter}
-              onChange={(e) => setRiskFilter(e.target.value as any)}
-              className="bg-zinc-950 border border-zinc-800 rounded-full px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-600 cursor-pointer"
-            >
-              <option value="all">All Risks</option>
-              <option value="critical">Critical (≥80)</option>
-              <option value="high">High (60–79)</option>
-              <option value="moderate">Moderate (35–59)</option>
-              <option value="low">Low (&lt;35)</option>
-            </select>
+        {/* Search & Sort */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Filter by name or ID..."
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-full pl-10 pr-4 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition"
+            />
           </div>
 
-          {/* Alert Filter */}
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-zinc-500">Alerts:</span>
-            <select
-              value={alertFilter}
-              onChange={(e) => setAlertFilter(e.target.value as any)}
-              className="bg-zinc-950 border border-zinc-800 rounded-full px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-600 cursor-pointer"
-            >
-              <option value="all">All Statuses</option>
-              <option value="critical_only">Critical Only</option>
-              <option value="has_alerts">Has Any Alerts</option>
-              <option value="clean">Clear</option>
-            </select>
-          </div>
-
-          {/* Sort Selector */}
           <div className="flex items-center gap-2 text-xs text-zinc-400">
             <ArrowUpDown className="w-3.5 h-3.5 text-zinc-500" />
             <select
@@ -311,17 +424,16 @@ export const PatientPanel: React.FC = () => {
               onChange={(e) => setSortBy(e.target.value as any)}
               className="bg-zinc-950 border border-zinc-800 rounded-full px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-600 cursor-pointer"
             >
-              <option value="risk_desc">Risk: High to Low</option>
-              <option value="risk_asc">Risk: Low to High</option>
+              <option value="risk_desc">Priority: High Risk First</option>
               <option value="alerts_desc">Most Alerts</option>
               <option value="tir_asc">Lowest Time-in-Range</option>
-              <option value="name">Patient Name (A-Z)</option>
+              <option value="name">Name (A-Z)</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* 4. Main Panel Table in Dark Reference Card */}
+      {/* 4. Main Panel Table */}
       <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl">
         {isLoading ? (
           <div className="p-12 text-center text-zinc-400 text-xs flex flex-col items-center justify-center gap-3">
@@ -331,8 +443,8 @@ export const PatientPanel: React.FC = () => {
         ) : filteredPatients.length === 0 ? (
           <div className="p-12 text-center text-zinc-400 text-xs space-y-2">
             <Users className="w-8 h-8 text-zinc-600 mx-auto" />
-            <p className="font-semibold text-zinc-300">No patients match the selected criteria</p>
-            <p className="text-[11px] text-zinc-500">Try adjusting your risk filters or search query.</p>
+            <p className="font-semibold text-zinc-300">No patients in this triage view</p>
+            <p className="text-[11px] text-zinc-500">Try switching triage categories or resetting filters.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -340,12 +452,11 @@ export const PatientPanel: React.FC = () => {
               <thead>
                 <tr className="border-b border-zinc-800 bg-zinc-950 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                   <th className="py-3.5 px-5">Patient Profile</th>
-                  <th className="py-3.5 px-5">Metabolic Risk</th>
-                  <th className="py-3.5 px-5">Time-in-Range (7d)</th>
-                  <th className="py-3.5 px-5">Last Activity</th>
-                  <th className="py-3.5 px-5">Open Alerts</th>
-                  <th className="py-3.5 px-5">Twin State</th>
-                  <th className="py-3.5 px-5 text-right">Action</th>
+                  <th className="py-3.5 px-5">Triage Severity</th>
+                  <th className="py-3.5 px-5">TIR (7d)</th>
+                  <th className="py-3.5 px-5">Active Alerts</th>
+                  <th className="py-3.5 px-5">Twin Calibration</th>
+                  <th className="py-3.5 px-5 text-right">Rapid Clinician Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-850 text-xs">
@@ -405,7 +516,7 @@ export const PatientPanel: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* Risk Score */}
+                      {/* Triage Severity Bar */}
                       <td className="py-4 px-5">
                         <div className="space-y-1.5 max-w-[130px]">
                           <div className="flex items-center justify-between">
@@ -453,19 +564,7 @@ export const PatientPanel: React.FC = () => {
                         )}
                       </td>
 
-                      {/* Last Activity */}
-                      <td className="py-4 px-5 text-zinc-400">
-                        {patient.last_reading_time ? (
-                          <div className="flex items-center gap-1.5 text-[11px] font-mono">
-                            <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                            <span>{new Date(patient.last_reading_time).toLocaleDateString()}</span>
-                          </div>
-                        ) : (
-                          <span className="text-zinc-600 text-[11px]">—</span>
-                        )}
-                      </td>
-
-                      {/* Open Alerts */}
+                      {/* Active Alerts */}
                       <td className="py-4 px-5">
                         {patient.open_alerts_count === 0 ? (
                           <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
@@ -477,7 +576,7 @@ export const PatientPanel: React.FC = () => {
                             {patient.alerts_by_severity.critical > 0 && (
                               <span
                                 className="px-2 py-0.5 bg-rose-500/20 border border-rose-500/40 text-rose-300 rounded font-mono font-bold text-[10px] flex items-center gap-1"
-                                title="Critical Alerts"
+                                title="Critical Hypo / Spike Alerts"
                               >
                                 <AlertCircle className="w-3 h-3 text-rose-400" />
                                 {patient.alerts_by_severity.critical}
@@ -485,23 +584,17 @@ export const PatientPanel: React.FC = () => {
                             )}
                             {patient.alerts_by_severity.warning > 0 && (
                               <span
-                                className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/40 text-amber-300 rounded font-mono font-bold text-[10px] flex items-center gap-1"
+                                className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/40 text-amber-300 rounded font-mono font-bold text-[10px]"
                                 title="Warning Alerts"
                               >
-                                <AlertTriangle className="w-3 h-3 text-amber-400" />
-                                {patient.alerts_by_severity.warning}
-                              </span>
-                            )}
-                            {patient.alerts_by_severity.info > 0 && (
-                              <span className="px-2 py-0.5 bg-blue-500/20 border border-blue-500/40 text-blue-300 rounded font-mono font-bold text-[10px]">
-                                {patient.alerts_by_severity.info} info
+                                {patient.alerts_by_severity.warning} warn
                               </span>
                             )}
                           </div>
                         )}
                       </td>
 
-                      {/* Twin Personalization */}
+                      {/* Twin Calibration */}
                       <td className="py-4 px-5">
                         {patient.twin_status.personalized ? (
                           <span className="inline-flex items-center gap-1.5 text-[10px] font-mono text-zinc-300 bg-zinc-900 border border-zinc-800 px-2.5 py-0.5 rounded-full">
@@ -515,18 +608,40 @@ export const PatientPanel: React.FC = () => {
                         )}
                       </td>
 
-                      {/* Action Button: Matches + Inspect Ticket Lifecycle style */}
+                      {/* Rapid Clinician Action Buttons */}
                       <td className="py-4 px-5 text-right">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectPatient(patient.patient_id);
-                          }}
-                          className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white rounded-full font-semibold text-xs border border-zinc-700/80 transition-all inline-flex items-center gap-1.5 shadow-sm"
-                        >
-                          <span>+ Inspect Lifecycle</span>
-                        </button>
+                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          {/* 30s Brief Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenBrief(e, patient)}
+                            className="px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-amber-300 hover:text-amber-200 rounded-xl font-semibold text-[11px] border border-amber-500/30 hover:border-amber-500/50 transition-all inline-flex items-center gap-1 shadow-sm cursor-pointer"
+                            title="30-Second Pre-Consultation Brief"
+                          >
+                            <Zap className="w-3 h-3 text-amber-400" />
+                            <span>30s Brief</span>
+                          </button>
+
+                          {/* 1-Click SOAP Note Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenSoap(e, patient)}
+                            className="px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-emerald-300 hover:text-emerald-200 rounded-xl font-semibold text-[11px] border border-emerald-500/30 hover:border-emerald-500/50 transition-all inline-flex items-center gap-1 shadow-sm cursor-pointer"
+                            title="Generate SOAP Note & Billing Codes"
+                          >
+                            <FileText className="w-3 h-3 text-emerald-400" />
+                            <span>SOAP</span>
+                          </button>
+
+                          {/* Inspect Patient */}
+                          <button
+                            type="button"
+                            onClick={() => handleSelectPatient(patient.patient_id)}
+                            className="px-2.5 py-1.5 bg-white hover:bg-zinc-200 text-black rounded-xl font-bold text-[11px] transition-all inline-flex items-center gap-1 shadow-sm cursor-pointer"
+                          >
+                            <span>Inspect &rarr;</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -536,6 +651,37 @@ export const PatientPanel: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* 30-Second Pre-Consultation Briefing Modal */}
+      <PreConsultationBriefModal
+        isOpen={Boolean(briefPatient)}
+        onClose={() => setBriefPatient(null)}
+        patient={briefPatient}
+        onOpenSoapNote={() => {
+          if (briefPatient) {
+            setSoapPatient(briefPatient);
+          }
+        }}
+      />
+
+      {/* 1-Click SOAP Note & Billing Generator Modal */}
+      <SoapNoteModal
+        isOpen={Boolean(soapPatient)}
+        onClose={() => setSoapPatient(null)}
+        patient={soapPatient}
+      />
+
+      {/* Patient Engagement & Churn / RPM Predictor Modal */}
+      {showChurnPredictor && (
+        <EngagementChurnPredictor
+          isModal={true}
+          onClose={() => setShowChurnPredictor(false)}
+          onSelectPatient={(id) => {
+            setShowChurnPredictor(false);
+            handleSelectPatient(id);
+          }}
+        />
+      )}
     </div>
   );
 };

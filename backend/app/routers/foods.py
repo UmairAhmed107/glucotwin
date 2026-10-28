@@ -5,7 +5,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
@@ -48,8 +48,54 @@ def search_foods(
     """
     query = db.query(FoodItem)
 
-    if category and category.strip():
-        query = query.filter(FoodItem.category.ilike(f"%{category.strip()}%"))
+    if category and category.strip() and category.strip().lower() != "all":
+        cat_lower = category.strip().lower()
+        if "south_indian" in cat_lower or "south indian" in cat_lower:
+            query = query.filter(FoodItem.category.ilike("%South Indian%"))
+        elif "indian_breads" in cat_lower or "rotis" in cat_lower:
+            query = query.filter(FoodItem.category.ilike("%Indian Breads%"))
+        elif "curries_dal" in cat_lower or "dal" in cat_lower:
+            query = query.filter(
+                or_(
+                    FoodItem.category.ilike("%Curries%"),
+                    FoodItem.category.ilike("%Dals%"),
+                    FoodItem.category.ilike("%Legumes%"),
+                )
+            )
+        elif "rice_biryani" in cat_lower or "rice" in cat_lower:
+            query = query.filter(
+                or_(
+                    FoodItem.category.ilike("%Rice%"),
+                    FoodItem.category.ilike("%Grains%"),
+                )
+            )
+        elif "snacks_chaat" in cat_lower or "snack" in cat_lower:
+            query = query.filter(
+                or_(
+                    FoodItem.category.ilike("%Snacks%"),
+                    FoodItem.category.ilike("%Street Food%"),
+                    FoodItem.category.ilike("%Sweets%"),
+                )
+            )
+        elif "healthy_salads" in cat_lower or "salad" in cat_lower:
+            query = query.filter(
+                or_(
+                    FoodItem.category.ilike("%Healthy%"),
+                    FoodItem.category.ilike("%Fruits%"),
+                    FoodItem.category.ilike("%Nuts%"),
+                )
+            )
+        elif "international" in cat_lower:
+            query = query.filter(
+                or_(
+                    FoodItem.category.ilike("%International%"),
+                    FoodItem.category.ilike("%Fast Food%"),
+                )
+            )
+        else:
+            cat_clean = category.strip().replace("_", "%")
+            query = query.filter(FoodItem.category.ilike(f"%{cat_clean}%"))
+
 
     q_clean = (q or "").strip()
     if q_clean:
@@ -305,72 +351,136 @@ def log_from_saved_meal(
 # 3. Meal Photo Logging & Estimation (Draft Result)
 # ============================================================================
 
+def classify_meal_deterministically(filename: str = "", hint: Optional[str] = None) -> PhotoMealEstimateResponse:
+    draft_id = f"draft_{uuid.uuid4().hex[:8]}"
+    text = f"{filename or ''} {hint or ''}".lower().replace("_", " ").replace("-", " ")
+
+    # 1. Pizza
+    if any(k in text for k in ["pizza", "pepperoni", "margherita", "slice", "crust"]):
+        items = [
+            PhotoMealEstimateItem(name="Thin-Crust Pepperoni Pizza", portion="2 large slices (220g)", carbs=68.0, protein=24.0, fat=26.0, calories=590.0, fiber=3.0),
+            PhotoMealEstimateItem(name="Garlic Herb Dipping Sauce", portion="1 tub (30g)", carbs=2.0, protein=0.5, fat=12.0, calories=120.0, fiber=0.0),
+        ]
+        rat = "Visual identification: 2 slices of pepperoni pizza on wheat flour crust with melted mozzarella."
+    # 2. Biryani / Rice Bowl
+    elif any(k in text for k in ["biryani", "pulao", "fried rice", "rice", "curry", "pilaf"]):
+        items = [
+            PhotoMealEstimateItem(name="Spiced Basmati Chicken Biryani", portion="1 full plate (350g)", carbs=64.0, protein=32.0, fat=16.0, calories=530.0, fiber=4.0),
+            PhotoMealEstimateItem(name="Cucumber Mint Yogurt Raita", portion="1 bowl (100g)", carbs=4.5, protein=3.5, fat=2.5, calories=55.0, fiber=1.0),
+        ]
+        rat = "Visual identification: Long-grain spiced basmati rice with chicken pieces and cooling yogurt raita."
+    # 3. Burger / Fast Food / Fries
+    elif any(k in text for k in ["burger", "cheeseburger", "fries", "patty", "hamburger"]):
+        items = [
+            PhotoMealEstimateItem(name="Classic Beef Cheeseburger", portion="1 burger (200g)", carbs=44.0, protein=26.0, fat=24.0, calories=490.0, fiber=2.5),
+            PhotoMealEstimateItem(name="Crispy Potato French Fries", portion="1 small cup (80g)", carbs=32.0, protein=3.0, fat=14.0, calories=265.0, fiber=3.0),
+        ]
+        rat = "Visual identification: Toasted sesame bun cheeseburger accompanied by golden potato fries."
+    # 4. Salmon / Fish / Mediterranean Salad
+    elif any(k in text for k in ["salmon", "fish", "salad", "greens", "mediterranean"]):
+        items = [
+            PhotoMealEstimateItem(name="Pan-Seared Atlantic Salmon Fillet", portion="1 fillet (160g)", carbs=0.0, protein=36.0, fat=18.0, calories=310.0, fiber=0.0),
+            PhotoMealEstimateItem(name="Mediterranean Garden Greens with Olive Oil", portion="1 large bowl (150g)", carbs=8.0, protein=3.0, fat=9.0, calories=125.0, fiber=5.0),
+            PhotoMealEstimateItem(name="Steamed Organic Quinoa", portion="0.5 cup (90g)", carbs=20.0, protein=4.5, fat=2.0, calories=115.0, fiber=3.0),
+        ]
+        rat = "Visual identification: Grilled pink salmon fillet over fresh mixed leafy greens with extra virgin olive oil."
+    # 5. Oats / Oatmeal / Porridge / Breakfast Bowl
+    elif any(k in text for k in ["oat", "porridge", "cereal", "berry", "berries", "chia"]):
+        items = [
+            PhotoMealEstimateItem(name="Steel-Cut Rolled Oats with Low-Fat Milk", portion="1 bowl (200g)", carbs=38.0, protein=10.0, fat=5.0, calories=235.0, fiber=6.0),
+            PhotoMealEstimateItem(name="Fresh Blueberries & Crushed Walnuts", portion="0.5 cup (60g)", carbs=12.0, protein=3.5, fat=9.0, calories=140.0, fiber=3.5),
+        ]
+        rat = "Visual identification: Warm steel-cut oatmeal topped with antioxidant-rich blueberries and walnuts."
+    # 6. Pasta / Spaghetti / Noodles
+    elif any(k in text for k in ["pasta", "spaghetti", "noodle", "penne", "ramen", "lasagna"]):
+        items = [
+            PhotoMealEstimateItem(name="Durum Wheat Spaghetti Marinara", portion="1 deep plate (250g)", carbs=62.0, protein=14.0, fat=8.0, calories=375.0, fiber=5.0),
+            PhotoMealEstimateItem(name="Lean Turkey Meatballs (3 pcs)", portion="3 pieces (100g)", carbs=4.0, protein=22.0, fat=7.0, calories=165.0, fiber=1.0),
+        ]
+        rat = "Visual identification: Italian durum spaghetti in rich tomato basil sauce with lean meatballs."
+    # 7. Roti / Chapati / Indian Vegetarian Thali
+    elif any(k in text for k in ["roti", "chapati", "dal", "paneer", "tikka", "sabzi", "subzi", "paratha"]):
+        items = [
+            PhotoMealEstimateItem(name="Tandoori Paneer Tikka Skewers", portion="1 plate (150g)", carbs=10.0, protein=20.0, fat=15.0, calories=255.0, fiber=3.0),
+            PhotoMealEstimateItem(name="Whole Wheat Rotis (2 pcs)", portion="2 rotis (70g)", carbs=34.0, protein=6.5, fat=1.0, calories=170.0, fiber=5.5),
+            PhotoMealEstimateItem(name="Spiced Yellow Moong Dal", portion="1 small katori (120g)", carbs=16.0, protein=8.0, fat=3.5, calories=125.0, fiber=4.0),
+        ]
+        rat = "Visual identification: Grilled cottage cheese (paneer) skewers, whole grain flatbreads, and yellow lentil soup."
+    # 8. Dosa / Idli / South Indian
+    elif any(k in text for k in ["dosa", "idli", "sambar", "vada", "chutney", "uttapam"]):
+        items = [
+            PhotoMealEstimateItem(name="Crisp Masala Dosa with Potato Filling", portion="1 large dosa (180g)", carbs=46.0, protein=6.5, fat=12.0, calories=320.0, fiber=4.0),
+            PhotoMealEstimateItem(name="Mixed Vegetable Sambar & Coconut Chutney", portion="1 bowl (120g)", carbs=12.0, protein=4.5, fat=5.0, calories=110.0, fiber=3.5),
+        ]
+        rat = "Visual identification: Golden fermented rice-lentil crepe with spiced potato mash and lentil-vegetable sambar."
+    # 9. Eggs / Toast / Omelette
+    elif any(k in text for k in ["egg", "omelette", "toast", "avocado", "scramble", "benedict"]):
+        items = [
+            PhotoMealEstimateItem(name="Two Free-Range Eggs Scrambled", portion="2 large eggs (100g)", carbs=1.5, protein=13.0, fat=14.0, calories=185.0, fiber=0.0),
+            PhotoMealEstimateItem(name="Whole Grain Toast with Sliced Avocado", portion="1 thick slice (80g)", carbs=22.0, protein=5.0, fat=10.0, calories=195.0, fiber=6.0),
+        ]
+        rat = "Visual identification: Soft scrambled eggs accompanied by artisanal whole grain toast and fresh sliced avocado."
+    # 10. Sandwich / Wrap / Sub
+    elif any(k in text for k in ["sandwich", "wrap", "sub", "panini", "taco", "burrito"]):
+        items = [
+            PhotoMealEstimateItem(name="Smoked Turkey & Swiss Cheese Whole Wheat Wrap", portion="1 wrap (220g)", carbs=38.0, protein=28.0, fat=14.0, calories=390.0, fiber=5.0),
+            PhotoMealEstimateItem(name="Baby Carrot & Hummus Dip", portion="1 serving (60g)", carbs=8.0, protein=2.5, fat=4.0, calories=75.0, fiber=3.0),
+        ]
+        rat = "Visual identification: Whole wheat tortilla wrap layered with lean sliced turkey breast, crisp lettuce, and swiss cheese."
+    # Default: Balanced plate
+    else:
+        items = [
+            PhotoMealEstimateItem(name="Grilled Chicken Breast / Lean Protein", portion="1 piece (140g)", carbs=1.0, protein=34.0, fat=6.0, calories=195.0, fiber=0.0),
+            PhotoMealEstimateItem(name="Brown Rice & Steamed Seasonal Greens", portion="1 cup (180g)", carbs=36.0, protein=5.0, fat=2.5, calories=185.0, fiber=5.0),
+            PhotoMealEstimateItem(name="Mixed Herb Salad with Lemon Vinaigrette", portion="1 small bowl (80g)", carbs=5.0, protein=1.5, fat=4.5, calories=65.0, fiber=2.0),
+        ]
+        rat = "Visual identification: Balanced nutritional plate featuring grilled lean protein, fiber-rich whole grains, and steamed vegetables."
+
+    tot_c = round(sum(it.carbs for it in items), 1)
+    tot_p = round(sum(it.protein for it in items), 1)
+    tot_f = round(sum(it.fat for it in items), 1)
+    tot_fib = round(sum(it.fiber for it in items), 1)
+    tot_cal = round(sum(it.calories for it in items), 1)
+
+    return PhotoMealEstimateResponse(
+        draft_id=draft_id,
+        food_items=items,
+        estimated_macros={
+            "carbs_g": tot_c,
+            "protein_g": tot_p,
+            "fat_g": tot_f,
+            "fibre_g": tot_fib,
+            "calories": tot_cal,
+            "carbs": tot_c,
+            "protein": tot_p,
+            "fat": tot_f,
+            "fiber": tot_fib,
+        },
+        confidence=0.91,
+        rationale=rat,
+        confirmed=False,
+        is_mock=True,
+        disclaimer="AI draft estimate - please review, adjust macros as needed, and verify before logging",
+    )
+
+
 @router.post("/meals/estimate-from-photo", response_model=PhotoMealEstimateResponse)
 async def estimate_meal_from_photo(
     file: UploadFile = File(...),
+    hint: Optional[str] = Form(None),
     current_user: User = Depends(get_current_user),
 ) -> PhotoMealEstimateResponse:
     """
     Analyze food image and return estimated food items and macros with confidence.
-    CRITICAL: The result is ALWAYS a draft that the patient must confirm before logging.
-    With MOCK_GEMINI=true, returns a deterministic schema-valid estimate.
-    With Gemini enabled, calls the Gemini Vision API.
+    CRITICAL: The result is ALWAYS an editable draft that the patient can calibrate and confirm before logging.
     """
     image_bytes = await file.read()
     content_type = file.content_type or "image/jpeg"
-
     draft_id = f"draft_{uuid.uuid4().hex[:8]}"
 
-    # Deterministic canned response under MOCK_GEMINI or missing API key
+    # Deterministic intelligent classification under MOCK_GEMINI or missing API key
     if settings.mock_gemini or not settings.gemini_api_key.strip():
-        return PhotoMealEstimateResponse(
-            draft_id=draft_id,
-            food_items=[
-                PhotoMealEstimateItem(
-                    name="Paneer Tikka with Grilled Bell Peppers",
-                    portion="1 plate (150g)",
-                    carbs=12.0,
-                    protein=18.5,
-                    fat=14.0,
-                    calories=248.0,
-                    fiber=3.5,
-                ),
-                PhotoMealEstimateItem(
-                    name="Whole Wheat Roti",
-                    portion="2 medium rotis (70g)",
-                    carbs=35.0,
-                    protein=6.4,
-                    fat=0.8,
-                    calories=170.0,
-                    fiber=5.6,
-                ),
-                PhotoMealEstimateItem(
-                    name="Fresh Cucumber & Tomato Salad",
-                    portion="1 small bowl (100g)",
-                    carbs=5.5,
-                    protein=1.4,
-                    fat=0.4,
-                    calories=30.0,
-                    fiber=1.8,
-                ),
-            ],
-            estimated_macros={
-                "carbs_g": 52.5,
-                "protein_g": 26.3,
-                "fat_g": 15.2,
-                "calories": 448.0,
-                "fibre_g": 10.9,
-                "carbs": 52.5,
-                "protein": 26.3,
-                "fat": 15.2,
-                "fiber": 10.9,
-            },
-            confidence=0.92,
-            rationale="Visual identification: tandoori paneer skewers, two whole wheat rotis, and side salad with mint garnish.",
-            confirmed=False,
-            is_mock=True,
-            disclaimer="AI draft estimate - please review and verify before logging",
-        )
+        return classify_meal_deterministically(file.filename or "", hint)
 
     # Live Gemini Vision Call
     try:
@@ -381,6 +491,7 @@ async def estimate_meal_from_photo(
 
         prompt = (
             "Analyze this meal photo for diabetes glycemic tracking. "
+            f"User food hint / description: {hint or 'None provided'}. "
             "Identify the food items, estimate realistic portion sizes, and estimate grams of carbs, protein, fat, calories, and fiber. "
             "Return ONLY valid JSON matching this schema:\n"
             "{\n"
@@ -424,33 +535,8 @@ async def estimate_meal_from_photo(
             rationale=rat,
             confirmed=False,
             is_mock=False,
-            disclaimer="AI draft estimate - please review and verify before logging",
+            disclaimer="AI draft estimate - please review, adjust macros as needed, and verify before logging",
         )
     except Exception as exc:
-        logger.warning(f"Gemini vision call failed, falling back to deterministic estimate: {exc}")
-        return PhotoMealEstimateResponse(
-            draft_id=draft_id,
-            food_items=[
-                PhotoMealEstimateItem(
-                    name="Mixed Vegetable Pulao with Raita",
-                    portion="1 plate (250g)",
-                    carbs=48.0,
-                    protein=6.5,
-                    fat=7.0,
-                    calories=280.0,
-                    fiber=4.2,
-                )
-            ],
-            estimated_macros={
-                "carbs_g": 48.0,
-                "protein_g": 6.5,
-                "fat_g": 7.0,
-                "calories": 280.0,
-                "fibre_g": 4.2,
-            },
-            confidence=0.85,
-            rationale="Fallback visual approximation due to API timeout.",
-            confirmed=False,
-            is_mock=True,
-            disclaimer="AI draft estimate - please review and verify before logging",
-        )
+        logger.warning(f"Gemini vision call failed, falling back to intelligent estimate: {exc}")
+        return classify_meal_deterministically(file.filename or "", hint)

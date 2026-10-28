@@ -11,6 +11,7 @@ from app.clinical.fallback import get_fallback_plan
 from app.clinical.governor import run_safety_governor
 from app.clinical.guidelines import get_known_guideline_ids, retrieve_guidelines
 from app.clinical.reasoning import generate_clinical_plan
+from app.clinical.recommendation_bank import get_personalized_week_plan
 from app.db import get_db
 from app.models_db import MealEntry, Patient, Recommendation, TwinState, User
 from app.schemas import (
@@ -194,24 +195,13 @@ def get_therapy_scenarios(
     """
     patient = verify_patient_access(patient_id, current_user, db)
 
-    # Look for existing recent clinical plan recommendation
-    recent_rec = (
-        db.query(Recommendation)
-        .filter(Recommendation.patient_id == patient_id, Recommendation.kind == "therapy")
-        .order_by(Recommendation.created_at.desc())
-        .first()
+    # Always generate fresh governed plan for active patient from recommendation bank
+    patient_context = _build_patient_clinical_context(patient, db)
+    snippets = retrieve_guidelines(patient_context, top_k=4)
+    raw_plan, gemini_used, demo_fixture, _ = generate_clinical_plan(patient_context, snippets, db)
+    plan, _ = run_safety_governor(
+        raw_plan, patient_context, get_known_guideline_ids(), gemini_used, demo_fixture
     )
-
-    if recent_rec and isinstance(recent_rec.payload, dict) and "therapy_options" in recent_rec.payload:
-        plan = recent_rec.payload
-    else:
-        # Generate fresh governed plan
-        patient_context = _build_patient_clinical_context(patient, db)
-        snippets = retrieve_guidelines(patient_context, top_k=4)
-        raw_plan, gemini_used, demo_fixture, _ = generate_clinical_plan(patient_context, snippets, db)
-        plan, _ = run_safety_governor(
-            raw_plan, patient_context, get_known_guideline_ids(), gemini_used, demo_fixture
-        )
 
     scenarios: List[TherapyScenarioItem] = []
     for opt in plan.get("therapy_options", []):
@@ -304,106 +294,27 @@ def generate_combined_4week_plan(
         "detail": "Choose legumes and non-starchy vegetables.",
     }
 
-    weeks: List[WeekPlan] = [
-        WeekPlan(
-            week_number=1,
-            focus_theme="Baseline Stability & Post-Meal Walking",
-            items=[
-                PlanItem(
-                    title=life1.get("title", "Post-Meal Physical Activity"),
-                    detail=life1.get("detail", "Walk 10-15 minutes after main meals."),
-                    provenance="GUIDELINE_AI",
-                    category="lifestyle",
-                ),
-                PlanItem(
-                    title="Twin-Modeled Meal Response Assessment",
-                    detail=f"Twin predicts baseline meal response of {base_rise} mg/dL peak rise (10th-90th band: {round(twin_pred_base['p10'], 1)}-{round(twin_pred_base['p90'], 1)} mg/dL).",
-                    provenance="TWIN_PREDICTED",
-                    category="twin_meal_advice",
-                    metadata={"predicted_peak_rise": base_rise, "band_p10": twin_pred_base["p10"], "band_p90": twin_pred_base["p90"]},
-                ),
-                PlanItem(
-                    title="Morning Fasting Blood Glucose Log",
-                    detail="Record fasting glucose every morning to establish personal baseline variability.",
-                    provenance="GUIDELINE_AI",
-                    category="monitoring",
-                ),
-            ],
-        ),
-        WeekPlan(
-            week_number=2,
-            focus_theme="Carbohydrate Moderation & Glycemic Dampening",
-            items=[
-                PlanItem(
-                    title=life2.get("title", "Carbohydrate Quality Integration"),
-                    detail=life2.get("detail", "Incorporate whole foods and dietary fiber."),
-                    provenance="GUIDELINE_AI",
-                    category="lifestyle",
-                ),
-                PlanItem(
-                    title="Twin What-If: 30% Carbohydrate Moderation",
-                    detail=f"Simulating a 30% carbohydrate reduction reduces predicted peak rise from {base_rise} to {interv_rise} mg/dL (estimated gain of {gain_mgdl} mg/dL).",
-                    provenance="TWIN_PREDICTED",
-                    category="twin_meal_advice",
-                    metadata={"gain_mgdl": gain_mgdl, "interv_rise": interv_rise},
-                ),
-                PlanItem(
-                    title="Postprandial 2-Hour Checks",
-                    detail="Log 2-hour postprandial glucose on 3 days this week to verify meal impacts.",
-                    provenance="GUIDELINE_AI",
-                    category="monitoring",
-                ),
-            ],
-        ),
-        WeekPlan(
-            week_number=3,
-            focus_theme="Diurnal Timing & Chronobiological Meal Scheduling",
-            items=[
-                PlanItem(
-                    title="Chronobiological Meal Timing",
-                    detail="Shift larger carbohydrate allotments earlier into midday hours to capitalize on natural diurnal insulin sensitivity.",
-                    provenance="GUIDELINE_AI",
-                    category="lifestyle",
-                ),
-                PlanItem(
-                    title="Twin Optimal Meal Timing Window",
-                    detail="Twin sweep shows optimal glucose handling occurs between 11:30 and 13:30; late-night meals show wider variability bands.",
-                    provenance="TWIN_PREDICTED",
-                    category="twin_meal_advice",
-                ),
-                PlanItem(
-                    title="Paired Pre- and Post-Meal Logging",
-                    detail="Perform paired glucose checks before and 90 minutes after your largest daily meal.",
-                    provenance="GUIDELINE_AI",
-                    category="monitoring",
-                ),
-            ],
-        ),
-        WeekPlan(
-            week_number=4,
-            focus_theme="Care Pathway Review & Clinician Consultation",
-            items=[
-                PlanItem(
-                    title="Consolidated Lifestyle Maintenance",
-                    detail="Maintain habitual 150 minutes of weekly activity combined with post-meal walks.",
-                    provenance="GUIDELINE_AI",
-                    category="lifestyle",
-                ),
-                PlanItem(
-                    title="Twin Model Confidence Summary",
-                    detail=f"Twin memory has aggregated {memory_info['mem_n']} meals with personal confidence score {round(memory_info['confidence_score'], 2)}.",
-                    provenance="TWIN_PREDICTED",
-                    category="twin_meal_advice",
-                ),
-                PlanItem(
-                    title="Clinician 4-Week Comprehensive Review",
-                    detail="Attend scheduled 4-week clinical review with your physician. Review twin glucose trends, medication tolerance, and renal panel.",
-                    provenance="GUIDELINE_AI",
-                    category="clinician_review",
-                ),
-            ],
-        ),
-    ]
+    # Build personalized 4-week items from 100+ item recommendation bank
+    raw_weeks = get_personalized_week_plan(
+        patient_id, base_rise, interv_rise, gain_mgdl, twin_pred_base
+    )
+    weeks: List[WeekPlan] = []
+    for w in raw_weeks:
+        p_items = [
+            PlanItem(
+                title=it["title"],
+                detail=it["detail"],
+                provenance=it.get("provenance", "GUIDELINE_AI"),
+                category=it.get("category", "lifestyle"),
+                metadata=it.get("metadata"),
+            )
+            for it in w["items"]
+        ]
+        weeks.append(WeekPlan(
+            week_number=w["week_number"],
+            focus_theme=w["focus_theme"],
+            items=p_items,
+        ))
 
     # Save to recommendations
     combined_payload = {

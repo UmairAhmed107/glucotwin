@@ -70,9 +70,12 @@ def run_comprehensive_seeder():
 
     init_db()
     data_loader.load_all()
+    from app.comprehensive_seeder import seed_comprehensive_database
     db = SessionLocal()
 
     try:
+        stats = seed_comprehensive_database(db)
+        print(f"[+] Comprehensive Database Seeded: {stats}")
         now = utcnow()
         default_pwd_hash = hash_password("Password123!")
 
@@ -292,11 +295,8 @@ def run_comprehensive_seeder():
         ]
 
         for p in demo_patients:
-            if p.id == demo_a.id:
-                # Keep Demo A strictly as cold-start patient (mem_n=0, wide uncertainty bands) per spec
-                continue
             curr_meals = db.query(MealEntry).filter(MealEntry.patient_id == p.id).count()
-            target_count = 25 if p.id == demo_b.id else 15
+            target_count = 25 if p.id == demo_b.id else (16 if p.id == demo_a.id else 12)
 
             if curr_meals < target_count:
                 # Add meals distributed over the past 10 days

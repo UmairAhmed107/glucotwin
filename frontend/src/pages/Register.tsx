@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Activity,
   ArrowRight,
-  Building,
   Lock,
   Mail,
   Sun,
@@ -63,12 +62,12 @@ export const Register: React.FC = () => {
           </div>
           <div>
             <span className="font-extrabold text-sm tracking-tight text-white">
-              GlucoTwin CMS
+              GlucoTwin
             </span>
             <span className="ml-2 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-300 border border-zinc-700/80">
               REGISTRATION
             </span>
-            <p className="text-[10px] text-zinc-400 font-medium">Facility & Incident Operations Console</p>
+            <p className="text-[10px] text-zinc-400 font-medium">Personalised Metabolic Digital Twin Platform</p>
           </div>
         </div>
 
@@ -98,7 +97,7 @@ export const Register: React.FC = () => {
           {/* Card Header */}
           <div className="flex items-center gap-3.5 mb-6">
             <div className="w-11 h-11 rounded-2xl bg-white text-black flex items-center justify-center font-bold shadow-md shrink-0">
-              <Building className="w-5 h-5 text-black" />
+              <Activity className="w-5 h-5 text-black" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">Portal Access</h2>
@@ -118,7 +117,7 @@ export const Register: React.FC = () => {
               type="button"
               className="flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-black shadow-sm text-center transition"
             >
-              Register Resident
+              Register Account
             </button>
           </div>
 
@@ -235,7 +234,7 @@ export const Register: React.FC = () => {
 
       {/* Footer */}
       <div className="max-w-7xl w-full mx-auto text-center pt-6 border-t border-zinc-850/80 text-[11px] text-zinc-500">
-        Residential Society Complaint Management System • Facility Operations OS
+        GlucoTwin • Personalised Metabolic Digital Twin with Deterministic Safety Governance
       </div>
     </div>
   );

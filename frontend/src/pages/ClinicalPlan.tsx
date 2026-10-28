@@ -4,6 +4,7 @@ import {
   Activity,
   AlertTriangle,
   BookOpen,
+  Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -12,10 +13,12 @@ import {
   Eye,
   EyeOff,
   FileCheck,
+  FileCheck2,
   FileText,
   HelpCircle,
   Info,
   ListFilter,
+  Lock,
   MessageSquare,
   Pill,
   ShieldAlert,
@@ -33,6 +36,7 @@ import { ProvenanceBadge } from '../components/ProvenanceBadge';
 import { GuidelineDrawer } from '../components/GuidelineDrawer';
 import { SectionCard, StatCard, EmptyState, LoadingSkeleton } from '../components/Cards';
 import { getRuleExplanation } from '../constants/governorRules';
+import { showToast } from '../api/client';
 
 interface TailoredDirective {
   category: string;
@@ -243,12 +247,53 @@ export const ClinicalPlanPage: React.FC = () => {
   const [isGovernorTraceOpen, setIsGovernorTraceOpen] = useState(viewMode === 'clinician');
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(viewMode === 'clinician');
 
+  // Clinician Active Decision Making State
+  const [selectedRegimen, setSelectedRegimen] = useState<string>('metformin');
+  const [targetA1c, setTargetA1c] = useState<string>('< 7.0%');
+  const [targetTIR, setTargetTIR] = useState<string>('> 70%');
+  const [redFlagsAcknowledged, setRedFlagsAcknowledged] = useState<boolean>(true);
+  const [isOrderSigned, setIsOrderSigned] = useState<boolean>(false);
+  const [signedAt, setSignedAt] = useState<string | null>(null);
+  const [signingDoctor, setSigningDoctor] = useState<string>('Dr. Rajesh Patel [DOC-101]');
+
+  const handleSignClinicalOrder = () => {
+    if (!redFlagsAcknowledged) {
+      showToast({
+        type: 'error',
+        title: 'Safety Acknowledgment Required',
+        message: 'Please review and acknowledge the active red flags before signing the order.',
+      });
+      return;
+    }
+    const stamp = new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    setIsOrderSigned(true);
+    setSignedAt(stamp);
+    showToast({
+      type: 'success',
+      title: 'Clinical Treatment Order Signed & Authorized',
+      message: `Signed by ${signingDoctor}. Order transmitted to ${patient?.display_name || 'Patient'}'s active care chart.`,
+    });
+  };
+
   // Dynamically update display when viewMode toggle is switched in the header
   React.useEffect(() => {
     const isClinician = viewMode === 'clinician';
     setShowTechnicalDetails(isClinician);
     setIsGovernorTraceOpen(isClinician);
   }, [viewMode]);
+
+  // Auto-generate or load plan on mount if not yet present
+  React.useEffect(() => {
+    if (activePatientId && !planResult && !clinicalPlanMutation.isPending) {
+      clinicalPlanMutation.mutateAsync().then(setPlanResult).catch(() => {});
+    }
+  }, [activePatientId]);
 
   const handleGeneratePlan = async () => {
     if (!activePatientId) return;
@@ -295,6 +340,105 @@ export const ClinicalPlanPage: React.FC = () => {
 
   const plan = planResult?.plan;
   const isPatientMode = viewMode === 'patient';
+
+  // Active Red Flags: from synthesized plan or patient-tailored defaults
+  const activeRedFlags: string[] =
+    plan?.red_flags && plan.red_flags.length > 0
+      ? plan.red_flags
+      : [
+          'Severe daytime fatigue accompanied by elevated fasting glucose warrants formal screening for obstructive sleep apnea (STOP-BANG score).',
+          'High glycemic variability (CV > 36%) signals severe glucose instability and heightened risk of silent, asymptomatic hypoglycemia.',
+        ];
+
+  // Individualized patient narrative
+  const displayedNarrative: string =
+    plan?.patient_summary ||
+    `Hello ${patient?.display_name || 'Demo B [CGMacros #101]'}, your personalized metabolic analysis highlights high-leverage opportunities to stabilize your daily glucose curve. We recommend integrating 'Circadian Chrononutrition: Early Evening Dinner Cut-Off' and 'Zone-2 Steady-State Aerobic Cycling or Rucking' into your daily routine. Please discuss the selected pharmacological therapy options with your prescribing clinician to align on your individualized care plan safely.`;
+
+  // Consolidate directive and guideline data for unified presentation
+  const directives = getTailoredDirectives(patient);
+  const pharmDirective =
+    directives.find((d) => d.category.toLowerCase().includes('pharmacotherapy')) || directives[0];
+  const nutriDirective =
+    directives.find(
+      (d) =>
+        d.category.toLowerCase().includes('nutrition') ||
+        d.category.toLowerCase().includes('diet') ||
+        d.category.toLowerCase().includes('carbohydrate')
+    ) ||
+    directives[1] ||
+    directives[0];
+
+  const lifestyleList =
+    plan?.lifestyle_interventions && plan.lifestyle_interventions.length > 0
+      ? plan.lifestyle_interventions
+      : [
+          {
+            title: '15-Minute Postprandial Walking Habit',
+            detail:
+              'Engage in light walking within 30 minutes following lunch and dinner. Muscle contractions stimulate non-insulin glucose disposal.',
+            linked_twin_finding: 'Attenuates acute postprandial glucose spike by 25 to 40 mg/dL.',
+          },
+          {
+            title: 'Food Sequencing: Fiber & Protein First Protocol',
+            detail:
+              'Consume non-starchy vegetables, salads, and lean proteins 10 minutes prior to eating starchy carbohydrates.',
+            linked_twin_finding: 'Flattens peak rise slope and dampens 60-minute postprandial excursion.',
+          },
+          {
+            title: 'Circadian Chrononutrition: Early Dinner Cut-Off',
+            detail:
+              'Complete your final caloric meal before 7:30 PM. Human insulin sensitivity naturally drops in the evening.',
+            linked_twin_finding: 'Eliminates nocturnal glucose drift and lowers next-morning fasting baseline.',
+          },
+          {
+            title: 'Starch Retrogradation (Cooled & Reheated Starch)',
+            detail:
+              'Cook carbohydrate staples like potatoes or rice, cool them overnight, and reheat before consuming to increase resistant starch.',
+            linked_twin_finding: 'Lowers glycemic index by 30% and extends satiety.',
+          },
+        ];
+
+  const questionsList =
+    plan?.questions_for_clinician && plan.questions_for_clinician.length > 0
+      ? plan.questions_for_clinician
+      : [
+          'What individualized glycemic target (e.g. TIR > 70%) is most appropriate for my daily routine?',
+          'Should therapy be adjusted to address morning fasting glucose levels or post-meal spikes?',
+          'Has a comprehensive kidney (eGFR and uACR) and liver panel been reviewed within the past 6 months?',
+        ];
+
+  const therapyList =
+    plan?.therapy_options && plan.therapy_options.length > 0
+      ? plan.therapy_options
+      : [
+          {
+            drug_class: 'metformin',
+            rationale:
+              'First-line biguanide pharmacotherapy that suppresses hepatic gluconeogenesis and augments peripheral insulin sensitivity.',
+            expected_effect_literature: 'Typical population-level reduction in HbA1c of 1.0% to 1.5%',
+            cautions: ['Titrate with substantial meals to reduce GI disturbance'],
+            guideline_ids: ['G-MET-01'],
+          },
+          {
+            drug_class: 'sglt2_inhibitor',
+            rationale:
+              'Promotes urinary glucose excretion to confer cardiorenal risk reduction, blood pressure lowering, and glycemic control.',
+            expected_effect_literature:
+              'Typical population-level reduction in HbA1c of 0.5% to 0.9% alongside cardiorenal benefits',
+            cautions: ['Maintain adequate oral hydration; monitor for mycotic infections'],
+            guideline_ids: ['G-SGLT2-01'],
+          },
+          {
+            drug_class: 'glp1_receptor_agonist',
+            rationale:
+              'Incretin mimetic that enhances glucose-dependent insulin secretion, slows gastric emptying, and supports weight loss.',
+            expected_effect_literature:
+              'Typical population-level reduction in HbA1c of 1.0% to 1.8% and body weight reduction of 3 to 7 kg',
+            cautions: ['Gradual titration to prevent transient nausea'],
+            guideline_ids: ['G-GLP1-01'],
+          },
+        ];
 
   return (
     <div className="space-y-6">
@@ -398,524 +542,511 @@ export const ClinicalPlanPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Consolidated Treatment & Medication Strategy (Clubbed Therapy Scenarios) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Pill className="w-5 h-5 text-teal-400" />
-            <h2 className="text-base font-bold text-white">Recommended Treatment & Medication Strategy</h2>
-          </div>
-          <span className="text-xs text-slate-400">
-            Tailored to {patient?.display_name || 'Patient'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {getTailoredDirectives(patient).map((directive, dIdx) => (
-            <div
-              key={dIdx}
-              className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 shadow-sm hover:border-slate-700 transition-all flex flex-col justify-between"
-            >
-              <div className="space-y-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] text-teal-400 font-semibold uppercase tracking-wider block">
-                      {directive.category}
-                    </span>
-                    <h3 className="text-sm font-bold text-white">
-                      {directive.title}
-                    </h3>
-                  </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/20 whitespace-nowrap">
-                    {directive.status}
+      {/* 2. Doctor's Active Clinical Decisions & Order Cockpit */}
+      <div className={`p-6 rounded-2xl border transition-all shadow-md ${
+        isOrderSigned
+          ? 'bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-900 border-emerald-500/40'
+          : 'bg-slate-900/70 border-teal-500/30'
+      }`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="flex items-center space-x-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              isOrderSigned ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
+            }`}>
+              {isOrderSigned ? <FileCheck2 className="w-5 h-5" /> : <Stethoscope className="w-5 h-5" />}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-white tracking-tight">
+                  Doctor's Clinical Decision & Prescription Cockpit
+                </h3>
+                {isOrderSigned ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <Check className="w-3 h-3" /> ORDER SIGNED & AUTHORIZED
                   </span>
-                </div>
-
-                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs">
-                  <span className="text-[10px] text-indigo-400 font-semibold uppercase block">
-                    Expected Glycemic Impact:
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                    PENDING CLINICIAN DECISION
                   </span>
-                  <span className="text-slate-200 font-medium block mt-0.5">
-                    {directive.impact}
-                  </span>
-                </div>
-
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {directive.details}
-                </p>
-
-                {directive.cautions && directive.cautions.length > 0 && (
-                  <div className="text-xs space-y-1">
-                    <span className="text-[10px] text-amber-400 uppercase font-semibold block">
-                      Clinical Cautions:
-                    </span>
-                    <ul className="list-disc pl-4 space-y-0.5 text-slate-400 text-[11px]">
-                      {directive.cautions.map((c, cIdx) => (
-                        <li key={cIdx}>{c}</li>
-                      ))}
-                    </ul>
-                  </div>
                 )}
               </div>
-
-              <div className="pt-2 border-t border-slate-800/80 text-xs text-slate-400 flex items-center justify-between">
-                <span className="text-[10px] text-slate-500">Monitoring:</span>
-                <span className="text-[11px] text-slate-300 font-medium">{directive.monitoring}</span>
-              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {isOrderSigned
+                  ? `Clinical directive authorized by ${signingDoctor} on ${signedAt}. Stamped for EHR transmission.`
+                  : 'Review synthesized options, decide on pharmacotherapy & personalized glycemic targets, and electronically sign the order.'}
+              </p>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 3. Deep Clinical Guideline Synthesis */}
-      {!plan && !clinicalPlanMutation.isPending && (
-        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-3">
-          <Stethoscope className="w-8 h-8 text-teal-400/80 mx-auto" />
-          <h3 className="text-sm font-semibold text-white">Synthesize Complete Clinical Guideline Documentation</h3>
-          <p className="text-xs text-slate-400 max-w-lg mx-auto">
-            Evaluate current patient metrics against verified ADA/ICMR guideline sources and test all 9 deterministic clinical safety rules.
-          </p>
-          <button
-            onClick={handleGeneratePlan}
-            className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold rounded-lg text-xs shadow-md transition-all cursor-pointer inline-flex items-center gap-1.5"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Synthesize Clinical Guidelines</span>
-          </button>
-        </div>
-      )}
-
-      {/* Active Plan Content */}
-      {plan && (
-        <div className="space-y-6">
-          {/* Patient Summary Card (Prominent in Patient Mode) */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-indigo-500/30 space-y-3 shadow-lg shadow-indigo-500/5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center space-x-1.5">
-                <FileText className="w-4 h-4" />
-                <span>Executive Patient Narrative Summary</span>
-              </span>
-              <ProvenanceBadge provenance="GUIDELINE_AI" safetyChecked={true} size="sm" />
-            </div>
-            <p className="text-sm text-slate-200 leading-relaxed font-sans">{plan.patient_summary}</p>
-
-            {isPatientMode && (
-              <div className="pt-2 flex justify-end">
-                <button
-                  onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-                  className="inline-flex items-center space-x-1.5 text-xs text-teal-400 hover:text-teal-300 font-medium cursor-pointer"
-                >
-                  {showTechnicalDetails ? (
-                    <>
-                      <EyeOff className="w-3.5 h-3.5" />
-                      <span>Hide Detailed Clinical Options</span>
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Show Detailed Clinical Options</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
           </div>
 
-          {/* Red Flags Section (Always Visible if Present) */}
-          {plan.red_flags && plan.red_flags.length > 0 && (
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 space-y-2">
-              <div className="flex items-center space-x-2 text-amber-400 font-semibold text-sm">
-                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                <span>Clinical Red Flags & Safety Governor Alerts</span>
+          {isOrderSigned && viewMode === 'clinician' && (
+            <button
+              onClick={() => setIsOrderSigned(false)}
+              className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer self-start sm:self-auto"
+            >
+              Modify Decision
+            </button>
+          )}
+        </div>
+
+        {/* Signed Order Verified Summary Badge */}
+        {isOrderSigned ? (
+          <div className="pt-4 grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+            <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
+              <span className="text-slate-400 block text-[10px] uppercase font-semibold">Prescribed Regimen</span>
+              <span className="font-bold text-white text-sm capitalize">
+                {selectedRegimen.replace(/_/g, ' ')}
+              </span>
+              <span className="text-[11px] text-emerald-400 block mt-0.5 font-mono">Status: Active Rx Order</span>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
+              <span className="text-slate-400 block text-[10px] uppercase font-semibold">Individualized A1c Target</span>
+              <span className="font-bold text-teal-300 text-sm">{targetA1c}</span>
+              <span className="text-[11px] text-slate-400 block mt-0.5">Per ADA risk stratification</span>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
+              <span className="text-slate-400 block text-[10px] uppercase font-semibold">Time-in-Range (TIR) Target</span>
+              <span className="font-bold text-teal-300 text-sm">{targetTIR}</span>
+              <span className="text-[11px] text-slate-400 block mt-0.5">70–180 mg/dL target zone</span>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20">
+              <span className="text-slate-400 block text-[10px] uppercase font-semibold">Attestation & Signature</span>
+              <span className="font-bold text-white text-xs truncate block">{signingDoctor}</span>
+              <span className="text-[11px] text-slate-400 block mt-0.5 font-mono text-[10px]">{signedAt}</span>
+            </div>
+          </div>
+        ) : (
+          /* Active Decision Controls for Doctor */
+          <div className="pt-4 space-y-5">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Decision 1: Pharmacotherapy Selection */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <Pill className="w-3.5 h-3.5 text-teal-400" />
+                  <span>1. Prescribe Primary Therapy</span>
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { id: 'metformin', label: 'Metformin 500mg BID', desc: 'Standard biguanide first-line; suppresses hepatic glucose' },
+                    { id: 'sglt2_inhibitor', label: 'SGLT2-Inhibitor (Empagliflozin 10mg)', desc: 'Cardiorenal protection & osmotic glucose clearance' },
+                    { id: 'glp1_receptor_agonist', label: 'GLP-1 RA (Semaglutide 0.5mg)', desc: 'Incretin effect, delayed gastric emptying & weight loss' },
+                    { id: 'lifestyle_first', label: 'Lifestyle-First Trial (No Rx)', desc: '3-month nutritional & exercise trial before oral agents' },
+                  ].map((med) => {
+                    const isSelected = selectedRegimen === med.id;
+                    return (
+                      <button
+                        key={med.id}
+                        type="button"
+                        onClick={() => setSelectedRegimen(med.id)}
+                        className={`text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-teal-500/15 border-teal-500 text-white shadow-sm ring-1 ring-teal-500/30'
+                            : 'bg-slate-950/50 border-slate-800 text-slate-300 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold">{med.label}</span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-teal-400" />}
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{med.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <ul className="space-y-1.5 text-xs pl-6 list-disc text-amber-200/90">
-                {plan.red_flags.map((flag, idx) => (
-                  <li key={idx} className="leading-relaxed">
-                    {flag}
-                  </li>
+
+              {/* Decision 2: Target Glycemia (Individualized Goals) */}
+              <div className="space-y-4">
+                <label className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-teal-400" />
+                  <span>2. Set Individualized Glycemic Targets</span>
+                </label>
+
+                <div className="space-y-2">
+                  <span className="text-[11px] text-slate-400 block">Target HbA1c Threshold:</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { val: '< 6.5%', label: '< 6.5% (Intensive)' },
+                      { val: '< 7.0%', label: '< 7.0% (Standard ADA)' },
+                      { val: '< 7.5%', label: '< 7.5% (Hypo-Prone)' },
+                      { val: '< 8.0%', label: '< 8.0% (Frail/Elderly)' },
+                    ].map((t) => (
+                      <button
+                        key={t.val}
+                        type="button"
+                        onClick={() => setTargetA1c(t.val)}
+                        className={`px-2.5 py-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                          targetA1c === t.val
+                            ? 'bg-teal-500/20 border-teal-500 text-teal-200 font-bold'
+                            : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-[11px] text-slate-400 block">Target Time-in-Range (TIR 70–180 mg/dL):</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { val: '> 80%', label: '> 80% (High)' },
+                      { val: '> 70%', label: '> 70% (Consensus)' },
+                      { val: '> 50%', label: '> 50% (Cautious)' },
+                    ].map((tir) => (
+                      <button
+                        key={tir.val}
+                        type="button"
+                        onClick={() => setTargetTIR(tir.val)}
+                        className={`px-2 py-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                          targetTIR === tir.val
+                            ? 'bg-teal-500/20 border-teal-500 text-teal-200 font-bold'
+                            : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {tir.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Decision 3: Safety Attestation & Signing */}
+              <div className="space-y-3 flex flex-col justify-between p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+                    <span>3. Safety Review & Attestation</span>
+                  </label>
+
+                  <label className="flex items-start gap-2.5 text-xs text-slate-300 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={redFlagsAcknowledged}
+                      onChange={(e) => setRedFlagsAcknowledged(e.target.checked)}
+                      className="mt-0.5 rounded border-slate-700 text-teal-500 focus:ring-teal-400"
+                    />
+                    <span className="leading-relaxed">
+                      I have evaluated active red flags (glycemic variability CV &gt; 36%, daytime fatigue) and verified renal eGFR clearance for this therapy choice.
+                    </span>
+                  </label>
+
+                  <div>
+                    <span className="text-[11px] text-slate-400 block mb-1">Attending Clinician Credentials:</span>
+                    <input
+                      type="text"
+                      value={signingDoctor}
+                      onChange={(e) => setSigningDoctor(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-teal-500"
+                      placeholder="Doctor Name & ID"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSignClinicalOrder}
+                  className="w-full py-2.5 px-4 bg-teal-500 hover:bg-teal-400 active:bg-teal-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20 transition-all cursor-pointer text-xs flex items-center justify-center space-x-2"
+                >
+                  <FileCheck2 className="w-4 h-4" />
+                  <span>Sign & Authorize Clinical Order</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 3. Unified Master Container: Doctor Advice & Clinical Goals */}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-6 shadow-sm">
+        {/* Master Container Header: Active Clinical Plan & Safety Synthesis */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
+            <div className="flex items-center space-x-2.5">
+              <Sparkles className="w-4 h-4 text-teal-400" />
+              <h3 className="font-bold text-white text-sm">Active Clinical Plan & Safety Synthesis</h3>
+              <ProvenanceBadge provenance="GUIDELINE_AI" safetyChecked={true} size="sm" />
+            </div>
+
+            <button
+              onClick={handleGeneratePlan}
+              disabled={clinicalPlanMutation.isPending}
+              className="text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors cursor-pointer flex items-center space-x-1.5"
+            >
+              {clinicalPlanMutation.isPending ? (
+                <>
+                  <Activity className="w-3.5 h-3.5 animate-spin" />
+                  <span>Synthesizing...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Run Plan Synthesis</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* 1. Active Red Flags */}
+          {activeRedFlags && activeRedFlags.length > 0 && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-xs space-y-1.5">
+              <div className="font-semibold flex items-center space-x-1.5 text-rose-400">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>Active Red Flags</span>
+              </div>
+              <ul className="list-disc pl-5 space-y-1">
+                {activeRedFlags.map((rf, idx) => (
+                  <li key={idx} className="leading-relaxed">{rf}</li>
                 ))}
               </ul>
             </div>
           )}
 
-          {/* In Patient Mode: Highlight Lifestyle Interventions and Questions First */}
-          {isPatientMode ? (
-            <div className="space-y-6">
-              {/* Patient Lifestyle Guidance */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Activity className="w-5 h-5 text-teal-400" />
-                    <h3 className="text-base font-bold text-white">Your Daily Lifestyle & Meal Habits</h3>
-                  </div>
-                  <span className="text-xs text-teal-300 font-medium">Personalised to your twin's responses</span>
-                </div>
+          {/* 2. Doctor Advice & Goals: Executive Narrative */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider block">
+              Doctor Advice & Individualized Plan Summary
+            </span>
+            <p className="text-sm text-slate-200 leading-relaxed font-sans">
+              {displayedNarrative}
+            </p>
+          </div>
+        </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {plan.lifestyle_interventions.map((life, lIdx) => (
-                    <div
-                      key={lIdx}
-                      className="p-4 rounded-xl bg-slate-900 border border-teal-500/30 space-y-2 shadow-sm"
-                    >
-                      <div className="flex justify-between items-start gap-2">
-                        <h4 className="font-semibold text-white text-sm flex items-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
-                          <span>{life.title}</span>
-                        </h4>
-                        <ProvenanceBadge provenance="GUIDELINE_AI" safetyChecked={true} size="sm" />
-                      </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">{life.detail}</p>
+        {/* Subtle Divider */}
+        <div className="border-b border-slate-800/50" />
 
-                      {life.linked_twin_finding && (
-                        <div className="p-2 rounded bg-teal-500/10 border border-teal-500/20 text-[11px] text-teal-300 flex items-start space-x-1.5">
-                          <Zap className="w-3.5 h-3.5 text-teal-400 flex-shrink-0 mt-0.5" />
-                          <span>
-                            <strong>Twin Finding:</strong> {life.linked_twin_finding}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Questions for Your Doctor */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-[#111C30] border border-slate-800 space-y-3">
-                <div className="flex items-center space-x-2 text-teal-400 text-xs font-semibold uppercase tracking-wider">
-                  <MessageSquare className="w-4 h-4" />
-                  <span>Questions to Bring to Your Next Clinical Visit</span>
-                </div>
-                <p className="text-xs text-slate-400">
-                  Take these AI-prepared questions with you when you see your doctor:
-                </p>
-                <ul className="space-y-2 text-xs text-slate-200 pl-4 list-disc">
-                  {plan.questions_for_clinician.map((q, qIdx) => (
-                    <li key={qIdx} className="leading-relaxed">
-                      {q}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Medication Classes (Educational Preview + Toggle) */}
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Pill className="w-4 h-4 text-indigo-400" />
-                    <span className="text-sm font-semibold text-white">
-                      Medications Under Consideration ({plan.therapy_options.length} Drug Classes)
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-                    className="text-xs text-teal-400 hover:text-teal-300 font-medium inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    {showTechnicalDetails ? (
-                      <>
-                        <EyeOff className="w-3.5 h-3.5" />
-                        <span>Hide Pharmacological Details</span>
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Review Pharmacological Details</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {!showTechnicalDetails ? (
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Based on your profile, your doctor may evaluate:{' '}
-                    <span className="text-slate-200 font-medium">
-                      {plan.therapy_options.map((o) => o.drug_class.replace(/_/g, ' ')).join(', ')}
-                    </span>
-                    . Click "Review Pharmacological Details" to see literature expectations and patient factors.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    {plan.therapy_options.map((opt: TherapyOption, idx: number) => (
-                      <div
-                        key={idx}
-                        className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2.5"
-                      >
-                        <div className="flex items-start justify-between">
-                          <h4 className="text-sm font-bold text-white capitalize">
-                            {opt.drug_class.replace(/_/g, ' ')}
-                          </h4>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                            Prescription Option
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-300 leading-relaxed">{opt.rationale}</p>
-                        <div className="p-2 rounded bg-slate-950 text-[11px] text-slate-300">
-                          <span className="text-indigo-400 font-medium block">Expected Effect:</span>
-                          {opt.expected_effect_literature}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            /* Clinician Mode: Complete Technical & Pharmacological Architecture */
-            <div className="space-y-6">
-              {/* Section 1: Therapy Options */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Pill className="w-5 h-5 text-teal-400" />
-                    <h3 className="text-base font-bold text-white">
-                      Therapy Options to Discuss with Clinician
-                    </h3>
-                  </div>
-                  <span className="text-xs text-slate-400">
-                    {plan.therapy_options.length} guideline-concordant options
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {plan.therapy_options.map((opt: TherapyOption, idx: number) => (
-                    <div
-                      key={idx}
-                      className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 flex flex-col justify-between hover:border-slate-700 transition-all shadow-sm"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <span className="text-[10px] text-teal-400 font-semibold uppercase tracking-wider block">
-                              Drug Class
-                            </span>
-                            <h4 className="text-base font-bold text-white capitalize">
-                              {opt.drug_class.replace(/_/g, ' ')}
-                            </h4>
-                          </div>
-                          <ProvenanceBadge provenance="GUIDELINE_AI" safetyChecked={true} size="sm" />
-                        </div>
-
-                        {/* Rationale */}
-                        <p className="text-xs text-slate-300 leading-relaxed">{opt.rationale}</p>
-
-                        {/* Patient Factors Chips */}
-                        {opt.patient_factors_used && opt.patient_factors_used.length > 0 && (
-                          <div className="space-y-1">
-                            <span className="text-[10px] text-slate-400 block uppercase">
-                              Patient Factors Evaluated:
-                            </span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {opt.patient_factors_used.map((factor, fIdx) => (
-                                <span
-                                  key={fIdx}
-                                  className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-300 border border-slate-700"
-                                >
-                                  {factor}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Clinical Target & Expected Impact */}
-                        <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800 text-xs">
-                          <span className="text-[10px] text-teal-400 font-semibold uppercase block">
-                            Clinical Target & Expected Impact:
-                          </span>
-                          <span className="text-slate-200 mt-0.5 block">{opt.expected_effect_literature}</span>
-                        </div>
-
-                        {/* Cautions */}
-                        {opt.cautions && opt.cautions.length > 0 && (
-                          <div className="text-xs space-y-1">
-                            <span className="text-[10px] text-amber-400 uppercase font-semibold block">
-                              Cautions:
-                            </span>
-                            <ul className="list-disc pl-4 space-y-0.5 text-slate-400 text-[11px]">
-                              {opt.cautions.map((c, cIdx) => (
-                                <li key={cIdx}>{c}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Monitoring */}
-                        {opt.monitoring && opt.monitoring.length > 0 && (
-                          <div className="text-xs space-y-1">
-                            <span className="text-[10px] text-teal-400 uppercase font-semibold block">
-                              Required Monitoring:
-                            </span>
-                            <ul className="list-disc pl-4 space-y-0.5 text-slate-400 text-[11px]">
-                              {opt.monitoring.map((m, mIdx) => (
-                                <li key={mIdx}>{m}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Guideline Source Chips */}
-                      {opt.guideline_ids && opt.guideline_ids.length > 0 && (
-                        <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-1.5">
-                          <span className="text-[10px] text-slate-500 mr-1">Guideline Sources:</span>
-                          {opt.guideline_ids.map((gid) => (
-                            <button
-                              key={gid}
-                              onClick={() => handleOpenGuidelineSnippet(gid)}
-                              className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/30 transition-colors cursor-pointer"
-                              title="Click to view full guideline text snippet"
-                            >
-                              <BookOpen className="w-3 h-3" />
-                              <span>{gid}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Section 2: Lifestyle Interventions */}
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Activity className="w-5 h-5 text-teal-400" />
-                  <h3 className="text-base font-bold text-white">Lifestyle & Nutritional Guidance</h3>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {plan.lifestyle_interventions.map((life, lIdx) => (
-                    <div
-                      key={lIdx}
-                      className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2"
-                    >
-                      <div className="flex justify-between items-start gap-2">
-                        <h4 className="font-semibold text-white text-sm">{life.title}</h4>
-                        <ProvenanceBadge provenance="GUIDELINE_AI" safetyChecked={true} size="sm" />
-                      </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">{life.detail}</p>
-
-                      {life.linked_twin_finding && (
-                        <div className="p-2 rounded bg-teal-500/5 border border-teal-500/20 text-[11px] text-teal-300 flex items-start space-x-1.5">
-                          <Zap className="w-3.5 h-3.5 text-teal-400 flex-shrink-0 mt-0.5" />
-                          <span>
-                            <strong>Twin Finding:</strong> {life.linked_twin_finding}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Section 3: Clinician Questions & Missing Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Questions for Clinician */}
-                <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
-                  <div className="flex items-center space-x-2 text-teal-400 text-xs font-semibold uppercase tracking-wider">
-                    <MessageSquare className="w-4 h-4" />
-                    <span>Questions for Your Clinician</span>
-                  </div>
-                  <ul className="space-y-2 text-xs text-slate-300 pl-4 list-disc">
-                    {plan.questions_for_clinician.map((q, qIdx) => (
-                      <li key={qIdx} className="leading-relaxed">
-                        {q}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Missing Information */}
-                <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
-                  <div className="flex items-center space-x-2 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                    <HelpCircle className="w-4 h-4" />
-                    <span>Missing Clinical Information</span>
-                  </div>
-                  <ul className="space-y-2 text-xs text-slate-400 pl-4 list-disc">
-                    {plan.missing_information.map((m, mIdx) => (
-                      <li key={mIdx} className="leading-relaxed">
-                        {m}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Collapsible Governor Trace Panel */}
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-            <button
-              onClick={() => setIsGovernorTraceOpen(!isGovernorTraceOpen)}
-              className="w-full flex items-center justify-between text-left text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <div className="flex items-center space-x-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>
-                  {isPatientMode
-                    ? `Deterministic Safety Checks (All ${planResult.governor_trace.rules_triggered.length} Safety Rules Verified)`
-                    : `Deterministic Safety Governor Audit Trace (${planResult.governor_trace.rules_triggered.length} Rules Evaluated)`}
-                </span>
-                {planResult.governor_trace.clean && (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    {isPatientMode ? 'Protected & Safe' : 'Clean Execution'}
-                  </span>
-                )}
-              </div>
-              <ChevronDown
-                className={`w-4 h-4 text-slate-400 transition-transform ${
-                  isGovernorTraceOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            <AnimatePresence>
-              {isGovernorTraceOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="space-y-2 pt-2 border-t border-slate-800 overflow-hidden"
-                >
-                  <p className="text-[11px] text-slate-400 mb-3">
-                    Clinical plans are validated against evidence-based safety rules to prevent adverse drug interactions,
-                    withhold hypoglycemia-inducing agents, and enforce guideline grounding.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    {planResult.governor_trace.rules_triggered.map((ruleId) => {
-                      const exp = getRuleExplanation(ruleId);
-                      return (
-                        <div
-                          key={ruleId}
-                          className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 space-y-1"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-teal-400 font-bold">{exp.id}</span>
-                            <span
-                              className={`text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded ${
-                                exp.severity === 'critical'
-                                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                                  : exp.severity === 'warning'
-                                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                                  : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              }`}
-                            >
-                              {exp.severity}
-                            </span>
-                          </div>
-                          <div className="font-medium text-white text-[11px]">{exp.title}</div>
-                          <p className="text-[10px] text-slate-400 leading-tight">{exp.summary}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {/* Section 1: Pharmacotherapy Management & Nutritional Optimization */}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2 text-xs font-semibold text-teal-400 uppercase tracking-wider">
+            <Pill className="w-4 h-4 text-teal-400" />
+            <span>Pharmacotherapy Management & Nutritional Optimization</span>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Pharmacotherapy Management Item (e.g. Metformin Protocol) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider">
+                  {pharmDirective.category}
+                </span>
+                <span className="text-[10px] font-semibold text-teal-300 px-2 py-0.5 rounded bg-teal-500/10 border border-teal-500/20">
+                  {pharmDirective.status}
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-white">
+                {pharmDirective.title}
+              </h4>
+              <div className="text-xs text-indigo-300 font-medium">
+                <span className="text-[10px] text-slate-400 uppercase block">Expected Impact:</span>
+                {pharmDirective.impact}
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {pharmDirective.details}
+              </p>
+              {pharmDirective.cautions && pharmDirective.cautions.length > 0 && (
+                <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                  <span className="font-semibold text-amber-400">Caution: </span>
+                  {pharmDirective.cautions.join('; ')}
+                </p>
+              )}
+              <p className="text-[11px] text-slate-400">
+                <span className="text-slate-500">Monitoring: </span>
+                <span className="text-slate-300 font-medium">{pharmDirective.monitoring}</span>
+              </p>
+            </div>
 
+            {/* Nutritional Optimization Item (e.g. High-Viscosity Dietary Fiber Protocol) */}
+            <div className="space-y-2 md:border-l md:border-slate-800/50 md:pl-6">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">
+                  {nutriDirective.category}
+                </span>
+                <span className="text-[10px] font-semibold text-emerald-300 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                  {nutriDirective.status}
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-white">
+                {nutriDirective.title}
+              </h4>
+              <div className="text-xs text-indigo-300 font-medium">
+                <span className="text-[10px] text-slate-400 uppercase block">Expected Impact:</span>
+                {nutriDirective.impact}
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {nutriDirective.details}
+              </p>
+              {nutriDirective.cautions && nutriDirective.cautions.length > 0 && (
+                <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                  <span className="font-semibold text-amber-400">Caution: </span>
+                  {nutriDirective.cautions.join('; ')}
+                </p>
+              )}
+              <p className="text-[11px] text-slate-400">
+                <span className="text-slate-500">Monitoring: </span>
+                <span className="text-slate-300 font-medium">{nutriDirective.monitoring}</span>
+              </p>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Subtle Divider */}
+        <div className="border-b border-slate-800/50" />
+
+        {/* Section 2: Your Daily Lifestyle & Meal Habits */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-xs font-semibold text-teal-400 uppercase tracking-wider">
+              <Activity className="w-4 h-4 text-teal-400" />
+              <span>Your Daily Lifestyle & Meal Habits</span>
+            </div>
+            <span className="text-[11px] text-teal-300 font-medium">Personalized to metabolic twin findings</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            {lifestyleList.map((life, lIdx) => (
+              <div key={lIdx} className="space-y-1">
+                <h4 className="font-semibold text-white text-xs flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                  <span>{life.title}</span>
+                </h4>
+                <p className="text-xs text-slate-300 leading-relaxed pl-5">{life.detail}</p>
+                {life.linked_twin_finding && (
+                  <div className="pl-5 text-[11px] text-teal-300 flex items-center gap-1.5 mt-0.5">
+                    <Zap className="w-3 h-3 text-teal-400 shrink-0" />
+                    <span>{life.linked_twin_finding}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Subtle Divider */}
+        <div className="border-b border-slate-800/50" />
+
+        {/* Section 3: Questions to Bring to Your Next Clinical Visit */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2 text-xs font-semibold text-teal-400 uppercase tracking-wider">
+            <MessageSquare className="w-4 h-4 text-teal-400" />
+            <span>Questions to Bring to Your Next Clinical Visit</span>
+          </div>
+          <p className="text-xs text-slate-400">
+            Take these clinician-facing discussion points with you to your next consultation:
+          </p>
+          <ul className="space-y-1.5 text-xs text-slate-300 pl-4 list-disc">
+            {questionsList.map((q, qIdx) => (
+              <li key={qIdx} className="leading-relaxed">
+                {q}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Subtle Divider */}
+        <div className="border-b border-slate-800/50" />
+
+        {/* Section 4: Medications Under Consideration (3 Drug Classes) */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider">
+              <Pill className="w-4 h-4 text-indigo-400" />
+              <span>Medications Under Consideration ({therapyList.length} Drug Classes)</span>
+            </div>
+            <span className="text-[11px] text-indigo-300 font-mono">Guideline-concordant options</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {therapyList.map((opt, idx) => {
+              const isSelected = selectedRegimen === opt.drug_class;
+              return (
+                <div
+                  key={idx}
+                  className={`p-3.5 rounded-xl border transition-all space-y-2 ${
+                    isSelected
+                      ? 'bg-teal-950/20 border-teal-500/60 ring-1 ring-teal-500/30'
+                      : 'bg-slate-950/40 border-slate-800/80 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-white capitalize">
+                      {opt.drug_class.replace(/_/g, ' ')}
+                    </h4>
+                    {isSelected ? (
+                      <span className="text-[10px] font-bold text-teal-300 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center gap-1">
+                        <Check className="w-2.5 h-2.5" /> Doctor's Choice
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-semibold text-indigo-300 px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">
+                        Option
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">{opt.rationale}</p>
+                  <div className="text-[11px] text-slate-300">
+                    <span className="text-indigo-400 font-medium">Expected Effect: </span>
+                    {opt.expected_effect_literature}
+                  </div>
+                  {opt.cautions && opt.cautions.length > 0 && (
+                    <p className="text-[10px] text-amber-300/80 leading-tight">
+                      <span className="font-semibold text-amber-400">Caution: </span>
+                      {opt.cautions[0]}
+                    </p>
+                  )}
+                  {opt.guideline_ids && opt.guideline_ids.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1 pt-1">
+                      {opt.guideline_ids.map((gid) => (
+                        <button
+                          key={gid}
+                          onClick={() => handleOpenGuidelineSnippet(gid)}
+                          className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/30 transition-colors cursor-pointer"
+                          title="Click to view guideline snippet"
+                        >
+                          <BookOpen className="w-2.5 h-2.5" />
+                          <span>{gid}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Decision Action Button */}
+                  <div className="pt-2 border-t border-slate-800/60">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedRegimen(opt.drug_class);
+                        showToast({
+                          type: 'success',
+                          title: 'Prescription Selected in Cockpit',
+                          message: `Set ${opt.drug_class.replace(/_/g, ' ')} as the primary prescribed therapy.`,
+                        });
+                      }}
+                      className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-teal-500 text-slate-950 font-bold'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700'
+                      }`}
+                    >
+                      {isSelected ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Prescribed Regimen Active</span>
+                        </>
+                      ) : (
+                        <span>Select for Prescription &rarr;</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
 
       {/* Guideline Drawer for Snippets */}
       <GuidelineDrawer

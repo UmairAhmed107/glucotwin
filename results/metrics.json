@@ -1,0 +1,142 @@
+{
+  "models": [
+    {
+      "Model": "Predict-the-Mean",
+      "MAE_mean": 29.680745873544748,
+      "MAE_std": 3.0687687538801884,
+      "RMSE_mean": 38.31765409742776,
+      "RMSE_std": 5.158767814663478,
+      "R2_mean": -0.035827724976184826,
+      "R2_std": 0.03645644884079646,
+      "Pearson_mean": 0.0,
+      "Pearson_std": 0.0
+    },
+    {
+      "Model": "Ridge Regression",
+      "MAE_mean": 24.339260521291514,
+      "MAE_std": 2.987760256619487,
+      "RMSE_mean": 32.10318265888895,
+      "RMSE_std": 3.6172333518576973,
+      "R2_mean": 0.2693991121360278,
+      "R2_std": 0.029814137170986413,
+      "Pearson_mean": 0.5426917392943843,
+      "Pearson_std": 0.01901978013831123
+    },
+    {
+      "Model": "Random Forest",
+      "MAE_mean": 22.16085535227294,
+      "MAE_std": 2.785365183433564,
+      "RMSE_mean": 29.601935741116034,
+      "RMSE_std": 3.6261515657340198,
+      "R2_mean": 0.37829307495522935,
+      "R2_std": 0.055382244986289256,
+      "Pearson_mean": 0.62881826342539,
+      "Pearson_std": 0.044166748556148584
+    },
+    {
+      "Model": "Single HistGBM",
+      "MAE_mean": 21.747667671081842,
+      "MAE_std": 2.898685241841022,
+      "RMSE_mean": 29.49478278980569,
+      "RMSE_std": 4.006173978816442,
+      "R2_mean": 0.3858760004330847,
+      "R2_std": 0.033253449689359074,
+      "Pearson_mean": 0.6379050070719581,
+      "Pearson_std": 0.01576456930534438
+    },
+    {
+      "Model": "GlucoTwin Ensemble (15x)",
+      "MAE_mean": 21.75806176094962,
+      "MAE_std": 3.067890849577748,
+      "RMSE_mean": 29.200142358414514,
+      "RMSE_std": 3.981785339194162,
+      "R2_mean": 0.39826244256293203,
+      "R2_std": 0.02982757640776015,
+      "Pearson_mean": 0.644202564731837,
+      "Pearson_std": 0.01701672244180606
+    }
+  ],
+  "coverage": {
+    "50pct": {
+      "nominal": 50.0,
+      "empirical": 14.885922990676983,
+      "avg_width": 10.44289012924744
+    },
+    "80pct": {
+      "nominal": 80.0,
+      "empirical": 28.809444154353322,
+      "avg_width": 19.432161884000188
+    },
+    "90pct": {
+      "nominal": 90.0,
+      "empirical": 34.8936410882405,
+      "avg_width": 24.236089043516806
+    },
+    "95pct": {
+      "nominal": 95.0,
+      "empirical": 38.39258302989604,
+      "avg_width": 27.345347085596167
+    }
+  },
+  "top_features": [
+    {
+      "feature": "mem_mean_rise",
+      "importance_mean": 0.27905477095932174,
+      "importance_std": 0.0350523110205142
+    },
+    {
+      "feature": "carbs_g",
+      "importance_mean": 0.2478414709347351,
+      "importance_std": 0.03672209228304924
+    },
+    {
+      "feature": "pre_trend30",
+      "importance_mean": 0.07040816636960648,
+      "importance_std": 0.02486126800110911
+    },
+    {
+      "feature": "gap_prev_min",
+      "importance_mean": 0.06509492622083651,
+      "importance_std": 0.0163009541941762
+    },
+    {
+      "feature": "pre_glucose",
+      "importance_mean": 0.05051782853713974,
+      "importance_std": 0.011412911215348199
+    },
+    {
+      "feature": "protein_g",
+      "importance_mean": 0.02269751841798512,
+      "importance_std": 0.012881824214867098
+    },
+    {
+      "feature": "kcal",
+      "importance_mean": 0.0217743804059921,
+      "importance_std": 0.00904644275244564
+    },
+    {
+      "feature": "fiber_g",
+      "importance_mean": 0.017732941331243656,
+      "importance_std": 0.008987744259868273
+    },
+    {
+      "feature": "prior_act_60",
+      "importance_mean": 0.009853558344999869,
+      "importance_std": 0.0037522982925612134
+    },
+    {
+      "feature": "mem_n",
+      "importance_mean": 0.009355695816766074,
+      "importance_std": 0.006115031739410339
+    }
+  ],
+  "personalisation": {
+    "mem_0_mae": 18.4,
+    "mem_3plus_mae": 11.2,
+    "improvement_pct": 39.1
+  },
+  "recommender_evaluation": {
+    "mean_peak_rise_reduction_mgdl": 18.7,
+    "pct_cases_improved": 84.6
+  }
+}

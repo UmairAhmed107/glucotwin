@@ -1,3 +1,8 @@
+"""
+GlucoTwin API - Personalized Metabolic Digital Twin Platform
+Branch: feature/clinical-decision-support (v1.1.0)
+Feature: Clinician-in-the-Loop Decision Cockpit, Safety Attestation & Unified Meal Intelligence
+"""
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
@@ -44,15 +49,17 @@ async def lifespan(app: FastAPI):
     data_loader.load_all()
     load_twin_model()
 
-    # Seed food items & demo medications
+    # Seed food items, medications, numbered patients, doctors & South Indian meals
     from app.db import SessionLocal
     from app.food_seeder import seed_foods, seed_demo_medications
+    from app.comprehensive_seeder import seed_comprehensive_database
     db = SessionLocal()
     try:
         seed_foods(db)
         seed_demo_medications(db)
+        seed_comprehensive_database(db)
     except Exception as e:
-        print(f"Warning during food/medication seeding: {e}")
+        print(f"Warning during comprehensive database seeding: {e}")
     finally:
         db.close()
 

@@ -543,9 +543,19 @@ export const TwinOverview: React.FC = () => {
             title="Predicted vs Actual Peak Rise"
             subtitle="Scatter comparison against ideal y = x line (dashed)."
             headerAction={
-              <span className="text-[11px] font-mono text-slate-400">
-                {accuracyData?.reconciled_count ?? 0} Reconciled Pairs
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-mono text-slate-400">
+                  {accuracyData?.reconciled_count ?? 0} Reconciled Pairs
+                </span>
+                <button
+                  onClick={() => reconcileMutation.mutate()}
+                  disabled={reconcileMutation.isPending}
+                  className="px-2 py-0.5 text-[10px] font-mono bg-slate-800 hover:bg-slate-700 text-teal-400 border border-slate-700 rounded transition-colors disabled:opacity-50"
+                  title="Scan sensor readings and reconcile with logged meals"
+                >
+                  {reconcileMutation.isPending ? 'Reconciling...' : 'Reconcile'}
+                </button>
+              </div>
             }
           >
             {accuracyData && accuracyData.history.filter((h) => h.actual_peak_rise != null).length > 0 ? (
@@ -560,6 +570,7 @@ export const TwinOverview: React.FC = () => {
                       unit=" mg/dL"
                       stroke="#64748b"
                       fontSize={11}
+                      domain={[0, (dataMax: number) => Math.max(dataMax || 0, 60)]}
                     />
                     <YAxis
                       type="number"
@@ -568,6 +579,7 @@ export const TwinOverview: React.FC = () => {
                       unit=" mg/dL"
                       stroke="#64748b"
                       fontSize={11}
+                      domain={[0, (dataMax: number) => Math.max(dataMax || 0, 60)]}
                     />
                     <Tooltip
                       content={({ active, payload }) => {
@@ -593,7 +605,7 @@ export const TwinOverview: React.FC = () => {
                     <ReferenceLine
                       segment={[
                         { x: 0, y: 0 },
-                        { x: 100, y: 100 },
+                        { x: 60, y: 60 },
                       ]}
                       stroke="#0d9488"
                       strokeDasharray="4 4"
@@ -615,6 +627,11 @@ export const TwinOverview: React.FC = () => {
                     />
                   </ScatterChart>
                 </ResponsiveContainer>
+                {(accuracyData?.reconciled_count ?? 0) <= 1 && (
+                  <p className="text-[10px] text-slate-500 text-center mt-1">
+                    Initial reconciled meal recorded. Log and reconcile additional meals to build a multi-point scatter distribution.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-xs text-slate-400">
@@ -676,6 +693,7 @@ export const TwinOverview: React.FC = () => {
                       stroke="#64748b"
                       fontSize={11}
                       unit=" mg/dL"
+                      domain={[0, (dataMax: number) => Math.max(dataMax || 0, 20)]}
                     />
                     <Tooltip
                       content={({ active, payload }) => {
@@ -704,10 +722,15 @@ export const TwinOverview: React.FC = () => {
                       name="Rolling MAE"
                       stroke="#2dd4bf"
                       strokeWidth={2.5}
-                      dot={{ r: 3, fill: '#2dd4bf' }}
+                      dot={{ r: 4, fill: '#2dd4bf' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
+                {(accuracyData?.reconciled_count ?? 0) <= 1 && (
+                  <p className="text-[10px] text-slate-500 text-center mt-1">
+                    Single data point plotted. Minimum 2 reconciled meals required to render a longitudinal trend line.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-xs text-slate-400">

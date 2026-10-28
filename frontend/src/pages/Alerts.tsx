@@ -18,7 +18,6 @@ import {
   Search,
   ShieldAlert,
   User,
-  Wrench,
 } from 'lucide-react';
 import {
   useAcknowledgeAlert,
@@ -289,7 +288,7 @@ export const AlertsPage: React.FC = () => {
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              {tab === 'open' ? 'All Tickets' : tab}
+              {tab === 'open' ? 'Active Alerts' : tab}
             </button>
           ))}
         </div>

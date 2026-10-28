@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Activity,
   ArrowRight,
-  Building,
   CheckCircle2,
   Lock,
   Mail,
@@ -90,19 +89,19 @@ export const Login: React.FC = () => {
           </div>
           <div>
             <span className="font-extrabold text-sm tracking-tight text-white">
-              GlucoTwin CMS
+              GlucoTwin
             </span>
             <span className="ml-2 text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-300 border border-zinc-700/80">
               METABOLIC OS
             </span>
-            <p className="text-[10px] text-zinc-400 font-medium">Facility & Incident Operations Console</p>
+            <p className="text-[10px] text-zinc-400 font-medium">Personalised Metabolic Digital Twin Platform</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/80 border border-zinc-800 text-[11px] text-emerald-400 font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Facility Services Online</span>
+            <span>Twin Inference Engine Online</span>
           </div>
 
           <button
@@ -141,8 +140,8 @@ export const Login: React.FC = () => {
           {/* Large Hero Title */}
           <div className="space-y-3">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.1]">
-              Unified Metabolic <br />
-              <span className="text-zinc-100">Incident Operations</span>
+              Personalised Metabolic <br />
+              <span className="text-zinc-100">Digital Twin</span>
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base max-w-xl leading-relaxed">
               An enterprise operations ecosystem connecting patients, clinical dietitians, and endocrinologists. Track glycemic excursions, monitor CGM telemetry, and verify deterministic safety governance in real time.
@@ -180,10 +179,10 @@ export const Login: React.FC = () => {
                 Target SLA
               </span>
               <span className="text-2xl font-black text-white font-mono block">
-                4 Hours
+                &lt; 15 min
               </span>
               <span className="text-[11px] text-zinc-500 block truncate mt-0.5">
-                P1 critical alert triage
+                Acute hypoglycemia triage
               </span>
             </div>
           </div>
@@ -195,7 +194,7 @@ export const Login: React.FC = () => {
             {/* Card Header */}
             <div className="flex items-center gap-3.5 mb-6">
               <div className="w-11 h-11 rounded-2xl bg-white text-black flex items-center justify-center font-bold shadow-md shrink-0">
-                <Building className="w-5 h-5 text-black" />
+                <Activity className="w-5 h-5 text-black" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white tracking-tight">Portal Access</h2>
@@ -203,7 +202,7 @@ export const Login: React.FC = () => {
               </div>
             </div>
 
-            {/* Tab Switcher (Sign In vs Register Resident) */}
+            {/* Tab Switcher (Sign In vs Register Account) */}
             <div className="bg-zinc-950 p-1 rounded-xl border border-zinc-850 flex items-center mb-6">
               <span
                 className="flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-black shadow-sm text-center transition select-none"
@@ -214,7 +213,7 @@ export const Login: React.FC = () => {
                 to="/register"
                 className="flex-1 py-2 text-xs font-medium rounded-lg text-zinc-400 hover:text-white text-center transition"
               >
-                Register Resident
+                Register Account
               </Link>
             </div>
 
@@ -315,7 +314,7 @@ export const Login: React.FC = () => {
 
       {/* Footer */}
       <div className="max-w-7xl w-full mx-auto text-center pt-6 border-t border-zinc-850/80 text-[11px] text-zinc-500">
-        Residential Society Complaint Management System • Facility Operations OS
+        GlucoTwin • Personalised Metabolic Digital Twin with Deterministic Safety Governance
       </div>
     </div>
   );

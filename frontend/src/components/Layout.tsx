@@ -49,53 +49,53 @@ interface NavItem {
   icon: React.ElementType;
   roles?: UserRole[];
   clinicianOnly?: boolean;
+  group?: 'core' | 'tools';
 }
 
 const NAV_ITEMS: NavItem[] = [
+  // --- CORE WORKSPACES ---
   // Patient Panel: Clinicians, Dietitians, Admins
-  { to: '/panel', label: 'Patient Panel', icon: Users, roles: ['clinician', 'dietitian', 'admin'] },
+  { to: '/panel', label: 'Patient Panel & Triage', icon: Users, roles: ['clinician', 'dietitian', 'admin'], group: 'core' },
 
   // Patient Home: Patients only
-  { to: '/', label: 'Patient Home', patientLabel: 'Patient Home', icon: Home, roles: ['patient'] },
-
-  // Core Metabolic Twin: All roles
-  { to: '/twin', label: 'Metabolic Profile', patientLabel: 'My Health Summary', icon: Activity, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  { to: '/', label: 'Patient Home', patientLabel: 'Today’s Overview', icon: Home, roles: ['patient'], group: 'core' },
 
   // Fast Meal & Glucose Logging: All roles
-  { to: '/log', label: 'Log Meal & Glucose', patientLabel: 'Fast Log Meal', icon: Utensils, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
-
-  // Timeline & Sensor Replay: All roles
-  { to: '/timeline', label: 'Timeline & Replay', patientLabel: 'Glucose Diary & Replay', icon: History, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  { to: '/log', label: 'Log Meal & Glucose', patientLabel: 'Log Meal & Glucose', icon: Utensils, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'core' },
 
   // Simulation Lab: All roles
-  { to: '/simulation', label: 'Scenario Planner', patientLabel: 'Meal & Walk Forecast', icon: Sliders, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  { to: '/simulation', label: 'Scenario Planner', patientLabel: 'Meal & Walk Simulator', icon: Sliders, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'core' },
 
   // Clinician Visit Workspace: Clinicians and Admins only
-  { to: '/visits', label: 'Visit Workspace', icon: Stethoscope, roles: ['clinician', 'admin'], clinicianOnly: true },
+  { to: '/visits', label: 'Clinical Visit Workspace', icon: Stethoscope, roles: ['clinician', 'admin'], clinicianOnly: true, group: 'core' },
 
   // Acute Metabolic Alerts: Clinicians and Admins only
-  { to: '/alerts', label: 'Alerts Center', icon: ShieldAlert, roles: ['clinician', 'admin'], clinicianOnly: true },
+  { to: '/alerts', label: 'Alerts Center', icon: ShieldAlert, roles: ['clinician', 'admin'], clinicianOnly: true, group: 'core' },
 
-  // 4-Week Care Plan: All roles
-  { to: '/my-plan', label: 'My Care Plan', patientLabel: 'My 4-Week Plan', icon: ClipboardList, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  // Treatment & Doctor Advice: All roles
+  { to: '/treatment', label: 'Clinical Decision Hub (CDS)', patientLabel: 'Care Plan & Doctor Advice', icon: Sparkles, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'core' },
 
-  // Treatment & Lifestyle Studio: All roles
-  { to: '/treatment', label: 'Doctor Advice & Plan', patientLabel: 'Doctor Advice & Plan', icon: Sparkles, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  // Core Metabolic Twin: All roles
+  { to: '/twin', label: 'Twin Tuning & Calibration', patientLabel: 'My Digital Twin', icon: Activity, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'core' },
 
-  // Care Team: All roles
-  { to: '/care-team', label: 'My Care Team', patientLabel: 'My Care Team', icon: Users, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  // --- SECONDARY DATA & TOOLS ---
+  // Timeline & Sensor Replay: All roles
+  { to: '/timeline', label: 'Timeline & Sensor Replay', patientLabel: 'Glucose Timeline', icon: History, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'tools' },
 
   // Care Team Messaging: All roles
-  { to: '/messages', label: 'Messages', patientLabel: 'Care Team Chat', icon: MessageSquare, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  { to: '/messages', label: 'Care Team Chat', patientLabel: 'Care Team Chat', icon: MessageSquare, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'tools' },
+
+  // Care Team Directory: All roles
+  { to: '/care-team', label: 'Care Team Directory', patientLabel: 'My Care Team', icon: Users, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'tools' },
 
   // Ingest CGM & Wearables: All roles
-  { to: '/import', label: 'Import Data', patientLabel: 'Data Import', icon: UploadCloud, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  { to: '/import', label: 'Import Sensor Data', patientLabel: 'Import Data', icon: UploadCloud, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'tools' },
 
   // Weekly Metabolic Reports: All roles
-  { to: '/reports', label: 'Weekly Reports', patientLabel: 'Weekly Reports', icon: FileText, roles: ['patient', 'clinician', 'dietitian', 'admin'] },
+  { to: '/reports', label: 'Weekly Reports', patientLabel: 'Weekly Reports', icon: FileText, roles: ['patient', 'clinician', 'dietitian', 'admin'], group: 'tools' },
 
   // About & Model Info: Clinicians, Dietitians, Admins
-  { to: '/governance', label: 'System Architecture & Specs', icon: Database, roles: ['clinician', 'dietitian', 'admin'] },
+  { to: '/governance', label: 'System Architecture', icon: Database, roles: ['clinician', 'dietitian', 'admin'], group: 'tools' },
 ];
 
 const ROUTE_TITLES: Record<string, string> = {
@@ -106,7 +106,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/alerts': 'Metabolic Alerts Center',
   '/timeline': 'Glucose Timeline & Sensor Replay',
   '/simulation': 'Scenario Planner & Forecasting',
-  '/treatment': 'Doctor Advice & Care Plan',
+  '/treatment': 'Clinical Decision Support & Care Hub',
   '/governance': 'System Architecture & Specifications',
   '/patients/setup': 'Patient Setup',
   '/log': 'Log Data',
@@ -382,7 +382,7 @@ export const Layout: React.FC = () => {
             )}
           </button>
 
-          {/* User Profile Pill (Matches reference UI `[R] Rohit Unit A-104 [->`) */}
+          {/* User Profile Pill */}
           <div className="flex items-center gap-2 pl-2 border-l border-zinc-800">
             <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-950 border border-zinc-850 text-xs">
               <div className="w-6 h-6 rounded-full bg-white text-black font-bold flex items-center justify-center text-xs shrink-0">
@@ -449,19 +449,19 @@ export const Layout: React.FC = () => {
                   ? item.patientLabel
                   : item.label;
 
-              const isFirstClinicianTool =
-                item.clinicianOnly &&
-                (idx === 0 || !visibleNavItems[idx - 1].clinicianOnly);
+              const isFirstTool =
+                item.group === 'tools' &&
+                (idx === 0 || visibleNavItems[idx - 1].group !== 'tools');
 
               return (
                 <React.Fragment key={item.to}>
-                  {isFirstClinicianTool && !isSidebarCollapsed && (
-                    <div className="pt-3 pb-1 px-3 flex items-center justify-between border-t border-zinc-800/80 my-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                        Clinician Tools
+                  {isFirstTool && !isSidebarCollapsed && (
+                    <div className="pt-3 pb-1.5 px-3 flex items-center justify-between border-t border-zinc-800/80 my-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                        {isPatientUser ? 'Data & Care Team' : 'Clinical Data & Tools'}
                       </span>
-                      <span className="text-[9px] px-1.5 py-0.2 bg-zinc-900 text-zinc-400 rounded border border-zinc-800">
-                        CDS
+                      <span className="text-[9px] px-1.5 py-0.5 bg-zinc-900 text-zinc-400 rounded border border-zinc-800 font-mono">
+                        TOOLS
                       </span>
                     </div>
                   )}

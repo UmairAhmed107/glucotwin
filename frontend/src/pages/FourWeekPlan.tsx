@@ -6,6 +6,7 @@ import {
   Award,
   Calendar,
   CheckCircle2,
+  ChevronRight,
   Clock,
   Compass,
   FileCheck,
@@ -103,8 +104,8 @@ export const FourWeekPlanPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Care Pathway Graphic Above Timeline */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 space-y-3 shadow-md">
+      {/* 1. Flattened Horizontal Care Pathway Architecture Pipeline */}
+      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-teal-400 uppercase tracking-wider flex items-center space-x-1.5">
             <Compass className="w-4 h-4" />
@@ -113,64 +114,63 @@ export const FourWeekPlanPage: React.FC = () => {
           <span className="text-[10px] text-slate-400 font-mono">Sequential Care Loop</span>
         </div>
 
-        {/* Responsive Flowchart Nodes */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
-          {/* Node 1: Current State */}
-          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-teal-500/30 space-y-1 relative group">
-            <div className="text-[10px] text-teal-400 uppercase font-semibold flex items-center justify-between">
-              <span>1. Current Baseline</span>
-              <Activity className="w-3.5 h-3.5 text-teal-400" />
+        {/* Flattened Progress Tracker */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-1">
+          {/* Step 1 */}
+          <div className="flex-1 flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center shrink-0 text-xs font-bold font-mono">
+              01
             </div>
-            <div className="text-sm font-bold text-white font-mono">
-              HbA1c: {hba1c}% • Conf: {confidencePct}%
-            </div>
-            <div className="text-[11px] text-slate-400">
-              {memN} observed meals • {patient?.is_synthetic ? 'Synthetic profile' : 'Clinical record'}
-            </div>
-            <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-slate-600">
-              <ArrowRight className="w-4 h-4" />
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-white truncate">1. Baseline State</div>
+              <div className="text-[11px] text-slate-400 truncate">
+                HbA1c {hba1c}% • {memN} meals observed
+              </div>
             </div>
           </div>
 
-          {/* Node 2: Interventions */}
-          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1 relative group">
-            <div className="text-[10px] text-indigo-400 uppercase font-semibold flex items-center justify-between">
-              <span>2. Interventions</span>
-              <Utensils className="w-3.5 h-3.5 text-indigo-400" />
+          <ChevronRight className="hidden md:block w-4 h-4 text-slate-600 shrink-0" />
+
+          {/* Step 2 */}
+          <div className="flex-1 flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 text-xs font-bold font-mono">
+              02
             </div>
-            <div className="text-sm font-bold text-white">Carb & Meal Tuning</div>
-            <div className="text-[11px] text-slate-400">
-              Postprandial walk + twin-predicted carb moderation
-            </div>
-            <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-slate-600">
-              <ArrowRight className="w-4 h-4" />
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-white truncate">2. Interventions</div>
+              <div className="text-[11px] text-slate-400 truncate">
+                Postprandial walk & carb tuning
+              </div>
             </div>
           </div>
 
-          {/* Node 3: Monitoring */}
-          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1 relative group">
-            <div className="text-[10px] text-amber-400 uppercase font-semibold flex items-center justify-between">
-              <span>3. Monitoring</span>
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
+          <ChevronRight className="hidden md:block w-4 h-4 text-slate-600 shrink-0" />
+
+          {/* Step 3 */}
+          <div className="flex-1 flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 text-xs font-bold font-mono">
+              03
             </div>
-            <div className="text-sm font-bold text-white">Continuous Tracking</div>
-            <div className="text-[11px] text-slate-400">
-              CGM logging, peak rise verification & safety checks
-            </div>
-            <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-slate-600">
-              <ArrowRight className="w-4 h-4" />
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-white truncate">3. Monitoring</div>
+              <div className="text-[11px] text-slate-400 truncate">
+                Continuous CGM tracking
+              </div>
             </div>
           </div>
 
-          {/* Node 4: Clinician Review */}
-          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-emerald-500/30 space-y-1">
-            <div className="text-[10px] text-emerald-400 uppercase font-semibold flex items-center justify-between">
-              <span>4. Clinical Review</span>
-              <Stethoscope className="w-3.5 h-3.5 text-emerald-400" />
+          <ChevronRight className="hidden md:block w-4 h-4 text-slate-600 shrink-0" />
+
+          {/* Step 4 */}
+          <div className="flex-1 flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-xs font-bold font-mono">
+              04
             </div>
-            <div className="text-sm font-bold text-white">Week 4 Milestone</div>
-            <div className="text-[11px] text-slate-400">
-              Physician review of glycemic logs & therapy escalation
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-white truncate">4. Clinical Review</div>
+              <div className="text-[11px] text-slate-400 truncate">
+                Week 4 milestone & titration
+              </div>
             </div>
           </div>
         </div>
@@ -180,105 +180,128 @@ export const FourWeekPlanPage: React.FC = () => {
         <LoadingSkeleton className="h-96 w-full" />
       )}
 
-      {/* 4-Column Timeline Grid */}
+      {/* 2. Unified Master Container: 4-Week Care Pathway */}
       {planResult && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {planResult.weeks.map((week: WeekPlan) => {
-              const isWeek4 = week.week_number === 4;
+          <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {planResult.weeks.map((week: WeekPlan, wIdx: number) => {
+                const isWeek4 = week.week_number === 4;
 
-              return (
-                <div
-                  key={week.week_number}
-                  className={`p-4 rounded-2xl border flex flex-col justify-between transition-all ${
-                    isWeek4
-                      ? 'bg-slate-900 border-emerald-500/30 shadow-lg shadow-emerald-500/5'
-                      : 'bg-slate-900 border-slate-800'
-                  }`}
-                >
-                  <div className="space-y-3">
-                    {/* Week Column Header */}
-                    <div className="pb-3 border-b border-slate-800 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                            isWeek4
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                              : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
-                          }`}
-                        >
-                          Week {week.week_number}
-                        </span>
-                        {isWeek4 && (
-                          <span className="text-[10px] text-emerald-400 font-semibold flex items-center space-x-1">
-                            <Award className="w-3 h-3" />
-                            <span>Milestone</span>
-                          </span>
-                        )}
+                const physicalDietItem =
+                  week.items.find((it) => it.category === 'lifestyle') || week.items[0];
+                const twinItem =
+                  week.items.find((it) => it.category === 'twin_meal_advice') || week.items[1];
+                const monitoringItem =
+                  week.items.find(
+                    (it) => it.category === 'monitoring' || it.category === 'clinician_review'
+                  ) || week.items[2];
+
+                return (
+                  <div
+                    key={week.week_number}
+                    className={`space-y-6 ${
+                      wIdx > 0 ? 'lg:border-l lg:border-slate-800/50 lg:pl-6' : ''
+                    }`}
+                  >
+                    {/* Standardized Column Header */}
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wider text-teal-400">
+                          WEEK {week.week_number}
+                        </div>
+                        <div className="text-xs text-white font-medium mt-0.5 line-clamp-1">
+                          {week.focus_theme}
+                        </div>
                       </div>
-                      <h3 className="font-semibold text-white text-xs leading-snug pt-1">
-                        {week.focus_theme}
-                      </h3>
+                      <span className="text-3xl font-black font-mono text-slate-700/40 select-none">
+                        0{week.week_number}
+                      </span>
                     </div>
 
-                    {/* Week Items */}
-                    <div className="space-y-2.5">
-                      {week.items.map((item: PlanItem, iIdx: number) => {
-                        const isClinicianMilestone = item.category === 'clinician_review';
-                        const isTwinMeal = item.category === 'twin_meal_advice';
+                    {/* Standardized Categorized Rows */}
+                    <div className="space-y-6">
+                      {/* Row 1: 1. PHYSICAL / DIET HABIT */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
+                            1. PHYSICAL / DIET HABIT
+                          </span>
+                          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                            CLINICAL GUIDELINE
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-semibold text-white leading-snug">
+                          {physicalDietItem?.title}
+                        </h4>
+                        <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                          {physicalDietItem?.detail}
+                        </p>
+                      </div>
 
-                        return (
-                          <div
-                            key={iIdx}
-                            className={`p-3 rounded-xl border text-xs space-y-1.5 transition-all ${
-                              isClinicianMilestone
-                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-100'
-                                : isTwinMeal
-                                ? 'bg-teal-500/5 border-teal-500/20 text-slate-200'
-                                : 'bg-slate-950/70 border-slate-800 text-slate-300'
+                      {/* Subtle Divider */}
+                      <div className="border-b border-slate-800/50" />
+
+                      {/* Row 2: 2. DIGITAL TWIN */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="text-[10px] font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-teal-400" />
+                            <span>2. DIGITAL TWIN</span>
+                          </span>
+                          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20">
+                            PERSONALIZED
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-semibold text-white leading-snug">
+                          {twinItem?.title}
+                        </h4>
+                        <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                          {twinItem?.detail}
+                        </p>
+                      </div>
+
+                      {/* Subtle Divider */}
+                      <div className="border-b border-slate-800/50" />
+
+                      {/* Row 3: 3. MONITORING & CLINICAL */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                            <Stethoscope className="w-3 h-3 text-emerald-400" />
+                            <span>3. MONITORING & CLINICAL</span>
+                          </span>
+                          <span
+                            className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
+                              isWeek4
+                                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20'
                             }`}
                           >
-                            <div className="flex justify-between items-start gap-1">
-                              <h4 className="font-semibold text-white text-[11px] leading-tight">
-                                {item.title}
-                              </h4>
-                              <ProvenanceBadge provenance={item.provenance} size="sm" />
-                            </div>
-
-                            <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
-                              {item.detail}
-                            </p>
-
-                            <div className="pt-1 flex items-center justify-between text-[9px] text-slate-400 uppercase tracking-wider">
-                              <span className="flex items-center space-x-1">
-                                {isTwinMeal && <Zap className="w-3 h-3 text-teal-400" />}
-                                {isClinicianMilestone && (
-                                  <Stethoscope className="w-3 h-3 text-emerald-400" />
-                                )}
-                                <span>{item.category.replace(/_/g, ' ')}</span>
-                              </span>
-                            </div>
+                            {isWeek4 ? 'MILESTONE' : 'CLINICAL GUIDELINE'}
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-semibold text-white leading-snug">
+                          {monitoringItem?.title}
+                        </h4>
+                        <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                          {monitoringItem?.detail}
+                        </p>
+                        {isWeek4 && (
+                          <div className="pt-2 text-[10px] text-emerald-400 font-semibold flex items-center gap-1.5">
+                            <Flag className="w-3 h-3 text-emerald-400 shrink-0" />
+                            <span>Comprehensive Clinician Review Point</span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Column Footer Milestone Flag */}
-                  {isWeek4 && (
-                    <div className="mt-4 pt-3 border-t border-emerald-500/20 text-center">
-                      <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-[10px] font-semibold">
-                        <Flag className="w-3 h-3" />
-                        <span>Comprehensive Clinician Review Point</span>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="p-3 text-center text-xs text-slate-400 pt-4">
+          <div className="p-3 text-center text-xs text-slate-400 pt-2">
             Care pathway milestones are generated for patient education and clinical alignment. This plan does not
             substitute for professional medical consultation.
           </div>

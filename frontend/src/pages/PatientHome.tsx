@@ -11,21 +11,20 @@ import {
   CheckCircle2,
   Clock,
   Compass,
-  FileText,
   Flame,
-  Home,
   Info,
   Pill,
   Plus,
   RefreshCw,
-  Search,
+  Camera,
+  Heart,
+  ShieldAlert,
   ShieldCheck,
   Sliders,
   Sparkles,
   TrendingDown,
   TrendingUp,
   Utensils,
-  Wrench,
   Zap,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -36,14 +35,16 @@ import {
   usePatient,
 } from '../api/queries';
 import { SectionCard, StatCard, EmptyState, LoadingSkeleton } from '../components/Cards';
+import { SnapToLogModal } from '../components/SnapToLogModal';
+import { CareCircleModal } from '../components/CareCircleModal';
 
 export const PatientHome: React.FC = () => {
   const { activePatientId } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [ticketSearch, setTicketSearch] = useState('');
-  const [ticketFilter, setTicketFilter] = useState<'all' | 'pending' | 'in_progress' | 'resolved' | 'critical'>('all');
+  const [isSnapModalOpen, setIsSnapModalOpen] = useState(false);
+  const [isCareCircleOpen, setIsCareCircleOpen] = useState(false);
 
   const {
     data: summary,
@@ -124,7 +125,7 @@ export const PatientHome: React.FC = () => {
     updateDoseMutation.mutate({ doseId, patientId: activePatientId || 1, status: nextStatus as 'pending' | 'taken' });
   };
 
-  const patientDisplayName = patient?.display_name || user?.full_name || 'Rohit';
+  const patientDisplayName = patient?.display_name || user?.full_name || 'Alex Rivera';
   const shortName = patientDisplayName.split(' ')[0];
 
   return (
@@ -132,12 +133,12 @@ export const PatientHome: React.FC = () => {
       {/* 1. Top Location Tag, Welcome Banner & Primary Action Button (Matches Reference Image 1) */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
         <div className="space-y-3">
-          {/* Breadcrumb / Unit Pill */}
+          {/* Breadcrumb / Status Pill */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300">
-            <Home className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="font-semibold text-white">Unit A-104</span>
+            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="font-semibold text-white">Patient Portal</span>
             <span className="text-zinc-600">•</span>
-            <span className="text-zinc-400">Resident Operations Hub</span>
+            <span className="text-zinc-400">Metabolic Health Hub</span>
           </div>
 
           {/* Large Hero Title */}
@@ -146,19 +147,39 @@ export const PatientHome: React.FC = () => {
           </h1>
 
           <p className="text-sm text-zinc-400 max-w-2xl leading-relaxed">
-            Track filed maintenance grievances in real time, view technician telemetry, or lodge a new service ticket.
+            Review continuous glucose telemetry, validate personalized twin predictions, and log daily nutrition with your care team.
           </p>
         </div>
 
-        {/* Primary CTA Button on Right (Pure White Pill Button from Image 1) */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Primary CTA Buttons on Right */}
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           <button
             onClick={() => refetch()}
             disabled={isRefetching}
-            className="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 flex items-center justify-center transition"
+            className="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 flex items-center justify-center transition cursor-pointer"
             title="Refresh telemetry"
           >
             <RefreshCw className={`w-4 h-4 ${isRefetching ? 'animate-spin' : ''}`} />
+          </button>
+
+          {/* Snap Meal AI Button */}
+          <button
+            onClick={() => setIsSnapModalOpen(true)}
+            className="px-3.5 py-2 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+            title="Take photo of plate for instant AI macro & curve estimation"
+          >
+            <Camera className="w-3.5 h-3.5 text-amber-400" />
+            <span>Snap Meal (AI)</span>
+          </button>
+
+          {/* Care Circle Button */}
+          <button
+            onClick={() => setIsCareCircleOpen(true)}
+            className="px-3.5 py-2 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+            title="Manage Family Emergency Circle & Nocturnal Hypo Alerts"
+          >
+            <Heart className="w-3.5 h-3.5 text-rose-400" />
+            <span>Care Circle</span>
           </button>
 
           <button
@@ -166,90 +187,151 @@ export const PatientHome: React.FC = () => {
             className="btn-white text-xs sm:text-sm font-bold shadow-lg shadow-white/5 active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4 text-black stroke-[3]" />
-            <span>Lodge Maintenance Ticket</span>
+            <span>Log Meal</span>
           </button>
         </div>
       </div>
 
-      {/* 2. 4 Primary Stat Cards Grid (Pixel-matching Reference Image 1) */}
+      {/* 2. 4 Primary Metabolic Stat Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: TOTAL REGISTERED */}
+        {/* Card 1: CURRENT GLUCOSE */}
         <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
-                TOTAL REGISTERED
+                CURRENT GLUCOSE
               </span>
-              <span className="text-xs text-zinc-500 font-medium">Facility Record</span>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
-              <FileText className="w-4 h-4 text-zinc-400" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
-              2
-            </span>
-          </div>
-        </div>
-
-        {/* Card 2: PENDING REVIEW */}
-        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider block">
-                PENDING REVIEW
+              <span className="text-xs text-emerald-400 font-mono font-medium">
+                {todayGlucose.trend.toUpperCase()}
               </span>
-              <span className="text-xs text-zinc-500 font-medium">Pending Action</span>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-400">
-              <Clock className="w-4 h-4 text-amber-400" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl sm:text-4xl font-extrabold text-amber-400 font-mono">
-              0
-            </span>
-          </div>
-        </div>
-
-        {/* Card 3: FIELD DISPATCHED */}
-        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider block">
-                FIELD DISPATCHED
-              </span>
-              <span className="text-xs text-zinc-500 font-medium">Technician Active</span>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300">
-              <Wrench className="w-4 h-4 text-zinc-300" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
-              1
-            </span>
-          </div>
-        </div>
-
-        {/* Card 4: RESOLVED & CLOSED */}
-        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider block">
-                RESOLVED & CLOSED
-              </span>
-              <span className="text-xs text-zinc-500 font-medium">Completed</span>
             </div>
             <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400">
-              <CheckCircle className="w-4 h-4 text-emerald-400" />
+              <Activity className="w-4 h-4 text-emerald-400" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-1.5">
+            <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
+              {todayGlucose.current_value}
+            </span>
+            <span className="text-xs text-zinc-500 font-mono">mg/dL</span>
+          </div>
+        </div>
+
+        {/* Card 2: GAMIFIED METABOLIC STABILITY SCORE (0-100) */}
+        {(() => {
+          const score = Math.min(
+            100,
+            Math.max(
+              35,
+              Math.round(
+                tir.in_range_pct * 0.72 +
+                (100 - Math.min(100, Math.abs(todayGlucose.mean_value - 112) * 1.2)) * 0.28
+              )
+            )
+          );
+          const isOptimal = score >= 80;
+          const isModerate = score >= 65 && score < 80;
+
+          return (
+            <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
+                    METABOLIC SCORE
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                      isOptimal
+                        ? 'text-emerald-400 bg-emerald-500/10'
+                        : isModerate
+                        ? 'text-amber-400 bg-amber-500/10'
+                        : 'text-rose-400 bg-rose-500/10'
+                    }`}
+                  >
+                    {isOptimal ? 'Optimal Stability' : isModerate ? 'Moderate Swings' : 'High Swings'}
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400">
+                  <Sparkles className="w-4 h-4 text-emerald-400" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl sm:text-4xl font-extrabold font-mono text-emerald-400">
+                    {score}
+                  </span>
+                  <span className="text-xs text-zinc-500 font-mono">/100</span>
+                </div>
+                <div className="text-[10px] text-zinc-400 mt-1 flex items-center gap-1.5">
+                  <span>In Range: <strong>{tir.in_range_pct}%</strong></span>
+                  <span>&bull;</span>
+                  <span>Target &gt; 70%</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Card 3: DAY AVERAGE */}
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
+                DAY AVERAGE
+              </span>
+              <span className="text-xs text-zinc-500 font-medium">
+                {todayGlucose.readings_count} readings
+              </span>
+            </div>
+            <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-400">
+              <Zap className="w-4 h-4 text-amber-400" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-1.5">
+            <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
+              {todayGlucose.mean_value}
+            </span>
+            <span className="text-xs text-zinc-500 font-mono">mg/dL</span>
+          </div>
+        </div>
+
+        {/* Card 4: LOGGING & HABIT STREAK */}
+        <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
+                HABIT STREAK
+              </span>
+              <span className="text-xs text-amber-400 font-medium">Daily Active</span>
+            </div>
+            <div className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-500">
+              <Flame className="w-4 h-4 text-amber-500" />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-3xl sm:text-4xl font-extrabold text-emerald-400 font-mono">
-              1
-            </span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl sm:text-4xl font-extrabold text-amber-400 font-mono">
+                {streak.current_streak_days}
+              </span>
+              <span className="text-xs text-zinc-400 font-medium">Days on track</span>
+            </div>
+
+            {/* Week Bubbles */}
+            <div className="flex items-center gap-1 mt-2">
+              {streak.history.map((h, i) => (
+                <span
+                  key={i}
+                  className={`w-4 h-4 rounded text-[9px] font-bold flex items-center justify-center font-mono ${
+                    h.active
+                      ? 'bg-amber-400 text-black font-extrabold shadow-sm'
+                      : 'bg-zinc-900 text-zinc-600 border border-zinc-800'
+                  }`}
+                  title={`${h.day}: ${h.active ? 'Completed' : 'Missed'}`}
+                >
+                  {h.day[0]}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -324,211 +406,7 @@ export const PatientHome: React.FC = () => {
         )}
       </div>
 
-      {/* 3. Maintenance Incident Tickets Section (Pixel-matching Reference Image 1) */}
-      <div className="space-y-4">
-        {/* Section Header & Subtitle */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-bold text-white tracking-tight">
-              Maintenance Incident Tickets
-            </h2>
-            <p className="text-xs text-zinc-400 mt-0.5">
-              Select any card to inspect full telemetry audit lifecycle
-            </p>
-          </div>
 
-          {/* Filter Bar with Search and Pills */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={ticketSearch}
-                onChange={(e) => setTicketSearch(e.target.value)}
-                placeholder="Search token, title, category..."
-                className="bg-zinc-950 border border-zinc-800 rounded-full pl-9 pr-4 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition w-56 sm:w-64"
-              />
-            </div>
-
-            <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-full border border-zinc-850 text-xs">
-              <button
-                type="button"
-                onClick={() => setTicketFilter('all')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                  ticketFilter === 'all'
-                    ? 'bg-white text-black shadow-sm'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                All Tickets
-              </button>
-              <button
-                type="button"
-                onClick={() => setTicketFilter('pending')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                  ticketFilter === 'pending'
-                    ? 'bg-white text-black shadow-sm'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                Pending
-              </button>
-              <button
-                type="button"
-                onClick={() => setTicketFilter('in_progress')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                  ticketFilter === 'in_progress'
-                    ? 'bg-white text-black shadow-sm'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                In Progress
-              </button>
-              <button
-                type="button"
-                onClick={() => setTicketFilter('resolved')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                  ticketFilter === 'resolved'
-                    ? 'bg-white text-black shadow-sm'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                Resolved
-              </button>
-              <button
-                type="button"
-                onClick={() => setTicketFilter('critical')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition flex items-center gap-1 ${
-                  ticketFilter === 'critical'
-                    ? 'bg-white text-black shadow-sm'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <span>🚨 P1 - Critical</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 2-Column Tickets Grid (Matching Image 1 cards) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Ticket Card 1 */}
-          <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between space-y-4">
-            <div>
-              {/* Card Top Row: Icon + Title + Version + Tags */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 shrink-0">
-                    <Wrench className="w-5 h-5 text-zinc-300" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white tracking-tight">
-                      kitchen pvc pipe leakage
-                    </h3>
-                    <p className="text-[11px] font-mono text-zinc-500">
-                      v1.2 • CMS 1041
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-blue-500/15 text-blue-400 border border-blue-500/30">
-                    Assigned
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-zinc-900 text-zinc-400 border border-zinc-800">
-                    Plumbing
-                  </span>
-                </div>
-              </div>
-
-              {/* Description */}
-              <p className="text-xs text-zinc-400 mt-3 leading-relaxed">
-                water leakage from pipe
-              </p>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              {/* Meta token footer */}
-              <div className="text-[11px] font-mono text-zinc-500 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span>Token: <strong className="text-zinc-300 font-bold">IKN-802789</strong></span>
-                <span>•</span>
-                <span>Priority: <strong className="text-zinc-300">P2</strong></span>
-                <span>•</span>
-                <span>SLA: <strong className="text-zinc-300">12h</strong></span>
-                <span>•</span>
-                <span>Unit: <strong className="text-zinc-300">A-A-104</strong></span>
-              </div>
-
-              {/* Full Width Inspect Button */}
-              <button
-                type="button"
-                onClick={() => navigate('/timeline')}
-                className="w-full py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800/80 hover:border-zinc-700 text-xs font-semibold transition flex items-center justify-center gap-1.5"
-              >
-                <span>+ Inspect Ticket Lifecycle</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Ticket Card 2 */}
-          <div className="bg-[#09090b] border border-zinc-800/90 rounded-2xl p-5 shadow-sm hover:border-zinc-700/80 transition-all flex flex-col justify-between space-y-4">
-            <div>
-              {/* Card Top Row: Icon + Title + Version + Tags */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 shrink-0">
-                    <Activity className="w-5 h-5 text-zinc-300" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white tracking-tight">
-                      first floor lift
-                    </h3>
-                    <p className="text-[11px] font-mono text-zinc-500">
-                      v1.2 • CMS 1045
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                    Resolved
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-zinc-900 text-zinc-400 border border-zinc-800">
-                    HVAC & Lift
-                  </span>
-                </div>
-              </div>
-
-              {/* Description */}
-              <p className="text-xs text-zinc-400 mt-3 leading-relaxed">
-                lift not working
-              </p>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              {/* Meta token footer */}
-              <div className="text-[11px] font-mono text-zinc-500 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span>Token: <strong className="text-zinc-300 font-bold">IKN-494108</strong></span>
-                <span>•</span>
-                <span>Priority: <strong className="text-zinc-300">P3</strong></span>
-                <span>•</span>
-                <span>SLA: <strong className="text-emerald-400 font-bold">Met</strong></span>
-                <span>•</span>
-                <span>Unit: <strong className="text-zinc-300">A-A-104</strong></span>
-              </div>
-
-              {/* Full Width Inspect Button */}
-              <button
-                type="button"
-                onClick={() => navigate('/twin')}
-                className="w-full py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800/80 hover:border-zinc-700 text-xs font-semibold transition flex items-center justify-center gap-1.5"
-              >
-                <span>+ Inspect Ticket Lifecycle</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* 4. Live Metabolic Telemetry, Time In Range, & Medications */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -760,6 +638,23 @@ export const PatientHome: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Snap-to-Log Multimodal AI Camera Modal */}
+      <SnapToLogModal
+        isOpen={isSnapModalOpen}
+        onClose={() => {
+          setIsSnapModalOpen(false);
+          refetch();
+        }}
+        patientId={activePatientId}
+      />
+
+      {/* Emergency Care Circle Alerting Modal */}
+      <CareCircleModal
+        isOpen={isCareCircleOpen}
+        onClose={() => setIsCareCircleOpen(false)}
+        patientName={patientDisplayName}
+      />
     </div>
   );
 };

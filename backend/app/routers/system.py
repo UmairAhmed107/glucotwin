@@ -86,3 +86,35 @@ def get_system_validation():
             status_code=500,
         )
 
+
+@router.api_route("/system/seed-demo", methods=["GET", "POST"])
+def trigger_seed_demo():
+    """
+    Triggers the comprehensive demo seeder to load 10 numbered patients,
+    7 doctors/dietitians, South Indian and Indian meal history, saved meals,
+    and 14-day continuous CGM sensor telemetry.
+    """
+    from app.db import SessionLocal
+    from app.food_seeder import seed_foods, seed_demo_medications
+    from app.comprehensive_seeder import seed_comprehensive_database
+
+    db = SessionLocal()
+    try:
+        seed_foods(db)
+        seed_demo_medications(db)
+        stats = seed_comprehensive_database(db)
+        return {
+            "status": "success",
+            "message": "Demo data successfully seeded and synchronized.",
+            "stats": stats,
+        }
+    except Exception as e:
+        raise AppException(
+            code="SEED_ERROR",
+            message=f"Error executing comprehensive seeder: {e}",
+            status_code=500,
+        )
+    finally:
+        db.close()
+
+
