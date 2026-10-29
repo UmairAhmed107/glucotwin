@@ -1,6 +1,6 @@
 # Models & pickled files
 models/*.pkl
-backend/models/*.pkl
+# backend/models/*.pkl is tracked for offline recommendations
 
 # Environment files
 .env
